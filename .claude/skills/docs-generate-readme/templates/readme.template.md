@@ -1,8 +1,8 @@
 # {module.name}
 
-{module.description}
+{module.badges}
 
-{module.overview}
+{module.description}
 
 ## Features
 
@@ -20,19 +20,10 @@ npm install {module.packageName}
 {module.quickStart}
 ```
 
-## API Overview
-
-{module.apiOverview}
-
-See [full API documentation]({module.apiDocsLink}) for complete details.
-
 ## Documentation
 
-{module.documentationLinks}
-
-## Contributing
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
+For configuration options, API reference, and advanced usage, see the
+[documentation]({module.docsLink}).
 
 ## License
 

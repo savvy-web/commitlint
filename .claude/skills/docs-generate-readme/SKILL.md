@@ -8,19 +8,33 @@ agent: docs-gen-agent
 
 # Generate Package README
 
-Generates Level 1 user documentation (README.md) from design docs and package metadata.
+Generates Level 1 user documentation (README.md) from design docs and package
+metadata.
+
+## Philosophy
+
+**READMEs should be concise entry points, not comprehensive documentation.**
+
+A good README answers three questions quickly:
+
+1. **What is this?** - Clear problem statement and solution
+2. **How do I install it?** - Single command
+3. **How do I start?** - Minimal working example
+
+Advanced configuration, detailed API reference, and in-depth guides belong in
+Level 2 documentation (`docs/` folder). READMEs should link there, not duplicate.
 
 ## Overview
 
-This skill transforms internal design documentation into a user-friendly
-package README by:
+This skill transforms internal design documentation into a focused package
+README by:
 
 1. Reading design docs for the module
 2. Extracting package.json metadata
-3. Analyzing the overview and features
-4. Generating quick start examples
-5. Creating or updating README.md following the Level 1 template
-6. Ensuring readability and accessibility for npm/GitHub users
+3. Writing a clear problem/solution statement
+4. Generating a minimal quick start example
+5. Linking to Level 2 docs for comprehensive information
+6. Keeping total length under 500 words
 
 ## Quick Start
 
@@ -67,31 +81,35 @@ Read module metadata:
 
 ### 3. Extract Content from Design Docs
 
-**Overview Section:**
+**Badges (2-4 badges):**
 
-- Extract high-level purpose from design doc overview
-- Simplify to 1-2 sentence description
-- Remove technical jargon
+Generate appropriate badges based on package.json:
 
-**Features:**
+- npm version badge (always include)
+- License badge (always include)
+- Node.js version badge (if engines specified)
+- TypeScript badge (if types included)
+- Build status badge (if CI configured)
 
-- Extract key features from design docs
-- Transform technical features into user benefits
-- Format as 3-5 bullet points
-- Focus on "what it does" not "how it works"
+**Problem Statement (1-2 sentences):**
 
-**Quick Start:**
+- What problem does this package solve?
+- Why would someone need it?
+- Avoid implementation details
 
-- Find common usage patterns in design docs
-- Create minimal working example (5-15 lines)
-- Ensure example is copy-paste ready
-- Include imports and basic setup
+**Features (3-5 bullet points):**
 
-**API Overview:**
+- Extract key capabilities from design docs
+- Transform to user benefits, not technical features
+- Keep each bullet to one line
+- Focus on "what you can do" not "how it works"
 
-- List main exports and their purposes
-- High-level only (not exhaustive)
-- Link to detailed API documentation
+**Quick Start (5-15 lines max):**
+
+- Find the simplest common usage pattern
+- Include only essential imports
+- Show one working example, not multiple variations
+- Link to docs/ for more examples
 
 ### 4. Apply Transformation Rules
 
@@ -107,12 +125,12 @@ Transform internal terminology to user-friendly language:
 
 Fill the Level 1 template with extracted content:
 
-- Package name and description
-- Features list
+- Package name and problem statement
+- Brief features list (3-5 bullets)
 - Installation command
-- Quick start example
-- API overview with link to full docs
-- Links to documentation, contributing, license
+- Minimal quick start example
+- Link to `docs/` for comprehensive documentation
+- License
 
 ### 6. Write or Update README
 
@@ -139,10 +157,10 @@ Fill the Level 1 template with extracted content:
 
 Check generated README against quality standards:
 
-- Length: 200-500 words (warn if >800)
-- Required sections: Description, Installation, Quick Start, Links
-- Code examples are valid TypeScript
-- Links are not broken
+- Length: 150-400 words (warn if >500)
+- Required sections: Problem statement, Installation, Quick Start
+- Single code example that works
+- Links to docs/ for more information
 - Markdown linting passes
 
 ## Supporting Documentation
@@ -158,14 +176,13 @@ When you need detailed information, load these files:
 
 A generated README is successful when:
 
-- ✅ Clear, accessible description (1-2 sentences)
-- ✅ 3-5 user-benefit focused features
-- ✅ Working quick start example (copy-paste ready)
-- ✅ All required sections present
-- ✅ 200-500 words total length
-- ✅ No technical jargon or internal terms
-- ✅ Valid markdown and code examples
-- ✅ Links to comprehensive documentation
+- ✅ Clear problem statement (what it solves, why you need it)
+- ✅ 3-5 concise feature bullets
+- ✅ Single working quick start example (copy-paste ready)
+- ✅ 150-400 words total (under 500 max)
+- ✅ Links to `docs/` for configuration, API reference, advanced usage
+- ✅ No API documentation in README (that's Level 2)
+- ✅ Valid markdown
 
 ## Example Usage
 

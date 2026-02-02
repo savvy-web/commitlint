@@ -2,6 +2,21 @@
 
 Detailed step-by-step instructions for generating package README files.
 
+## Core Principle
+
+**READMEs are entry points, not documentation.**
+
+The goal is to help users understand what the package does and get started quickly.
+Advanced configuration, API reference, and detailed guides belong in `docs/`
+(Level 2 documentation).
+
+A README should answer:
+
+1. What problem does this solve?
+2. How do I install it?
+3. How do I use it (basic case)?
+4. Where do I learn more?
+
 ## Implementation Steps
 
 ### Step 1: Load Configuration
@@ -52,22 +67,38 @@ For each design doc:
 
 ### Step 4: Extract Content for README
 
-**Description (1-2 sentences):**
+**Badges (2-4 badges):**
 
-- Take from package.json description
-- Enhance with design doc overview if needed
-- Focus on "what problem does this solve?"
+Generate shields.io badges based on package.json. Common badges:
+
+```markdown
+<!-- npm version - always include -->
+[![npm version](https://img.shields.io/npm/v/{packageName})](https://www.npmjs.com/package/{packageName})
+
+<!-- License - always include -->
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+<!-- Node.js version - if engines.node specified -->
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D{nodeVersion}-brightgreen)](https://nodejs.org)
+
+<!-- TypeScript - if types field present -->
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+
+<!-- Build status - if CI configured -->
+[![CI](https://github.com/{org}/{repo}/actions/workflows/ci.yml/badge.svg)](https://github.com/{org}/{repo}/actions)
+```
+
+Choose badges relevant to the package. Don't add badges that don't apply.
+
+**Problem Statement (1-2 sentences):**
+
+- What problem does this package solve?
+- Why would someone need it?
+- Keep it concrete, not abstract
 
 **Features (3-5 bullet points):**
 
-From design docs, extract:
-
-- Key capabilities
-- Unique features
-- Performance characteristics
-- Integration capabilities
-
-Transform to user benefits:
+From design docs, extract key capabilities and transform to user benefits:
 
 - "Effect-TS based" → "Fault-tolerant with graceful error handling"
 - "Disk caching with TTL" → "Fast repeated lookups with automatic cache
@@ -75,24 +106,23 @@ Transform to user benefits:
 - "HTTP retry with exponential backoff" → "Reliable fetching even with network
   issues"
 
-**Quick Start:**
+Keep bullets to one line each. No sub-bullets.
 
-Find simplest working example:
+**Quick Start (5-15 lines max):**
 
-1. Look for "Quick Start" or "Getting Started" in design docs
-2. Look for common patterns in "Usage" sections
-3. Simplify to minimal code (5-15 lines)
-4. Ensure all imports are included
-5. Add comments for clarity
+Find the simplest working example:
 
-**API Overview:**
+1. Look for "Quick Start" in design docs
+2. Show ONE use case, the most common one
+3. Include only essential imports
+4. Add brief comments only where necessary
 
-List main exports:
+**Do NOT include:**
 
-1. Find exported types/functions from design docs
-2. Group by category (classes, functions, types)
-3. One-line description per export
-4. Link to full API documentation
+- API overview or reference (that's Level 2)
+- Multiple examples (that's Level 2)
+- Configuration options (that's Level 2)
+- Advanced usage patterns (that's Level 2)
 
 ### Step 5: Apply Template
 
@@ -105,14 +135,12 @@ cat .claude/skills/docs-generate-readme/templates/readme.template.md
 Replace placeholders:
 
 - `{module.name}` → package name
-- `{module.description}` → short description
-- `{module.overview}` → overview paragraph
-- `{module.features}` → feature bullet points
+- `{module.badges}` → shields.io badges (2-4)
+- `{module.description}` → problem statement (1-2 sentences)
+- `{module.features}` → feature bullet points (3-5)
 - `{module.packageName}` → npm package name
-- `{module.quickStart}` → example code
-- `{module.apiOverview}` → API summary
-- `{module.apiDocsLink}` → link to full API docs
-- `{module.documentationLinks}` → links to docs, examples
+- `{module.quickStart}` → minimal example code
+- `{module.docsLink}` → link to docs/ folder
 - `{module.license}` → license type
 
 ### Step 6: Write Output
@@ -160,12 +188,13 @@ grep -o '\[.*\](.*\.md)' {module.path}/README.md
 
 Validation criteria:
 
-- ✅ Word count: 200-500 (warn if >800)
+- ✅ Word count: 150-400 (warn if >500)
 - ✅ Line length: ≤80 characters
-- ✅ Required sections present
+- ✅ Required sections: Problem statement, Installation, Quick Start
+- ✅ NO API overview section (that's Level 2)
+- ✅ Link to docs/ present
+- ✅ Single code example only
 - ✅ No markdown errors
-- ✅ Code blocks have language specifiers
-- ✅ All links are valid
 
 ## Content Transformation Rules
 
@@ -251,12 +280,25 @@ From `.claude/design/design.config.json`:
 ```json
 "userDocs": {
   "level1": {
-    "targetWordCount": [200, 500],
+    "targetWordCount": [150, 400],
+    "maxWordCount": 500,
     "maxLineLength": 80,
-    "requireSections": ["Features", "Installation", "Usage"]
+    "requireSections": ["Features", "Installation", "Quick Start"],
+    "forbidSections": ["API Overview", "API Reference", "Configuration"]
   }
 }
 ```
+
+### What Does NOT Belong in README
+
+These belong in `docs/` (Level 2):
+
+- API reference or overview
+- Configuration options
+- Multiple examples
+- Advanced usage patterns
+- Troubleshooting guides
+- Architecture explanations
 
 ### Readability Guidelines
 

@@ -1,7 +1,7 @@
 ---
 name: docs-gen-agent
 description: Generate user-facing documentation. Use for creating READMEs, repository docs, documentation sites, and transforming internal docs to user docs.
-skills: docs-generate-readme, docs-generate-repo, docs-generate-site, docs-sync, docs-review
+skills: docs-generate-readme, docs-generate-contributing, docs-generate-security, docs-generate-repo, docs-generate-site, docs-sync, docs-review, docs-review-package, docs-update
 allowed-tools: Read, Grep, Glob, Edit, Write
 ---
 
@@ -16,33 +16,58 @@ into accessible, user-friendly guides, READMEs, and documentation sites.
 **Use this agent when:**
 
 - Creating or updating package README.md files
+- Creating or updating CONTRIBUTING.md files
+- Creating or updating SECURITY.md files
 - Generating repository documentation
 - Building user-facing documentation sites
 - Transforming design docs into user guides
 - Syncing user documentation with code changes
 - Reviewing documentation quality and accessibility
+- Reviewing package.json for completeness and best practices
 
 ## Skills Available
 
 ### README Generation
 
-**docs-generate-readme** - Generate README.md for packages
+**docs-generate-readme** - Generate concise README.md for packages
 
-- Extract key information from package.json, design docs, and code
-- Create standard README sections (Installation, Usage, API, Contributing)
-- Generate code examples and usage patterns
-- Include badges and shields (build status, version, license)
-- Format for GitHub/GitLab markdown rendering
+- Add appropriate shields.io badges (npm version, license, node version)
+- Write clear problem statement (what it solves, why you need it)
+- Create 3-5 feature bullets focused on user benefits
+- Generate single minimal quick start example
+- Link to `docs/` for configuration, API reference, advanced usage
+- Keep under 500 words - READMEs are entry points, not documentation
+
+### Contributing Documentation
+
+**docs-generate-contributing** - Generate CONTRIBUTING.md for developer onboarding
+
+- Extract environment requirements from package.json (Node, pnpm, TypeScript)
+- Document available development commands (build, test, lint)
+- Include code quality standards from config files
+- Explain contribution process (branching, commits, DCO)
+- Use actual versions from project, not placeholders
+
+### Security Policy
+
+**docs-generate-security** - Generate SECURITY.md for vulnerability reporting
+
+- Detect supported versions from package.json
+- Check changesets for pending version bumps
+- Extract security contact from package.json author
+- Include GitHub Security Advisories link if applicable
+- Standard sections: Supported Versions, Reporting Process
 
 ### Repository Documentation
 
-**docs-generate-repo** - Generate repository-level documentation
+**docs-generate-repo** - Generate Level 2 repository documentation
 
-- Create CONTRIBUTING.md from development guides
-- Generate CHANGELOG.md from git history and design docs
-- Create LICENSE files with proper formatting
-- Generate CODE_OF_CONDUCT.md
-- Create issue and PR templates
+- Transform design docs into topic-based `docs/` folder structure
+- Create architecture guides (overview, components, data flow)
+- Generate feature and integration guides
+- Build getting-started guide with detailed examples
+- Create troubleshooting documentation from known issues
+- Organize content for developer consumption
 
 ### Documentation Site Generation
 
@@ -74,6 +99,16 @@ into accessible, user-friendly guides, READMEs, and documentation sites.
 - Review tone and consistency
 - Identify jargon that needs explanation
 - Suggest improvements for user experience
+
+### Package Review
+
+**docs-review-package** - Review package.json for completeness and best practices
+
+- Check metadata completeness (name, description, repository, bugs, homepage)
+- Review dependency version ranges
+- Validate peerDependency compatibility
+- Check for outdated dependencies (optional)
+- NEVER modify version field (changesets handles that)
 
 ## Documentation Transformation Approach
 
@@ -222,18 +257,21 @@ When documentation is stale:
 
 ### README Structure
 
-A good README includes:
+A good README is concise (under 500 words):
 
 ````markdown
 # Package Name
 
-Brief description (1-2 sentences)
+[![npm version](https://img.shields.io/npm/v/@scope/package)](https://www.npmjs.com/package/@scope/package)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+What problem this solves and why you need it. (1-2 sentences)
 
 ## Features
 
-- Key feature 1
-- Key feature 2
-- Key feature 3
+- User benefit 1
+- User benefit 2
+- User benefit 3
 
 ## Installation
 
@@ -249,22 +287,21 @@ import { main } from 'package-name';
 main();
 ```
 
-## Usage
+## Documentation
 
-Detailed usage examples...
-
-## API Reference
-
-Link to full API docs or inline reference...
-
-## Contributing
-
-Link to CONTRIBUTING.md
+For configuration, API reference, and advanced usage, see [docs/](./docs/).
 
 ## License
 
-License type and link
+MIT
 ````
+
+**What does NOT belong in README:**
+
+- API reference or overview (put in `docs/`)
+- Multiple examples (put in `docs/`)
+- Configuration options (put in `docs/`)
+- Architecture explanations (put in `docs/`)
 
 ### Writing for Users
 
