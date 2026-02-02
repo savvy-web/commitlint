@@ -5,15 +5,15 @@ and instructions for development.
 
 ## Prerequisites
 
-- Node.js 20+
-- pnpm 10+
+- Node.js 24+
+- pnpm 10.28+
 
 ## Development Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/savvy-web/pnpm-module-template.git
-cd pnpm-module-template
+git clone https://github.com/savvy-web/commitlint.git
+cd commitlint
 
 # Install dependencies
 pnpm install
@@ -28,31 +28,41 @@ pnpm run test
 ## Project Structure
 
 ```text
-pnpm-module-template/
-├── pkgs/                           # Workspace packages
-│   └── ecma-module/                # Example ESM package
+commitlint/
+├── src/                              # Source code
+│   ├── bin/                          # CLI entry point
+│   ├── cli/                          # CLI commands
+│   ├── config/                       # Configuration factory and schemas
+│   ├── detection/                    # Auto-detection modules
+│   ├── formatter/                    # Custom commit message formatter
+│   └── prompt/                       # Prompt configuration
 ├── lib/
-│   └── configs/                    # Shared configuration files
-└── ...
+│   └── configs/                      # Shared configuration files
+└── dist/                             # Build output
 ```
 
 ## Available Scripts
 
-| Script              | Description                          |
-| ------------------- | ------------------------------------ |
-| `pnpm run build`    | Build all packages (dev + prod)      |
-| `pnpm run test`     | Run all tests                        |
-| `pnpm run lint`     | Check code with Biome                |
-| `pnpm run lint:fix` | Auto-fix lint issues                 |
-| `pnpm run typecheck`| Type-check all workspaces            |
+| Script                   | Description                      |
+| ------------------------ | -------------------------------- |
+| `pnpm run build`         | Build all packages (dev + prod)  |
+| `pnpm run build:dev`     | Build development output only    |
+| `pnpm run build:prod`    | Build production/npm output only |
+| `pnpm run test`          | Run all tests                    |
+| `pnpm run test:watch`    | Run tests in watch mode          |
+| `pnpm run test:coverage` | Run tests with coverage report   |
+| `pnpm run lint`          | Check code with Biome            |
+| `pnpm run lint:fix`      | Auto-fix lint issues             |
+| `pnpm run typecheck`     | Type-check all workspaces        |
 
 ## Code Quality
 
 This project uses:
 
-- **Biome** for linting and formatting
+- **Biome** for linting and formatting (tabs, 120 char line width)
 - **Commitlint** for enforcing conventional commits
 - **Husky** for Git hooks
+- **Vitest** for testing with v8 coverage
 
 ### Commit Format
 
@@ -65,6 +75,9 @@ feat: add new feature
 Signed-off-by: Your Name <your.email@example.com>
 ```
 
+Allowed commit types: `ai`, `build`, `chore`, `ci`, `docs`, `feat`, `fix`,
+`perf`, `refactor`, `release`, `revert`, `style`, `test`
+
 ### Pre-commit Hooks
 
 The following checks run automatically:
@@ -75,7 +88,8 @@ The following checks run automatically:
 
 ## Testing
 
-Tests use [Vitest](https://vitest.dev) with v8 coverage.
+Tests use [Vitest](https://vitest.dev) with v8 coverage and the forks pool
+for Effect-TS compatibility.
 
 ```bash
 # Run all tests
@@ -86,14 +100,11 @@ pnpm run test:watch
 
 # Run tests with coverage
 pnpm run test:coverage
-
-# Run tests for a specific package
-pnpm run test -- --filter=@savvy-web/ecma-module
 ```
 
 ## TypeScript
 
-- Composite builds with project references
+- Uses tsgo (TypeScript Go) for fast type checking
 - Strict mode enabled
 - ES2022/ES2023 targets
 - Import extensions required (`.js` for ESM)
