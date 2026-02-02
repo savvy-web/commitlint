@@ -1,0 +1,319 @@
+import { describe, expect, it } from "vitest";
+import { silkPlugin } from "./plugins.js";
+
+/**
+ * Minimal commit structure for testing rules.
+ * Mirrors the Commit type from conventional-commits-parser.
+ */
+interface TestCommit {
+	raw: string;
+	header: string;
+	type: string | null;
+	scope: string | null;
+	subject: string | null;
+	body: string | null;
+	footer: string | null;
+	mentions: string[];
+	notes: Array<{ title: string; text: string }>;
+	references: Array<{ action: string; issue: string }>;
+	revert: Record<string, string> | null;
+	merge: string | null;
+}
+
+/**
+ * Create a mock commit object for testing rules.
+ */
+function createCommit(overrides: Partial<TestCommit> = {}): TestCommit {
+	return {
+		raw: "",
+		header: "",
+		type: null,
+		scope: null,
+		subject: null,
+		body: null,
+		footer: null,
+		mentions: [],
+		notes: [],
+		references: [],
+		revert: null,
+		merge: null,
+		...overrides,
+	};
+}
+
+/** Helper to unwrap potentially async rule results */
+async function runRule(
+	rule: (typeof silkPlugin.rules)[keyof typeof silkPlugin.rules],
+	commit: TestCommit,
+): Promise<[boolean, string]> {
+	// biome-ignore lint/suspicious/noExplicitAny: Test helper, type coercion needed
+	const result = await rule(commit as any);
+	return [result[0], result[1] ?? ""];
+}
+
+describe("silk/body-no-markdown", () => {
+	const rule = silkPlugin.rules["silk/body-no-markdown"];
+
+	it("passes for empty body", async () => {
+		const commit = createCommit({ body: null });
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("passes for plain text body", async () => {
+		const commit = createCommit({
+			body: "This is a simple commit message.\n\nIt has multiple paragraphs but no markdown.",
+		});
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("rejects markdown headers", async () => {
+		const commit = createCommit({
+			body: "## Summary\n\nThis commit adds a feature.",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("headers (#)");
+	});
+
+	it("rejects bullet lists with dash", async () => {
+		const commit = createCommit({
+			body: "Changes:\n- Added feature\n- Fixed bug",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("bullet lists (- or *)");
+	});
+
+	it("rejects bullet lists with asterisk", async () => {
+		const commit = createCommit({
+			body: "Changes:\n* Added feature\n* Fixed bug",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("bullet lists (- or *)");
+	});
+
+	it("rejects numbered lists", async () => {
+		const commit = createCommit({
+			body: "Steps:\n1. First step\n2. Second step",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("numbered lists (1.)");
+	});
+
+	it("rejects code fences", async () => {
+		const commit = createCommit({
+			body: "Example:\n```typescript\nconst x = 1;\n```",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("code fences");
+	});
+
+	it("rejects bold text", async () => {
+		const commit = createCommit({
+			body: "This is **important** information.",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("bold");
+	});
+
+	it("rejects markdown links", async () => {
+		const commit = createCommit({
+			body: "See [documentation](https://example.com) for details.",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("links");
+	});
+
+	it("rejects horizontal rules", async () => {
+		const commit = createCommit({
+			body: "Section one\n\n---\n\nSection two",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("horizontal rules");
+	});
+
+	it("allows single inline code backticks", async () => {
+		const commit = createCommit({
+			body: "Fixed the `foo` function.",
+		});
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("allows two inline code backticks", async () => {
+		const commit = createCommit({
+			body: "Changed `foo` to use `bar` instead.",
+		});
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("rejects excessive inline code (more than 2)", async () => {
+		const commit = createCommit({
+			body: "Changed `foo`, `bar`, and `baz` to use `qux`.",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("excessive inline code");
+	});
+
+	it("reports multiple markdown patterns", async () => {
+		const commit = createCommit({
+			body: "## Summary\n\n- Item one\n- Item two\n\nSee [link](url).",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("headers (#)");
+		expect(message).toContain("bullet lists");
+		expect(message).toContain("links");
+	});
+
+	it("allows dashes in normal text", async () => {
+		const commit = createCommit({
+			body: "This is a well-known fix for the foo-bar issue.",
+		});
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("allows asterisks in normal text", async () => {
+		const commit = createCommit({
+			body: "Performance improved by 2x * faster than before.",
+		});
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+});
+
+describe("silk/subject-no-markdown", () => {
+	const rule = silkPlugin.rules["silk/subject-no-markdown"];
+
+	it("passes for empty subject", async () => {
+		const commit = createCommit({ subject: null });
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("passes for plain text subject", async () => {
+		const commit = createCommit({ subject: "add user authentication" });
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("rejects markdown in subject", async () => {
+		const commit = createCommit({ subject: "add **important** feature" });
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("bold");
+	});
+
+	it("rejects links in subject", async () => {
+		const commit = createCommit({ subject: "fix [issue](https://github.com/org/repo/issues/1)" });
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("links");
+	});
+
+	it("allows backticks in subject (common for referencing code)", async () => {
+		const commit = createCommit({ subject: "fix `handleClick` function" });
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+});
+
+describe("silk/body-prose-only", () => {
+	const rule = silkPlugin.rules["silk/body-prose-only"];
+
+	it("passes for empty body", async () => {
+		const commit = createCommit({ body: null });
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("passes for prose paragraphs", async () => {
+		const commit = createCommit({
+			body: "This commit refactors the authentication module.\n\nThe changes improve performance and readability.",
+		});
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("rejects dash lists", async () => {
+		const commit = createCommit({
+			body: "Changes:\n- First change\n- Second change",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("prose paragraphs");
+	});
+
+	it("rejects asterisk lists", async () => {
+		const commit = createCommit({
+			body: "Changes:\n* First change\n* Second change",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("prose paragraphs");
+	});
+
+	it("rejects bullet point lists", async () => {
+		const commit = createCommit({
+			body: "Changes:\n• First change\n• Second change",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("prose paragraphs");
+	});
+
+	it("rejects numbered lists with period", async () => {
+		const commit = createCommit({
+			body: "Steps:\n1. First\n2. Second",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("prose paragraphs");
+	});
+
+	it("rejects numbered lists with parenthesis", async () => {
+		const commit = createCommit({
+			body: "Steps:\n1) First\n2) Second",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("prose paragraphs");
+	});
+
+	it("rejects numbered lists with colon", async () => {
+		const commit = createCommit({
+			body: "Steps:\n1: First\n2: Second",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("prose paragraphs");
+	});
+
+	it("allows numbers in normal text", async () => {
+		const commit = createCommit({
+			body: "This fixes issue 123 and improves performance by 50%.",
+		});
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("allows indented lists (rejects them)", async () => {
+		const commit = createCommit({
+			body: "Changes:\n  - Indented item\n  - Another item",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("prose paragraphs");
+	});
+});
