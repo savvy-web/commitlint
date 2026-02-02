@@ -71,6 +71,7 @@
 		"@changesets/cli": "^2.29.8",
 		"@commitlint/cli": "^20.4.1",
 		"@commitlint/config-conventional": "^20.4.1",
+		"@commitlint/cz-commitlint": "^20.4.1",
 		"@commitlint/lint": "^20.4.1",
 		"@commitlint/types": "^20.4.0",
 		"@microsoft/api-extractor": "^7.56.0",
@@ -78,19 +79,31 @@
 		"@savvy-web/lint-staged": "^0.1.3",
 		"@savvy-web/rslib-builder": "^0.7.0",
 		"@types/node": "^25.2.0",
-		"@typescript/native-preview": "7.0.0-dev.20260202.1",
+		"@typescript/native-preview": "^7.0.0-dev.20260202.1",
 		"@vitest/coverage-v8": "^4.0.18",
+		"husky": "^9.1.7",
 		"turbo": "^2.8.1",
 		"typescript": "^5.9.3",
 		"vitest": "^4.0.18"
 	},
 	"peerDependencies": {
 		"@commitlint/cli": "^20.4.1",
-		"@commitlint/config-conventional": "^20.4.1"
+		"@commitlint/config-conventional": "^20.4.1",
+		"@commitlint/cz-commitlint": "^20.4.1",
+		"husky": "^9.1.7"
 	},
 	"peerDependenciesMeta": {
+		"@commitlint/cli": {
+			"optional": false
+		},
+		"@commitlint/config-conventional": {
+			"optional": false
+		},
 		"@commitlint/cz-commitlint": {
 			"optional": true
+		},
+		"husky": {
+			"optional": false
 		}
 	},
 	"packageManager": "pnpm@10.28.2",
