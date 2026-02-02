@@ -1,5 +1,5 @@
 ---
-status: draft
+status: current
 module: commitlint
 category: architecture
 created: 2026-02-02
