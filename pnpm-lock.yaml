@@ -55,8 +55,8 @@ importers:
         specifier: ^0.1.3
         version: 0.1.3(husky@9.1.7)(jiti@2.6.1)(lint-staged@16.2.7)(markdownlint-cli2-formatter-codequality@0.0.7(markdownlint-cli2@0.20.0))(markdownlint-cli2@0.20.0)(typescript@5.9.3)
       '@savvy-web/rslib-builder':
-        specifier: ^0.8.0
-        version: 0.8.0(@microsoft/api-extractor@7.56.0(@types/node@25.2.0))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.4(@microsoft/api-extractor@7.56.0(@types/node@25.2.0))(@typescript/native-preview@7.0.0-dev.20260202.1)(typescript@5.9.3))(@types/node@25.2.0)(@typescript/native-preview@7.0.0-dev.20260202.1)(jiti@2.6.1)(typescript@5.9.3)
+        specifier: ^0.7.0
+        version: 0.7.0(@microsoft/api-extractor@7.56.0(@types/node@25.2.0))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.4(@microsoft/api-extractor@7.56.0(@types/node@25.2.0))(@typescript/native-preview@7.0.0-dev.20260202.1)(typescript@5.9.3))(@types/node@25.2.0)(@typescript/native-preview@7.0.0-dev.20260202.1)(jiti@2.6.1)(typescript@5.9.3)
       '@types/node':
         specifier: ^25.2.0
         version: 25.2.0
@@ -1153,15 +1153,17 @@ packages:
       '@biomejs/biome':
         optional: true
 
-  '@savvy-web/rslib-builder@0.8.0':
-    resolution: {integrity: sha512-BwVHBG55kQZlOyBPgZOX9Cf7P8hJVeHdehVQLTcE1K3+qsQjLsMuvCzcbjoaCDi58rWJPiOnpV/YBE2gSjaajw==}
-    engines: {node: '>=24.0.0'}
+  '@savvy-web/rslib-builder@0.7.0':
+    resolution: {integrity: sha512-Tnsr76uDB4hAZkph4WYfhB4Z0WWlfOeu3S4RH5lo6VmYZOpG+Ah7AaDFyXB5G5T/5DBlV+kKGynGvkEciEYURQ==}
     peerDependencies:
       '@microsoft/api-extractor': ^7.55.2
       '@rslib/core': ^0.19.3
       '@types/node': ^25.0.10
       '@typescript/native-preview': ^7.0.0-dev.20260124.1
       typescript: ^5.9.3
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   '@sindresorhus/merge-streams@4.0.0':
     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
@@ -4498,7 +4500,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@savvy-web/rslib-builder@0.8.0(@microsoft/api-extractor@7.56.0(@types/node@25.2.0))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.4(@microsoft/api-extractor@7.56.0(@types/node@25.2.0))(@typescript/native-preview@7.0.0-dev.20260202.1)(typescript@5.9.3))(@types/node@25.2.0)(@typescript/native-preview@7.0.0-dev.20260202.1)(jiti@2.6.1)(typescript@5.9.3)':
+  '@savvy-web/rslib-builder@0.7.0(@microsoft/api-extractor@7.56.0(@types/node@25.2.0))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.4(@microsoft/api-extractor@7.56.0(@types/node@25.2.0))(@typescript/native-preview@7.0.0-dev.20260202.1)(typescript@5.9.3))(@types/node@25.2.0)(@typescript/native-preview@7.0.0-dev.20260202.1)(jiti@2.6.1)(typescript@5.9.3)':
     dependencies:
       '@microsoft/api-extractor': 7.56.0(@types/node@25.2.0)
       '@microsoft/tsdoc': 0.16.0
@@ -4515,9 +4517,10 @@ snapshots:
       picocolors: 1.1.1
       sort-package-json: 3.6.1
       tmp: 0.2.5
-      typescript: 5.9.3
       workspace-tools: 0.40.4
       yaml: 2.8.2
+    optionalDependencies:
+      typescript: 5.9.3
     transitivePeerDependencies:
       - '@pnpm/logger'
       - jiti
@@ -5620,7 +5623,7 @@ snapshots:
       cli-width: 3.0.0
       external-editor: 3.1.0
       figures: 3.2.0
-      lodash: 4.17.21
+      lodash: 4.17.23
       mute-stream: 0.0.8
       ora: 5.4.1
       run-async: 2.4.1
