@@ -3,9 +3,9 @@ status: current
 module: commitlint
 category: architecture
 created: 2026-02-02
-updated: 2026-02-02
-last-synced: 2026-02-02
-completeness: 70
+updated: 2026-02-03
+last-synced: 2026-02-03
+completeness: 85
 related: []
 dependencies:
   - workspace-tools
@@ -240,10 +240,10 @@ pkgs/commitlint/
       versioning.ts             # Release format detection
 
     prompt/
-      index.ts                  # Prompt configuration factory
-      config.ts                 # Base prompt configuration
-      emojis.ts                 # Emoji definitions for types
-      types.ts                  # Prompt type definitions
+      index.ts                  # Prompt module exports
+      config.ts                 # Prompt configuration for cz-commitlint
+      emojis.ts                 # Emoji definitions (shortcodes + Unicode)
+      prompter.ts               # Commitizen adapter implementation
 
     formatter/
       index.ts                  # Custom formatter entry
@@ -417,6 +417,15 @@ export const ConfigOptionsSchema = z.object({
   bodyMaxLineLength: z.number().positive().default(300),
 
   /**
+   * Reject markdown formatting in commit messages.
+   * When enabled, rejects headers, numbered lists, code fences,
+   * links, and bold/italic formatting.
+   * Simple unordered lists (- or *) are allowed for readability.
+   * @default true
+   */
+  noMarkdown: z.boolean().default(true),
+
+  /**
    * Working directory for detection.
    * @default process.cwd()
    */
@@ -426,6 +435,29 @@ export const ConfigOptionsSchema = z.object({
 export type ConfigOptions = z.input<typeof ConfigOptionsSchema>;
 export type ResolvedConfigOptions = z.output<typeof ConfigOptionsSchema>;
 ```
+
+### Markdown Rules
+
+The `noMarkdown` option (enabled by default) enforces plain-text commit messages
+by rejecting common markdown formatting:
+
+**Rejected:**
+
+- Headers (`#`, `##`, etc.)
+- Numbered lists (`1.`, `2.`)
+- Code fences (triple backticks)
+- Links (`[text](url)`)
+- Bold/italic formatting (`**text**`, `*text*`)
+- Horizontal rules (`---`)
+
+**Allowed:**
+
+- Simple unordered lists (`- item` or `* item`)
+- Single inline code backticks (up to 2 instances)
+- Plain prose paragraphs
+
+This helps ensure commit messages are readable in terminals, `git log`, and
+tools that don't render markdown.
 
 ### Factory Implementation
 
@@ -743,24 +775,31 @@ export const checkCommand = Command.make("check", {}, () =>
 
 | Type | Emoji | Description | Example |
 | :--- | :---- | :---------- | :------ |
-| `feat` | :sparkles: | New feature | `feat: add user authentication` |
-| `fix` | :bug: | Bug fix | `fix: resolve memory leak in cache` |
-| `docs` | :memo: | Documentation | `docs: update API reference` |
-| `style` | :lipstick: | Formatting | `style: fix indentation in utils` |
-| `refactor` | :recycle: | Code restructure | `refactor: extract validation logic` |
-| `perf` | :zap: | Performance | `perf: optimize database queries` |
-| `test` | :white_check_mark: | Tests | `test: add unit tests for parser` |
-| `build` | :package: | Build system | `build: update webpack configuration` |
-| `ci` | :construction_worker: | CI/CD | `ci: add GitHub Actions workflow` |
-| `chore` | :wrench: | Maintenance | `chore: update dependencies` |
-| `revert` | :rewind: | Revert | `revert: undo last commit` |
-| `release` | :bookmark: | Release | `release: v1.2.0` |
+| `ai` | 🤖 | AI/LLM agent updates | `ai: update CLAUDE.md context` |
+| `feat` | ✨ | New feature | `feat: add user authentication` |
+| `fix` | 🐛 | Bug fix | `fix: resolve memory leak in cache` |
+| `docs` | 📝 | Documentation | `docs: update API reference` |
+| `style` | 💄 | Formatting | `style: fix indentation in utils` |
+| `refactor` | ♻️ | Code restructure | `refactor: extract validation logic` |
+| `perf` | ⚡ | Performance | `perf: optimize database queries` |
+| `test` | ✅ | Tests | `test: add unit tests for parser` |
+| `build` | 📦 | Build system | `build: update webpack configuration` |
+| `ci` | 👷 | CI/CD | `ci: add GitHub Actions workflow` |
+| `chore` | 🔧 | Maintenance | `chore: update dependencies` |
+| `revert` | ⏪ | Revert | `revert: undo last commit` |
+| `release` | 🔖 | Release | `release: v1.2.0` |
 
 ### Emoji Definitions
 
+The prompt module provides both GitHub shortcodes (for markdown rendering) and
+Unicode emojis (for terminal display):
+
 ```typescript
 // src/prompt/emojis.ts
+
+// GitHub/GitLab shortcodes (render in markdown)
 export const TYPE_EMOJIS = {
+  ai: ":robot:",
   feat: ":sparkles:",
   fix: ":bug:",
   docs: ":memo:",
@@ -774,7 +813,26 @@ export const TYPE_EMOJIS = {
   revert: ":rewind:",
   release: ":bookmark:",
 } as const;
+
+// Unicode emojis (render in terminals)
+export const TYPE_EMOJIS_UNICODE = {
+  ai: "🤖",
+  feat: "✨",
+  fix: "🐛",
+  docs: "📝",
+  style: "💄",
+  refactor: "♻️",
+  perf: "⚡",
+  test: "✅",
+  build: "📦",
+  ci: "👷",
+  chore: "🔧",
+  revert: "⏪",
+  release: "🔖",
+} as const;
 ```
+
+The interactive prompt uses Unicode emojis for proper terminal rendering.
 
 ### Rule Configuration
 
@@ -835,16 +893,24 @@ export default {
 ```json
 {
   "peerDependencies": {
-    "@commitlint/cli": ">=18.0.0",
-    "@commitlint/config-conventional": ">=18.0.0"
+    "@commitlint/cli": "^20.4.1",
+    "@commitlint/config-conventional": "^20.4.1",
+    "commitizen": "^4.3.1",
+    "husky": "^9.1.7"
   },
   "peerDependenciesMeta": {
-    "@commitlint/cz-commitlint": {
+    "commitizen": {
       "optional": true
     }
   }
 }
 ```
+
+- `@commitlint/cli` and `@commitlint/config-conventional` are required
+- `commitizen` is optional (for interactive commits using built-in adapter)
+- `husky` is required for git hooks
+
+Users who prefer `@commitlint/cz-commitlint` can install it separately.
 
 ### Direct Dependencies
 
@@ -884,10 +950,10 @@ export default {
 
 ```bash
 # Install the config and required peers
-pnpm add -D @savvy-web/commitlint @commitlint/cli
+pnpm add -D @savvy-web/commitlint @commitlint/cli @commitlint/config-conventional husky
 
 # Optional: for interactive commits
-pnpm add -D @commitlint/cz-commitlint commitizen
+pnpm add -D commitizen
 ```
 
 ### Quick Setup with CLI
@@ -941,9 +1007,49 @@ export default {
 };
 ```
 
-### Prompt Setup (Optional)
+### Prompt Setup (Interactive Commits)
 
-For interactive commits with commitizen, add to `package.json`:
+The package includes a built-in commitizen adapter for interactive commits.
+Add to `package.json`:
+
+```json
+{
+  "config": {
+    "commitizen": {
+      "path": "@savvy-web/commitlint/prompt"
+    }
+  },
+  "scripts": {
+    "commit": "cz"
+  }
+}
+```
+
+Then stage changes and run:
+
+```bash
+git add .
+pnpm commit
+```
+
+The interactive prompt displays:
+
+- Type selection with Unicode emojis (🤖, ✨, 🐛, etc.)
+- Scope selection (from detected workspace packages)
+- Subject input with validation
+- Optional body and breaking change prompts
+- Issue reference prompts
+
+**Alternative: Use `@commitlint/cz-commitlint`**
+
+If you prefer the standard commitlint adapter that reads configuration from your
+commitlint config file, install it separately:
+
+```bash
+pnpm add -D @commitlint/cz-commitlint
+```
+
+Then configure:
 
 ```json
 {
@@ -954,6 +1060,9 @@ For interactive commits with commitizen, add to `package.json`:
   }
 }
 ```
+
+The `CommitlintConfig.silk()` factory includes full prompt configuration in the
+`prompt` section, which `@commitlint/cz-commitlint` will read automatically.
 
 ### Monorepo Template Integration
 
@@ -1106,10 +1215,13 @@ describe("commitlint integration", () => {
 - [x] Versioning strategy detection
 - [x] Zod schema validation
 - [x] Static config export
-- [ ] Custom formatter
+- [x] Custom formatter with explanations
+- [x] Prompt configuration with emojis
+- [x] Custom commitizen adapter (`prompter` function)
+- [x] Unicode emojis for terminal display
+- [x] Markdown rejection rules (with list allowance)
+- [x] TypeScript types
 - [ ] CLI init/check commands
-- [ ] Prompt configuration with emojis
-- [ ] TypeScript types
 - [ ] Documentation
 
 ### Phase 2: Enhanced CLI
@@ -1157,18 +1269,22 @@ describe("commitlint integration", () => {
 
 ---
 
-**Document Status:** Draft - Expanded architecture defined, implementation
-pending
+**Document Status:** Current - Core implementation complete
+
+**Completed:**
+
+1. ~~Create the package directory structure~~
+2. ~~Move `detect-versioning-strategy.ts` to detection module~~
+3. ~~Implement configuration factory with Zod schemas~~
+4. ~~Implement detection modules (DCO, scopes, versioning)~~
+5. ~~Implement prompt configuration with emojis~~
+6. ~~Implement custom formatter~~
+7. ~~Implement custom commitizen adapter~~
 
 **Next Steps:**
 
-1. Create the package directory structure
-2. Move `detect-versioning-strategy.ts` to detection module
-3. Implement configuration factory with Zod schemas
-4. Implement detection modules (DCO, scopes, versioning)
-5. Implement prompt configuration with emojis
-6. Implement custom formatter
-7. Implement CLI with Effect
-8. Add comprehensive tests
-9. Publish to npm registries
-10. Update monorepo template to use the package
+1. Implement CLI init/check commands with Effect
+2. Add comprehensive integration tests
+3. Publish to npm registries
+4. Update monorepo template to use the package
+5. Add shell completions for CLI

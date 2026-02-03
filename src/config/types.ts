@@ -101,7 +101,7 @@ export interface CommitlintUserConfig {
  *
  * @remarks
  * Each commit type has associated metadata used by interactive prompts
- * (via `@commitlint/cz-commitlint`) and changelog generation.
+ * and changelog generation.
  *
  * @public
  */

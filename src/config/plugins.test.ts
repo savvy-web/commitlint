@@ -77,22 +77,20 @@ describe("silk/body-no-markdown", () => {
 		expect(message).toContain("headers (#)");
 	});
 
-	it("rejects bullet lists with dash", async () => {
+	it("allows bullet lists with dash", async () => {
 		const commit = createCommit({
 			body: "Changes:\n- Added feature\n- Fixed bug",
 		});
-		const [valid, message] = await runRule(rule, commit);
-		expect(valid).toBe(false);
-		expect(message).toContain("bullet lists (- or *)");
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
 	});
 
-	it("rejects bullet lists with asterisk", async () => {
+	it("allows bullet lists with asterisk", async () => {
 		const commit = createCommit({
 			body: "Changes:\n* Added feature\n* Fixed bug",
 		});
-		const [valid, message] = await runRule(rule, commit);
-		expect(valid).toBe(false);
-		expect(message).toContain("bullet lists (- or *)");
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
 	});
 
 	it("rejects numbered lists", async () => {
@@ -172,7 +170,6 @@ describe("silk/body-no-markdown", () => {
 		const [valid, message] = await runRule(rule, commit);
 		expect(valid).toBe(false);
 		expect(message).toContain("headers (#)");
-		expect(message).toContain("bullet lists");
 		expect(message).toContain("links");
 	});
 

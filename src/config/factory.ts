@@ -5,6 +5,7 @@
  */
 import { detectDCO } from "../detection/dco.js";
 import { detectScopes } from "../detection/scopes.js";
+import { createPromptConfig } from "../prompt/config.js";
 import { silkPlugin } from "./plugins.js";
 import { COMMIT_TYPES } from "./rules.js";
 import type { ResolvedConfigOptions } from "./schema.js";
@@ -54,15 +55,15 @@ export function createConfig(options: ResolvedConfigOptions): CommitlintUserConf
 		rules["silk/subject-no-markdown"] = [2, "always"];
 	}
 
+	const promptOptions = { emojis: options.emojis };
+	if (allScopes.length > 0) {
+		Object.assign(promptOptions, { scopes: allScopes });
+	}
+
 	return {
 		extends: ["@commitlint/config-conventional"],
 		plugins: [silkPlugin],
 		rules,
-		prompt: {
-			settings: {
-				enableMultipleScopes: true,
-				scopeEnumSeparator: ",",
-			},
-		},
+		prompt: createPromptConfig(promptOptions),
 	};
 }

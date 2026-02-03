@@ -53,7 +53,7 @@ commitlint/
 | `pnpm run test:coverage` | Run tests with coverage report   |
 | `pnpm run lint`          | Check code with Biome            |
 | `pnpm run lint:fix`      | Auto-fix lint issues             |
-| `pnpm run typecheck`     | Type-check all workspaces        |
+| `pnpm run typecheck`     | Type-check the project           |
 
 ## Code Quality
 

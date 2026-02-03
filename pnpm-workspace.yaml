@@ -11,7 +11,7 @@ preferFrozenLockfile: true
 publicHoistPattern:
   - "@commitlint/cli"
   - "@commitlint/config-conventional"
-  - "@commitlint/cz-commitlint"
+  - commitizen
   - husky
   - lint-staged
   - markdownlint-cli2

@@ -55,8 +55,8 @@ export interface WorkspacePackageInfo {
 	/** Whether package has publishConfig.access defined */
 	hasPublishConfig: boolean;
 
-	/** Access level if configured */
-	access?: PackageAccess;
+	/** Access level if configured (undefined if not set) */
+	access: PackageAccess | undefined;
 
 	/** Number of publish targets (from publishConfig.targets array) */
 	targetCount: number;
