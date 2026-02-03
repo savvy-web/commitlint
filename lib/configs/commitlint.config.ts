@@ -1,3 +1,3 @@
-import { CommitlintConfig } from "@savvy-web/commitlint";
+import { CommitlintConfig } from "../../src/index.js";
 
 export default CommitlintConfig.silk();
