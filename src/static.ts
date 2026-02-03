@@ -28,9 +28,9 @@
  * };
  * ```
  */
-import type { UserConfig } from "@commitlint/types";
 import { silkPlugin } from "./config/plugins.js";
 import { COMMIT_TYPES, DEFAULT_BODY_MAX_LINE_LENGTH } from "./config/rules.js";
+import type { CommitlintUserConfig } from "./config/types.js";
 
 /**
  * Static commitlint configuration.
@@ -45,7 +45,7 @@ import { COMMIT_TYPES, DEFAULT_BODY_MAX_LINE_LENGTH } from "./config/rules.js";
  *
  * @public
  */
-const staticConfig: UserConfig = {
+const staticConfig: CommitlintUserConfig = {
 	extends: ["@commitlint/config-conventional"],
 	plugins: [silkPlugin],
 	rules: {
@@ -66,7 +66,7 @@ const staticConfig: UserConfig = {
 
 export default staticConfig;
 
-export type { CommitType } from "./config/rules.js";
+export type { CommitType, CommitTypeDefinition } from "./config/rules.js";
 // Re-export useful constants for manual configuration
 export {
 	COMMIT_TYPES,
@@ -74,3 +74,14 @@ export {
 	DCO_SIGNOFF_TEXT,
 	DEFAULT_BODY_MAX_LINE_LENGTH,
 } from "./config/rules.js";
+// Re-export types for public API
+export type {
+	CommitlintPlugin,
+	CommitlintUserConfig,
+	PromptConfig,
+	PromptSettings,
+	RuleApplicability,
+	RuleConfigTuple,
+	RuleSeverity,
+	RulesConfig,
+} from "./config/types.js";

@@ -3,19 +3,98 @@
  *
  * @internal
  */
-import type { UserConfig } from "@commitlint/types";
-
 /**
- * Commitlint user configuration type.
- *
- * @remarks
- * Re-export of the official `@commitlint/types` UserConfig for convenience.
- * This allows consumers to type their configurations without adding
- * `@commitlint/types` as a direct dependency.
+ * Rule severity level.
+ * - 0: Disabled
+ * - 1: Warning
+ * - 2: Error
  *
  * @public
  */
-export type CommitlintUserConfig = UserConfig;
+export type RuleSeverity = 0 | 1 | 2;
+
+/**
+ * Rule applicability.
+ *
+ * @public
+ */
+export type RuleApplicability = "always" | "never";
+
+/**
+ * Rule configuration tuple.
+ *
+ * @public
+ */
+export type RuleConfigTuple<T = unknown> =
+	| readonly [RuleSeverity]
+	| readonly [RuleSeverity, RuleApplicability]
+	| readonly [RuleSeverity, RuleApplicability, T];
+
+/**
+ * Commitlint rules configuration.
+ *
+ * @public
+ */
+export interface RulesConfig {
+	[ruleName: string]: RuleConfigTuple | undefined;
+}
+
+/**
+ * Commitlint prompt settings.
+ *
+ * @public
+ */
+export interface PromptSettings {
+	enableMultipleScopes?: boolean;
+	scopeEnumSeparator?: string;
+}
+
+/**
+ * Commitlint prompt configuration.
+ *
+ * @public
+ */
+export interface PromptConfig {
+	settings?: PromptSettings;
+	messages?: Record<string, string>;
+	questions?: Record<string, unknown>;
+}
+
+/**
+ * Commitlint plugin interface.
+ *
+ * @public
+ */
+export interface CommitlintPlugin {
+	// biome-ignore lint/suspicious/noExplicitAny: Plugin rules have complex signatures
+	rules?: Record<string, any>;
+}
+
+/**
+ * Commitlint user configuration.
+ *
+ * @remarks
+ * Simplified type that captures the configuration shape used by this package.
+ * Compatible with `@commitlint/types` UserConfig.
+ *
+ * @public
+ */
+export interface CommitlintUserConfig {
+	/** Configurations to extend */
+	extends?: string[];
+	/** Plugins to load */
+	plugins?: (string | CommitlintPlugin)[];
+	/** Rule configurations */
+	rules?: RulesConfig;
+	/** Prompt configuration for interactive commits */
+	prompt?: PromptConfig;
+	/** Parser preset */
+	parserPreset?: string | Record<string, unknown>;
+	/** Formatter for output */
+	formatter?: string;
+	/** Help URL for errors */
+	helpUrl?: string;
+}
 
 /**
  * Commit type definition with metadata for prompts and documentation.
@@ -52,38 +131,6 @@ export interface CommitTypeDefinition {
 	 */
 	readonly emoji?: string;
 }
-
-/**
- * Rule severity level for commitlint rules.
- *
- * @remarks
- * - `0`: Disabled - rule is not checked
- * - `1`: Warning - rule violation produces a warning but allows commit
- * - `2`: Error - rule violation blocks the commit
- *
- * @public
- */
-export type RuleSeverity = 0 | 1 | 2;
-
-/**
- * Rule applicability determines when the rule condition applies.
- *
- * @remarks
- * - `"always"`: Rule must always be satisfied
- * - `"never"`: Rule condition must never be satisfied (inverts the check)
- *
- * @example
- * ```typescript
- * // Subject must NOT end with a period
- * "subject-full-stop": [2, "never", "."]
- *
- * // Subject must always be present
- * "subject-empty": [2, "never"]
- * ```
- *
- * @public
- */
-export type RuleApplicability = "always" | "never";
 
 /**
  * Rule configuration tuple format used by commitlint.

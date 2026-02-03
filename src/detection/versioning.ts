@@ -18,9 +18,9 @@ import type { ReleaseFormat } from "../config/schema.js";
  * @remarks
  * Partial type representing only the fields used for versioning detection.
  *
- * @internal
+ * @public
  */
-interface ChangesetConfig {
+export interface ChangesetConfig {
 	/** Fixed version groups - all packages in a group share the same version */
 	fixed?: string[][];
 	/** Linked version groups - packages bump together but can have different versions */

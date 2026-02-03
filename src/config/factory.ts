@@ -3,12 +3,12 @@
  *
  * @internal
  */
-import type { UserConfig } from "@commitlint/types";
 import { detectDCO } from "../detection/dco.js";
 import { detectScopes } from "../detection/scopes.js";
 import { silkPlugin } from "./plugins.js";
 import { COMMIT_TYPES } from "./rules.js";
 import type { ResolvedConfigOptions } from "./schema.js";
+import type { CommitlintUserConfig, RulesConfig } from "./types.js";
 
 /**
  * Create a commitlint configuration with auto-detection.
@@ -23,7 +23,7 @@ import type { ResolvedConfigOptions } from "./schema.js";
  *
  * @internal
  */
-export function createConfig(options: ResolvedConfigOptions): UserConfig {
+export function createConfig(options: ResolvedConfigOptions): CommitlintUserConfig {
 	const cwd = options.cwd ?? process.cwd();
 
 	// COMMITLINT_SKIP_DCO=1 disables DCO check (useful for PR title validation)
@@ -33,7 +33,7 @@ export function createConfig(options: ResolvedConfigOptions): UserConfig {
 	const scopes = options.scopes ?? detectedScopes;
 	const allScopes = [...new Set([...scopes, ...(options.additionalScopes ?? [])])].sort();
 
-	const rules: UserConfig["rules"] = {
+	const rules: RulesConfig = {
 		"body-max-line-length": [2, "always", options.bodyMaxLineLength],
 		"type-enum": [2, "always", [...COMMIT_TYPES]],
 		// Allow any case in subject (AI tools often capitalize, which is acceptable)
