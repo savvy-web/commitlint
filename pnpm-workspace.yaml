@@ -1,5 +1,6 @@
 packages:
   - .
+autoInstallPeers: true
 loglevel: info
 onlyBuiltDependencies:
   - "@parcel/watcher"
