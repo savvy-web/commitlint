@@ -21,5 +21,6 @@
  * };
  * ```
  */
+export type { FormatterResult, LintOutcome, RuleResult } from "./format.js";
 export { format, format as default } from "./format.js";
 export { ERROR_EXPLANATIONS, ERROR_SUGGESTIONS, getExplanation, getSuggestion } from "./messages.js";

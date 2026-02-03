@@ -60,6 +60,7 @@
 		"types:check": "tsgo --noEmit"
 	},
 	"dependencies": {
+		"@commitlint/types": "^20.4.0",
 		"@effect/cli": "^0.73.1",
 		"@effect/platform": "^0.94.2",
 		"@effect/platform-node": "^0.104.1",
@@ -73,7 +74,6 @@
 		"@commitlint/config-conventional": "^20.4.1",
 		"@commitlint/cz-commitlint": "^20.4.1",
 		"@commitlint/lint": "^20.4.1",
-		"@commitlint/types": "^20.4.0",
 		"@microsoft/api-extractor": "^7.56.0",
 		"@rslib/core": "^0.19.4",
 		"@savvy-web/lint-staged": "^0.1.3",

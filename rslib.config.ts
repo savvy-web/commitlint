@@ -1,14 +1,6 @@
 import { NodeLibraryBuilder } from "@savvy-web/rslib-builder";
 
-const config: ReturnType<typeof NodeLibraryBuilder.create> = NodeLibraryBuilder.create({
-	tsdocLint: true,
-	entry: {
-		index: "./src/index.ts",
-		static: "./src/static.ts",
-		"prompt/index": "./src/prompt/index.ts",
-		"formatter/index": "./src/formatter/index.ts",
-		"bin/cli": "./src/bin/cli.ts",
-	},
+export default NodeLibraryBuilder.create({
 	externals: [
 		// Externalize peer dependencies
 		"@commitlint/cli",
@@ -17,6 +9,7 @@ const config: ReturnType<typeof NodeLibraryBuilder.create> = NodeLibraryBuilder.
 		"@commitlint/types",
 		"@commitlint/lint",
 	],
+	dtsBundledPackages: ["@commitlint/types"],
 	transform({ pkg }) {
 		delete pkg.devDependencies;
 		delete pkg.bundleDependencies;
@@ -26,5 +19,3 @@ const config: ReturnType<typeof NodeLibraryBuilder.create> = NodeLibraryBuilder.
 		return pkg;
 	},
 });
-
-export default config;

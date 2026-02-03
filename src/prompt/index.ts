@@ -21,6 +21,8 @@
  * ```
  */
 
+export type { CommitType } from "../config/rules.js";
+export { COMMIT_TYPES } from "../config/rules.js";
 export type { PromptConfigOptions, TypeEnumEntry } from "./config.js";
 export {
 	createPromptConfig,

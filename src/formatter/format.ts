@@ -12,23 +12,11 @@ const ERROR_ICON = "\u2717"; // ✗
 const WARNING_ICON = "\u26A0"; // ⚠
 
 /**
- * Lint result from commitlint.
- *
- * @internal
- */
-interface LintOutcome {
-	valid: boolean;
-	errors: RuleResult[];
-	warnings: RuleResult[];
-	input: string;
-}
-
-/**
  * Individual rule result.
  *
- * @internal
+ * @public
  */
-interface RuleResult {
+export interface RuleResult {
 	level: 0 | 1 | 2;
 	valid: boolean;
 	name: string;
@@ -36,11 +24,23 @@ interface RuleResult {
 }
 
 /**
+ * Lint result from commitlint.
+ *
+ * @public
+ */
+export interface LintOutcome {
+	valid: boolean;
+	errors: RuleResult[];
+	warnings: RuleResult[];
+	input: string;
+}
+
+/**
  * Formatter result structure passed by commitlint.
  *
- * @internal
+ * @public
  */
-interface FormatterResult {
+export interface FormatterResult {
 	results: LintOutcome[];
 	options?: {
 		helpUrl?: string;

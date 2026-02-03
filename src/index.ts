@@ -38,16 +38,23 @@ export {
 	DEFAULT_BODY_MAX_LINE_LENGTH,
 } from "./config/rules.js";
 export type { ReleaseFormat, ResolvedConfigOptions } from "./config/schema.js";
+export { ConfigOptionsSchema, ReleaseFormatSchema } from "./config/schema.js";
 export type {
 	CommitTypeDefinition,
+	CommitlintPlugin,
+	PromptConfig,
+	PromptSettings,
 	RuleApplicability,
 	RuleConfig,
+	RuleConfigTuple,
 	RuleSeverity,
+	RulesConfig,
 } from "./config/types.js";
 // Re-export detection utilities for public API
 export { detectDCO } from "./detection/dco.js";
 export { detectScopes } from "./detection/scopes.js";
 export type {
+	ChangesetConfig,
 	PackageAccess,
 	VersioningStrategy,
 	VersioningStrategyType,

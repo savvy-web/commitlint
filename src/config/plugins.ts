@@ -7,7 +7,24 @@
  *
  * @internal
  */
-import type { Rule } from "@commitlint/types";
+
+/**
+ * Parsed commit message structure.
+ *
+ * @internal
+ */
+interface ParsedCommit {
+	body: string | null;
+	subject: string | null;
+	raw: string;
+}
+
+/**
+ * Commitlint rule function type.
+ *
+ * @internal
+ */
+type Rule = (parsed: ParsedCommit) => readonly [boolean, string];
 
 /**
  * Patterns that indicate markdown formatting in commit messages.

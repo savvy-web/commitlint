@@ -5,6 +5,9 @@
  */
 import type { CommitTypeDefinition } from "./types.js";
 
+// Re-export for public API
+export type { CommitTypeDefinition } from "./types.js";
+
 /**
  * Allowed commit types for conventional commits.
  *
