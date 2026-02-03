@@ -86,6 +86,7 @@ describe("getExplanation", () => {
 	it("returns explanation for known rules", () => {
 		expect(getExplanation("type-empty")).toBeTruthy();
 		expect(getExplanation("signed-off-by")).toBeTruthy();
+		expect(getExplanation("silk/signed-off-by")).toBeTruthy();
 	});
 
 	it("returns undefined for unknown rules", () => {
@@ -97,6 +98,7 @@ describe("getSuggestion", () => {
 	it("returns suggestion for known rules", () => {
 		expect(getSuggestion("type-empty")).toBeTruthy();
 		expect(getSuggestion("signed-off-by")).toBeTruthy();
+		expect(getSuggestion("silk/signed-off-by")).toBeTruthy();
 	});
 
 	it("returns undefined for unknown rules", () => {

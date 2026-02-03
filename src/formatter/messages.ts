@@ -28,6 +28,8 @@ export const ERROR_EXPLANATIONS: Record<string, string> = {
 	"scope-empty": "A scope is required for this commit type.",
 	"signed-off-by":
 		'This project requires DCO signoff. Add "Signed-off-by: Your Name <email>" to your commit, or use `git commit -s`.',
+	"silk/signed-off-by":
+		'This project requires DCO signoff. Add "Signed-off-by: Your Name <email>" to your commit, or use `git commit -s`.',
 	"trailer-exists": "A required trailer is missing from the commit message.",
 	"references-empty": "This commit should reference an issue (e.g., #123 or PROJ-456).",
 };
@@ -52,6 +54,7 @@ export const ERROR_SUGGESTIONS: Record<string, string> = {
 	"body-leading-blank": "Add an empty line after the subject before the body.",
 	"footer-leading-blank": "Add an empty line before any footers like Signed-off-by.",
 	"signed-off-by": "Run: git commit --amend -s",
+	"silk/signed-off-by": "Run: git commit --amend -s",
 };
 
 /**

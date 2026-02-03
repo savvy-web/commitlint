@@ -7,7 +7,7 @@ import type { UserConfig } from "@commitlint/types";
 import { detectDCO } from "../detection/dco.js";
 import { detectScopes } from "../detection/scopes.js";
 import { silkPlugin } from "./plugins.js";
-import { COMMIT_TYPES, DCO_SIGNOFF_TEXT } from "./rules.js";
+import { COMMIT_TYPES } from "./rules.js";
 import type { ResolvedConfigOptions } from "./schema.js";
 
 /**
@@ -43,7 +43,8 @@ export function createConfig(options: ResolvedConfigOptions): UserConfig {
 	}
 
 	if (dco) {
-		rules["signed-off-by"] = [2, "always", DCO_SIGNOFF_TEXT];
+		// Use custom case-insensitive rule instead of built-in signed-off-by
+		rules["silk/signed-off-by"] = [2, "always"];
 	}
 
 	if (options.noMarkdown) {

@@ -7,7 +7,7 @@
  *
  * @internal
  */
-import type { Rule, RuleOutcome } from "@commitlint/types";
+import type { Rule } from "@commitlint/types";
 
 /**
  * Patterns that indicate markdown formatting in commit messages.
@@ -134,6 +134,28 @@ const bodyProseOnly: Rule = (parsed) => {
 };
 
 /**
+ * Rule: signed-off-by
+ *
+ * @remarks
+ * Case-insensitive check for DCO signoff trailer. Accepts both
+ * "Signed-off-by:" and "signed-off-by:" (and any other casing).
+ *
+ * This replaces the built-in commitlint signed-off-by rule which
+ * is case-sensitive.
+ */
+const signedOffBy: Rule = (parsed) => {
+	const raw = parsed.raw;
+	if (!raw) return [false, "message must be signed off"];
+
+	// Case-insensitive match for "signed-off-by:" anywhere in the message
+	const signoffPattern = /^signed-off-by:\s*.+$/im;
+	if (signoffPattern.test(raw)) {
+		return [true, ""];
+	}
+	return [false, "message must be signed off"];
+};
+
+/**
  * Custom commitlint plugin with markdown prevention rules.
  *
  * @remarks
@@ -152,6 +174,7 @@ export const silkPlugin = {
 		"silk/body-no-markdown": bodyNoMarkdown,
 		"silk/subject-no-markdown": subjectNoMarkdown,
 		"silk/body-prose-only": bodyProseOnly,
+		"silk/signed-off-by": signedOffBy,
 	},
 };
 

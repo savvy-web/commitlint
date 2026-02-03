@@ -29,7 +29,8 @@
  * ```
  */
 import type { UserConfig } from "@commitlint/types";
-import { COMMIT_TYPES, DCO_SIGNOFF_TEXT, DEFAULT_BODY_MAX_LINE_LENGTH } from "./config/rules.js";
+import { silkPlugin } from "./config/plugins.js";
+import { COMMIT_TYPES, DEFAULT_BODY_MAX_LINE_LENGTH } from "./config/rules.js";
 
 /**
  * Static commitlint configuration.
@@ -46,10 +47,12 @@ import { COMMIT_TYPES, DCO_SIGNOFF_TEXT, DEFAULT_BODY_MAX_LINE_LENGTH } from "./
  */
 const staticConfig: UserConfig = {
 	extends: ["@commitlint/config-conventional"],
+	plugins: [silkPlugin],
 	rules: {
 		"body-max-line-length": [2, "always", DEFAULT_BODY_MAX_LINE_LENGTH],
 		"type-enum": [2, "always", [...COMMIT_TYPES]],
-		"signed-off-by": [2, "always", DCO_SIGNOFF_TEXT],
+		// Use custom case-insensitive rule instead of built-in signed-off-by
+		"silk/signed-off-by": [2, "always"],
 		// Allow any case in subject (AI tools often capitalize, which is acceptable)
 		"subject-case": [0],
 	},

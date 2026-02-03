@@ -317,3 +317,70 @@ describe("silk/body-prose-only", () => {
 		expect(message).toContain("prose paragraphs");
 	});
 });
+
+describe("silk/signed-off-by", () => {
+	const rule = silkPlugin.rules["silk/signed-off-by"];
+
+	it("passes for Signed-off-by with capital S", async () => {
+		const commit = createCommit({
+			raw: "feat: add feature\n\nSigned-off-by: John Doe <john@example.com>",
+		});
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("passes for signed-off-by with lowercase s", async () => {
+		const commit = createCommit({
+			raw: "feat: add feature\n\nsigned-off-by: John Doe <john@example.com>",
+		});
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("passes for SIGNED-OFF-BY in all caps", async () => {
+		const commit = createCommit({
+			raw: "feat: add feature\n\nSIGNED-OFF-BY: John Doe <john@example.com>",
+		});
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("passes for mixed case signoff", async () => {
+		const commit = createCommit({
+			raw: "feat: add feature\n\nSigned-Off-By: John Doe <john@example.com>",
+		});
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+
+	it("rejects missing signoff", async () => {
+		const commit = createCommit({
+			raw: "feat: add feature\n\nThis is a regular commit body.",
+		});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("signed off");
+	});
+
+	it("rejects empty raw message", async () => {
+		const commit = createCommit({ raw: "" });
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("signed off");
+	});
+
+	it("rejects null raw message", async () => {
+		const commit = createCommit({});
+		const [valid, message] = await runRule(rule, commit);
+		expect(valid).toBe(false);
+		expect(message).toContain("signed off");
+	});
+
+	it("passes when signoff is in the footer with other trailers", async () => {
+		const commit = createCommit({
+			raw: "feat: add feature\n\nBody text.\n\nCo-authored-by: Jane <jane@example.com>\nSigned-off-by: John Doe <john@example.com>",
+		});
+		const [valid] = await runRule(rule, commit);
+		expect(valid).toBe(true);
+	});
+});

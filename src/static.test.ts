@@ -12,10 +12,11 @@ describe("static config", () => {
 		expect(typeEnumRule?.[2]).toEqual(expect.arrayContaining([...COMMIT_TYPES]));
 	});
 
-	it("includes signed-off-by rule", () => {
-		const signoffRule = staticConfig.rules?.["signed-off-by"] as [number, string, string] | undefined;
+	it("includes case-insensitive signed-off-by rule", () => {
+		const signoffRule = staticConfig.rules?.["silk/signed-off-by"] as [number, string] | undefined;
 		expect(signoffRule).toBeDefined();
-		expect(signoffRule?.[2]).toBe(DCO_SIGNOFF_TEXT);
+		expect(signoffRule?.[0]).toBe(2);
+		expect(signoffRule?.[1]).toBe("always");
 	});
 
 	it("sets body-max-line-length to 300", () => {

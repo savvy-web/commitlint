@@ -34,17 +34,17 @@ describe("CommitlintConfig.silk()", () => {
 		expect(config.rules?.["body-max-line-length"]).toEqual([2, "always", 500]);
 	});
 
-	it("enables signed-off-by rule when dco is true", () => {
+	it("enables case-insensitive signed-off-by rule when dco is true", () => {
 		const config = CommitlintConfig.silk({ dco: true });
 
-		expect(config.rules?.["signed-off-by"]).toBeDefined();
-		expect(config.rules?.["signed-off-by"]).toEqual([2, "always", "Signed-off-by:"]);
+		expect(config.rules?.["silk/signed-off-by"]).toBeDefined();
+		expect(config.rules?.["silk/signed-off-by"]).toEqual([2, "always"]);
 	});
 
 	it("disables signed-off-by rule when dco is false", () => {
 		const config = CommitlintConfig.silk({ dco: false });
 
-		expect(config.rules?.["signed-off-by"]).toBeUndefined();
+		expect(config.rules?.["silk/signed-off-by"]).toBeUndefined();
 	});
 
 	it("adds scope-enum rule when scopes are provided", () => {
