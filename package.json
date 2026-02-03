@@ -1,6 +1,6 @@
 {
 	"name": "@savvy-web/commitlint",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"private": true,
 	"description": "Dynamic, intelligent commitlint configuration with auto-detection of DCO, workspace scopes, and versioning strategies.",
 	"keywords": [
