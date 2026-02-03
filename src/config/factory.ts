@@ -26,7 +26,9 @@ import type { ResolvedConfigOptions } from "./schema.js";
 export function createConfig(options: ResolvedConfigOptions): UserConfig {
 	const cwd = options.cwd ?? process.cwd();
 
-	const dco = options.dco ?? detectDCO(cwd);
+	// COMMITLINT_SKIP_DCO=1 disables DCO check (useful for PR title validation)
+	const skipDco = process.env.COMMITLINT_SKIP_DCO === "1" || process.env.COMMITLINT_SKIP_DCO === "true";
+	const dco = skipDco ? false : (options.dco ?? detectDCO(cwd));
 	const detectedScopes = detectScopes(cwd);
 	const scopes = options.scopes ?? detectedScopes;
 	const allScopes = [...new Set([...scopes, ...(options.additionalScopes ?? [])])].sort();

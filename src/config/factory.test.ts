@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { CommitlintConfig } from "../index.js";
 import { COMMIT_TYPES } from "./rules.js";
 
@@ -73,5 +73,38 @@ describe("CommitlintConfig.silk()", () => {
 		expect(config.prompt).toBeDefined();
 		expect(config.prompt?.settings?.enableMultipleScopes).toBe(true);
 		expect(config.prompt?.settings?.scopeEnumSeparator).toBe(",");
+	});
+
+	describe("COMMITLINT_SKIP_DCO environment variable", () => {
+		const originalEnv = process.env.COMMITLINT_SKIP_DCO;
+
+		afterEach(() => {
+			if (originalEnv === undefined) {
+				delete process.env.COMMITLINT_SKIP_DCO;
+			} else {
+				process.env.COMMITLINT_SKIP_DCO = originalEnv;
+			}
+		});
+
+		it("disables DCO when COMMITLINT_SKIP_DCO=1", () => {
+			process.env.COMMITLINT_SKIP_DCO = "1";
+			const config = CommitlintConfig.silk({ dco: true });
+
+			expect(config.rules?.["silk/signed-off-by"]).toBeUndefined();
+		});
+
+		it("disables DCO when COMMITLINT_SKIP_DCO=true", () => {
+			process.env.COMMITLINT_SKIP_DCO = "true";
+			const config = CommitlintConfig.silk({ dco: true });
+
+			expect(config.rules?.["silk/signed-off-by"]).toBeUndefined();
+		});
+
+		it("does not disable DCO for other values", () => {
+			process.env.COMMITLINT_SKIP_DCO = "false";
+			const config = CommitlintConfig.silk({ dco: true });
+
+			expect(config.rules?.["silk/signed-off-by"]).toBeDefined();
+		});
 	});
 });
