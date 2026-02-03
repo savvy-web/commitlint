@@ -79,14 +79,11 @@ Add to your `package.json`:
 
 ## Husky Integration
 
-The `init` command creates a husky hook at `.husky/commit-msg`:
+The `init` command creates a husky hook at `.husky/commit-msg` with:
 
-```bash
-#!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
-
-npx --no -- commitlint --edit "$1"
-```
+- CI environment detection (skips validation in GitHub Actions)
+- Automatic package manager detection (pnpm, yarn, bun, npm)
+- Absolute path resolution for reliable config location
 
 This validates every commit message against your configuration.
 
@@ -94,7 +91,7 @@ This validates every commit message against your configuration.
 
 If you prefer manual setup over the CLI:
 
-1. Create `commitlint.config.ts`:
+1. Create `commitlint.config.ts` (or `lib/configs/commitlint.config.ts`):
 
 ```typescript
 import { CommitlintConfig } from "@savvy-web/commitlint";
@@ -102,16 +99,13 @@ import { CommitlintConfig } from "@savvy-web/commitlint";
 export default CommitlintConfig.silk();
 ```
 
-1. Create `.husky/commit-msg`:
+1. Run the init command to generate the hook:
 
 ```bash
-#!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
-
-npx --no -- commitlint --edit "$1"
+npx savvy-commit init --config lib/configs/commitlint.config.ts
 ```
 
-1. Make the hook executable:
+1. Alternatively, create `.husky/commit-msg` manually and make it executable:
 
 ```bash
 chmod +x .husky/commit-msg

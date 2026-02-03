@@ -1,5 +1,9 @@
 /**
- * Prompt configuration for `\@commitlint/cz-commitlint`.
+ * Prompt configuration for commitizen adapters.
+ *
+ * @remarks
+ * This module provides prompt configurations compatible with both the
+ * built-in prompter and `@commitlint/cz-commitlint`.
  *
  * @internal
  */
@@ -52,7 +56,7 @@ export interface PromptConfigOptions {
  * Create type enum configuration for prompts.
  *
  * @remarks
- * Builds the type enum object used by `@commitlint/cz-commitlint`
+ * Builds the type enum object used by commitizen adapters
  * to display commit type options in the interactive prompt.
  *
  * @param emojis - Whether to include emoji shortcodes
@@ -75,11 +79,11 @@ export function createTypeEnum(emojis: boolean): Record<CommitType, TypeEnumEntr
 }
 
 /**
- * Create prompt configuration for `@commitlint/cz-commitlint`.
+ * Create prompt configuration for commitizen adapters.
  *
  * @remarks
  * Generates a complete prompt configuration object compatible with
- * the commitizen adapter `@commitlint/cz-commitlint`.
+ * `@commitlint/cz-commitlint` and included in `CommitlintConfig.silk()` output.
  *
  * @param options - Prompt configuration options
  * @returns Prompt configuration object

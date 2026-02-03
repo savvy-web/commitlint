@@ -124,11 +124,12 @@ export interface ConfigOptions {
 	 * When enabled, commit messages containing markdown formatting
 	 * will be rejected. This includes:
 	 * - Headers (`#`, `##`, etc.)
-	 * - Bullet lists (`-`, `*`)
 	 * - Numbered lists (`1.`, `2.`)
 	 * - Code fences (triple backticks)
 	 * - Links (`[text](url)`)
 	 * - Bold/italic formatting
+	 *
+	 * Simple unordered lists (`-` or `*`) are allowed for readability.
 	 *
 	 * This helps ensure commit messages are plain text and readable
 	 * in terminals and tools that don't render markdown. Particularly

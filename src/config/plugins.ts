@@ -62,7 +62,6 @@ function detectMarkdown(text: string): { hasMarkdown: boolean; patterns: string[
 	const detected: string[] = [];
 
 	if (MARKDOWN_PATTERNS.headers.test(text)) detected.push("headers (#)");
-	if (MARKDOWN_PATTERNS.bullets.test(text)) detected.push("bullet lists (- or *)");
 	if (MARKDOWN_PATTERNS.numberedLists.test(text)) detected.push("numbered lists (1.)");
 	if (MARKDOWN_PATTERNS.codeFences.test(text)) detected.push("code fences (```)");
 	if (MARKDOWN_PATTERNS.bold.test(text)) detected.push("bold (**text**)");
@@ -86,19 +85,22 @@ function detectMarkdown(text: string): { hasMarkdown: boolean; patterns: string[
  * This helps ensure commit messages are plain text and readable
  * in terminals, git log, and other tools that don't render markdown.
  *
+ * Simple unordered lists (`-` or `*`) are allowed for readability.
+ *
  * @example
  * ```
- * // Invalid - contains markdown
+ * // Invalid - contains markdown headers
  * feat: add feature
  *
  * ## Summary
- * - Added new feature
- * - Fixed bug
+ * This adds a new feature.
  *
- * // Valid - plain text
+ * // Valid - plain text with lists
  * feat: add feature
  *
- * Added new feature and fixed related bug.
+ * Added new feature and fixed related bug:
+ * - Implemented user authentication
+ * - Fixed session timeout issue
  * ```
  */
 const bodyNoMarkdown: Rule = (parsed) => {
