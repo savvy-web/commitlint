@@ -32,7 +32,7 @@ const DEFAULT_CONFIG_PATH = "lib/configs/commitlint.config.ts";
 function generateHuskyContent(configPath: string): string {
 	return `#!/usr/bin/env sh
 # Skip in CI environment
-[ -n "$GITHUB_ACTIONS" ] && exit 0
+[ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ] && exit 0
 
 # Get repo root directory
 ROOT=$(git rev-parse --show-toplevel)
@@ -87,7 +87,7 @@ const forceOption = Options.boolean("force").pipe(
 
 const configOption = Options.text("config").pipe(
 	Options.withAlias("c"),
-	Options.withDescription("Path for the commitlint config file"),
+	Options.withDescription("Relative path for the commitlint config file (from repo root)"),
 	Options.withDefault(DEFAULT_CONFIG_PATH),
 );
 
@@ -112,6 +112,10 @@ function makeExecutable(path: string) {
 export const initCommand = Command.make("init", { force: forceOption, config: configOption }, ({ force, config }) =>
 	Effect.gen(function* () {
 		const fs = yield* FileSystem.FileSystem;
+
+		if (config.startsWith("/")) {
+			yield* Effect.fail(new Error("Config path must be relative to repository root, not absolute"));
+		}
 
 		yield* Effect.log("Initializing commitlint configuration...\n");
 
