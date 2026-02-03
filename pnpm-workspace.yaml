@@ -1,8 +1,13 @@
 packages:
   - .
+autoInstallPeers: true
 loglevel: info
 onlyBuiltDependencies:
   - "@parcel/watcher"
   - core-js
   - esbuild
+  - msgpackr-extract
 preferFrozenLockfile: true
+publicHoistPattern:
+  - markdownlint-cli2
+  - markdownlint-cli2-formatter-codequality
