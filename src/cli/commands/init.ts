@@ -20,7 +20,7 @@ const EXECUTABLE_MODE = 0o755;
 const HUSKY_HOOK_PATH = ".husky/commit-msg";
 
 /** Path for the commitlint config file. */
-const CONFIG_PATH = "commitlint.config.ts";
+const CONFIG_PATH = "lib/configs/commitlint.config.ts";
 
 /** Content for the husky commit-msg hook. */
 const HUSKY_CONTENT = `#!/usr/bin/env sh
@@ -93,7 +93,7 @@ function makeExecutable(path: string) {
  * @remarks
  * Creates the necessary configuration files for commitlint:
  * - `.husky/commit-msg` hook for automatic validation
- * - `commitlint.config.ts` with default configuration
+ * - `lib/configs/commitlint.config.ts` with default configuration
  */
 export const initCommand = Command.make("init", { force: forceOption }, ({ force }) =>
 	Effect.gen(function* () {
@@ -117,6 +117,7 @@ export const initCommand = Command.make("init", { force: forceOption }, ({ force
 		if (configExists && !force) {
 			yield* Effect.log(`${WARNING} ${CONFIG_PATH} already exists (use --force to overwrite)`);
 		} else {
+			yield* fs.makeDirectory("lib/configs", { recursive: true });
 			yield* fs.writeFileString(CONFIG_PATH, CONFIG_CONTENT);
 			yield* Effect.log(`${CHECK_MARK} Created ${CONFIG_PATH}`);
 		}
