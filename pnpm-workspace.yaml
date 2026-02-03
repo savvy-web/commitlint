@@ -9,5 +9,10 @@ onlyBuiltDependencies:
   - msgpackr-extract
 preferFrozenLockfile: true
 publicHoistPattern:
+  - "@commitlint/cli"
+  - "@commitlint/config-conventional"
+  - "@commitlint/cz-commitlint"
+  - husky
+  - lint-staged
   - markdownlint-cli2
   - markdownlint-cli2-formatter-codequality
