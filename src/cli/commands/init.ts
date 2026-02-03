@@ -24,13 +24,17 @@ const CONFIG_PATH = "commitlint.config.ts";
 
 /** Content for the husky commit-msg hook. */
 const HUSKY_CONTENT = `#!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
+# Skip in CI environment
+[ -n "$GITHUB_ACTIONS" ] && exit 0
+
+# Get repo root directory
+ROOT=$(git rev-parse --show-toplevel)
 
 # Detect package manager from package.json or lockfiles
 detect_pm() {
   # Check packageManager field in package.json (e.g., "pnpm@9.0.0")
-  if [ -f "package.json" ]; then
-    pm=$(jq -r '.packageManager // empty' package.json 2>/dev/null | cut -d'@' -f1)
+  if [ -f "$ROOT/package.json" ]; then
+    pm=$(jq -r '.packageManager // empty' "$ROOT/package.json" 2>/dev/null | cut -d'@' -f1)
     if [ -n "$pm" ]; then
       echo "$pm"
       return
@@ -38,11 +42,11 @@ detect_pm() {
   fi
 
   # Fallback to lockfile detection
-  if [ -f "pnpm-lock.yaml" ]; then
+  if [ -f "$ROOT/pnpm-lock.yaml" ]; then
     echo "pnpm"
-  elif [ -f "yarn.lock" ]; then
+  elif [ -f "$ROOT/yarn.lock" ]; then
     echo "yarn"
-  elif [ -f "bun.lockb" ]; then
+  elif [ -f "$ROOT/bun.lock" ]; then
     echo "bun"
   else
     echo "npm"
@@ -58,7 +62,7 @@ case "$PM" in
   *)    CMD="npx --no --" ;;
 esac
 
-$CMD commitlint --edit "$1"
+$CMD commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1"
 `;
 
 /** Content for the commitlint config file. */
