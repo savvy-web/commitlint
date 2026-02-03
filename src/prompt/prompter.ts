@@ -224,8 +224,13 @@ export function prompter(cz: Inquirer, commit: (message: string) => void, option
 		},
 	];
 
-	cz.prompt<CommitAnswers>(questions).then((answers) => {
-		const message = formatCommitMessage(answers);
-		commit(message);
-	});
+	cz.prompt<CommitAnswers>(questions)
+		.then((answers) => {
+			const message = formatCommitMessage(answers);
+			commit(message);
+		})
+		.catch(() => {
+			// User cancelled the prompt (Ctrl+C) or an error occurred
+			// Exit silently - commitizen handles the process exit
+		});
 }
