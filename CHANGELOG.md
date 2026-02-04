@@ -1,5 +1,11 @@
 # @savvy-web/commitlint
 
+## 0.2.1
+
+### Patch Changes
+
+- e00fd8f: Switches to managed dependecies with @savvy-web/pnpm-plugin-silk
+
 ## 0.2.0
 
 ### Minor Changes
