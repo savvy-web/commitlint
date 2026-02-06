@@ -44,19 +44,19 @@ commitlint/
 
 ## Available Scripts
 
-| Script                   | Description                      |
-| ------------------------ | -------------------------------- |
-| `pnpm run build`         | Build all packages (dev + prod)  |
-| `pnpm run build:dev`     | Build development output only    |
-| `pnpm run build:prod`    | Build production/npm output only |
-| `pnpm run test`          | Run all tests                    |
-| `pnpm run test:watch`    | Run tests in watch mode          |
-| `pnpm run test:coverage` | Run tests with coverage report   |
-| `pnpm run lint`          | Check code with Biome            |
-| `pnpm run lint:fix`      | Auto-fix lint issues             |
-| `pnpm run lint:md`       | Check markdown files             |
-| `pnpm run typecheck`     | Type-check the project           |
-| `pnpm run commit`        | Interactive commit (commitizen)  |
+| Script | Description |
+| --- | --- |
+| `pnpm run build` | Build all packages (dev + prod) |
+| `pnpm run build:dev` | Build development output only |
+| `pnpm run build:prod` | Build production/npm output only |
+| `pnpm run test` | Run all tests |
+| `pnpm run test:watch` | Run tests in watch mode |
+| `pnpm run test:coverage` | Run tests with coverage report |
+| `pnpm run lint` | Check code with Biome |
+| `pnpm run lint:fix` | Auto-fix lint issues |
+| `pnpm run lint:md` | Check markdown files |
+| `pnpm run typecheck` | Type-check the project |
+| `pnpm run commit` | Interactive commit (commitizen) |
 
 ## Code Quality
 
