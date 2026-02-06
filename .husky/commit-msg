@@ -5,9 +5,6 @@ if [ -z "$ZSH_VERSION" ]; then
   exec /bin/zsh "$0" "$@"
 fi
 
-# Enable POSIX-compatible word splitting in zsh
-setopt SH_WORD_SPLIT 2>/dev/null || true
-
 # Ensure pnpm is in PATH for GUI git clients
 # Source nvm to get access to node/pnpm
 source ~/.zshenv
@@ -44,16 +41,14 @@ detect_pm() {
   fi
 }
 
-# Get the exec command for the detected package manager
+# Run commitlint via the detected package manager
 PM=$(detect_pm)
 case "$PM" in
-  pnpm) CMD="pnpm exec" ;;
-  yarn) CMD="yarn exec" ;;
-  bun)  CMD="bunx" ;;
-  *)    CMD="npx --no --" ;;
+  pnpm) pnpm exec commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1" ;;
+  yarn) yarn exec commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1" ;;
+  bun)  bunx commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1" ;;
+  *)    npx --no -- commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1" ;;
 esac
-
-$CMD commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1"
 
 fi
 # --- END SAVVY-COMMIT MANAGED SECTION ---

@@ -66,16 +66,14 @@ detect_pm() {
   fi
 }
 
-# Get the dlx/npx equivalent command for the detected package manager
+# Run commitlint via the detected package manager
 PM=$(detect_pm)
 case "$PM" in
-  pnpm) CMD="pnpm dlx" ;;
-  yarn) CMD="yarn dlx" ;;
-  bun)  CMD="bun x" ;;
-  *)    CMD="npx --no --" ;;
+  pnpm) pnpm dlx commitlint --config "$ROOT/${configPath}" --edit "$1" ;;
+  yarn) yarn dlx commitlint --config "$ROOT/${configPath}" --edit "$1" ;;
+  bun)  bun x commitlint --config "$ROOT/${configPath}" --edit "$1" ;;
+  *)    npx --no -- commitlint --config "$ROOT/${configPath}" --edit "$1" ;;
 esac
-
-$CMD commitlint --config "$ROOT/${configPath}" --edit "$1"
 
 fi`;
 }
