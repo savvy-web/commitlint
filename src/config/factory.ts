@@ -4,7 +4,6 @@
  * @internal
  */
 import { detectDCO } from "../detection/dco.js";
-import { detectScopes } from "../detection/scopes.js";
 import { createPromptConfig } from "../prompt/config.js";
 import { silkPlugin } from "./plugins.js";
 import { COMMIT_TYPES } from "./rules.js";
@@ -30,8 +29,7 @@ export function createConfig(options: ResolvedConfigOptions): CommitlintUserConf
 	// COMMITLINT_SKIP_DCO=1 disables DCO check (useful for PR title validation)
 	const skipDco = process.env.COMMITLINT_SKIP_DCO === "1" || process.env.COMMITLINT_SKIP_DCO === "true";
 	const dco = skipDco ? false : (options.dco ?? detectDCO(cwd));
-	const detectedScopes = detectScopes(cwd);
-	const scopes = options.scopes ?? detectedScopes;
+	const scopes = options.scopes ?? [];
 	const allScopes = [...new Set([...scopes, ...(options.additionalScopes ?? [])])].sort();
 
 	const rules: RulesConfig = {

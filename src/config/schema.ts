@@ -71,19 +71,19 @@ export interface ConfigOptions {
 	 * Allowed scopes for commits.
 	 *
 	 * @remarks
-	 * When provided, replaces auto-detected scopes entirely.
-	 * For monorepos, scopes are auto-detected from workspace package names.
+	 * When provided, enforces a `scope-enum` rule restricting commits
+	 * to only these scopes. When omitted, any scope is allowed.
 	 *
-	 * @defaultValue Auto-detected from workspace packages
+	 * @defaultValue undefined (no restriction)
 	 */
 	scopes?: string[];
 
 	/**
-	 * Additional scopes to add to auto-detected scopes.
+	 * Additional scopes merged with `scopes`.
 	 *
 	 * @remarks
-	 * Unlike `scopes`, this does not replace auto-detected values
-	 * but adds to them. Useful for adding scopes like "deps" or "release".
+	 * Combined with `scopes` (deduplicated and sorted) to form the
+	 * full `scope-enum` allowlist. Can be used alone or with `scopes`.
 	 */
 	additionalScopes?: string[];
 

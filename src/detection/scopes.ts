@@ -3,7 +3,7 @@
  *
  * @internal
  */
-import { getWorkspaces } from "workspace-tools";
+import { getWorkspaceInfos } from "workspace-tools";
 import { safelyFindProjectRoot } from "./utils.js";
 
 /**
@@ -51,7 +51,10 @@ export function detectScopes(cwd: string = process.cwd()): string[] {
 		return [];
 	}
 
-	const workspaces = getWorkspaces(root);
+	const workspaces = getWorkspaceInfos(root);
+	if (!workspaces) {
+		return [];
+	}
 	const scopes: string[] = [];
 
 	for (const workspace of workspaces) {
