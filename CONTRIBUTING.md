@@ -30,12 +30,13 @@ pnpm run test
 ```text
 commitlint/
 ├── src/                              # Source code
-│   ├── bin/                          # CLI entry point
-│   ├── cli/                          # CLI commands
+│   ├── bin/                          # CLI entry point (savvy-commit)
+│   ├── cli/                          # CLI commands (init, check)
 │   ├── config/                       # Configuration factory and schemas
-│   ├── detection/                    # Auto-detection modules
+│   ├── detection/                    # Auto-detection (DCO, scopes, versioning)
 │   ├── formatter/                    # Custom commit message formatter
-│   └── prompt/                       # Prompt configuration
+│   └── prompt/                       # Commitizen adapter and prompt config
+├── docs/                             # User-facing documentation
 ├── lib/
 │   └── configs/                      # Shared configuration files
 └── dist/                             # Build output
@@ -53,7 +54,9 @@ commitlint/
 | `pnpm run test:coverage` | Run tests with coverage report   |
 | `pnpm run lint`          | Check code with Biome            |
 | `pnpm run lint:fix`      | Auto-fix lint issues             |
+| `pnpm run lint:md`       | Check markdown files             |
 | `pnpm run typecheck`     | Type-check the project           |
+| `pnpm run commit`        | Interactive commit (commitizen)  |
 
 ## Code Quality
 
