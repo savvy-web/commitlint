@@ -23,16 +23,22 @@ const HUSKY_HOOK_PATH = ".husky/commit-msg";
 /** Default path for the commitlint config file. */
 const DEFAULT_CONFIG_PATH = "lib/configs/commitlint.config.ts";
 
+/** Begin marker for managed section. */
+const BEGIN_MARKER = "# --- BEGIN SAVVY-COMMIT MANAGED SECTION ---";
+
+/** End marker for managed section. */
+const END_MARKER = "# --- END SAVVY-COMMIT MANAGED SECTION ---";
+
 /**
- * Generate the husky commit-msg hook content.
+ * Generate the managed section content for the commit-msg hook.
  *
  * @param configPath - Path to the commitlint config file
- * @returns Shell script content for the hook
+ * @returns The managed section content (without markers)
  */
-function generateHuskyContent(configPath: string): string {
-	return `#!/usr/bin/env sh
-# Skip in CI environment
-[ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ] && exit 0
+function generateManagedContent(configPath: string): string {
+	return `# DO NOT EDIT between these markers - managed by savvy-commit
+# Skip managed section in CI environment
+if ! { [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; }; then
 
 # Get repo root directory
 ROOT=$(git rev-parse --show-toplevel)
@@ -70,7 +76,79 @@ case "$PM" in
 esac
 
 $CMD commitlint --config "$ROOT/${configPath}" --edit "$1"
+
+fi`;
+}
+
+/**
+ * Generate the full husky commit-msg hook content for a fresh file.
+ *
+ * @param configPath - Path to the commitlint config file
+ * @returns Complete shell script content for the hook
+ */
+function generateFullHookContent(configPath: string): string {
+	return `#!/usr/bin/env sh
+# Commit-msg hook with savvy-commit managed section
+# Custom hooks can go above or below the managed section
+
+${BEGIN_MARKER}
+${generateManagedContent(configPath)}
+${END_MARKER}
 `;
+}
+
+/**
+ * Extract the managed section from existing hook content.
+ *
+ * @param content - The existing hook file content
+ * @returns Object with beforeSection, managedSection, afterSection, and found flag
+ */
+function extractManagedSection(content: string): {
+	beforeSection: string;
+	managedSection: string;
+	afterSection: string;
+	found: boolean;
+} {
+	const beginIndex = content.indexOf(BEGIN_MARKER);
+	const endIndex = content.indexOf(END_MARKER);
+
+	if (beginIndex === -1 || endIndex === -1 || endIndex <= beginIndex) {
+		return {
+			beforeSection: content,
+			managedSection: "",
+			afterSection: "",
+			found: false,
+		};
+	}
+
+	return {
+		beforeSection: content.slice(0, beginIndex),
+		managedSection: content.slice(beginIndex, endIndex + END_MARKER.length),
+		afterSection: content.slice(endIndex + END_MARKER.length),
+		found: true,
+	};
+}
+
+/**
+ * Update existing hook content with new managed section.
+ *
+ * @param existingContent - The existing hook file content
+ * @param configPath - Path to the commitlint config file
+ * @returns Updated hook content
+ */
+function updateManagedSection(existingContent: string, configPath: string): string {
+	const { beforeSection, afterSection, found } = extractManagedSection(existingContent);
+
+	const newManagedSection = `${BEGIN_MARKER}\n${generateManagedContent(configPath)}\n${END_MARKER}`;
+
+	if (found) {
+		// Replace existing managed section
+		return `${beforeSection}${newManagedSection}${afterSection}`;
+	}
+
+	// No existing managed section - append at end
+	const trimmedContent = existingContent.trimEnd();
+	return `${trimmedContent}\n\n${newManagedSection}\n`;
 }
 
 /** Content for the commitlint config file. */
@@ -81,7 +159,7 @@ export default CommitlintConfig.silk();
 
 const forceOption = Options.boolean("force").pipe(
 	Options.withAlias("f"),
-	Options.withDescription("Overwrite existing files"),
+	Options.withDescription("Overwrite entire hook file (not just managed section)"),
 	Options.withDefault(false),
 );
 
@@ -106,8 +184,11 @@ function makeExecutable(path: string) {
  *
  * @remarks
  * Creates the necessary configuration files for commitlint:
- * - `.husky/commit-msg` hook for automatic validation
- * - Commitlint config at the specified path (default: `lib/configs/commitlint.config.ts`)
+ * - `.husky/commit-msg` hook with managed section
+ * - Commitlint config at the specified path
+ *
+ * The managed section feature allows users to add custom hooks above/below
+ * the savvy-commit section without them being overwritten on updates.
  */
 export const initCommand = Command.make("init", { force: forceOption, config: configOption }, ({ force, config }) =>
 	Effect.gen(function* () {
@@ -119,17 +200,37 @@ export const initCommand = Command.make("init", { force: forceOption, config: co
 
 		yield* Effect.log("Initializing commitlint configuration...\n");
 
+		// Handle husky hook
 		const huskyExists = yield* fs.exists(HUSKY_HOOK_PATH);
 
 		if (huskyExists && !force) {
-			yield* Effect.log(`${WARNING} ${HUSKY_HOOK_PATH} already exists (use --force to overwrite)`);
+			// Read existing content and update managed section
+			const existingContent = yield* fs.readFileString(HUSKY_HOOK_PATH);
+			const { found } = extractManagedSection(existingContent);
+
+			const updatedContent = updateManagedSection(existingContent, config);
+			yield* fs.writeFileString(HUSKY_HOOK_PATH, updatedContent);
+			yield* makeExecutable(HUSKY_HOOK_PATH);
+
+			if (found) {
+				yield* Effect.log(`${CHECK_MARK} Updated managed section in ${HUSKY_HOOK_PATH}`);
+			} else {
+				yield* Effect.log(`${CHECK_MARK} Added managed section to ${HUSKY_HOOK_PATH}`);
+			}
+		} else if (huskyExists && force) {
+			// Force: overwrite entire file
+			yield* fs.writeFileString(HUSKY_HOOK_PATH, generateFullHookContent(config));
+			yield* makeExecutable(HUSKY_HOOK_PATH);
+			yield* Effect.log(`${CHECK_MARK} Replaced ${HUSKY_HOOK_PATH} (--force)`);
 		} else {
+			// Create new hook
 			yield* fs.makeDirectory(".husky", { recursive: true });
-			yield* fs.writeFileString(HUSKY_HOOK_PATH, generateHuskyContent(config));
+			yield* fs.writeFileString(HUSKY_HOOK_PATH, generateFullHookContent(config));
 			yield* makeExecutable(HUSKY_HOOK_PATH);
 			yield* Effect.log(`${CHECK_MARK} Created ${HUSKY_HOOK_PATH}`);
 		}
 
+		// Handle config file
 		const configExists = yield* fs.exists(config);
 
 		if (configExists && !force) {
@@ -146,3 +247,5 @@ export const initCommand = Command.make("init", { force: forceOption, config: co
 		yield* Effect.log("\nDone! Install @commitlint/cli if not already installed.");
 	}),
 ).pipe(Command.withDescription("Initialize commitlint configuration and husky hooks"));
+
+export { BEGIN_MARKER, END_MARKER, extractManagedSection, generateManagedContent };

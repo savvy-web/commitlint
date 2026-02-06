@@ -3,9 +3,9 @@ status: current
 module: commitlint
 category: architecture
 created: 2026-02-02
-updated: 2026-02-03
-last-synced: 2026-02-03
-completeness: 85
+updated: 2026-02-06
+last-synced: 2026-02-06
+completeness: 90
 related: []
 dependencies:
   - workspace-tools
@@ -13,6 +13,8 @@ dependencies:
   - "@effect/platform-node"
   - effect
   - zod
+implementation-plans:
+  - ../plans/wondrous-purring-bee.md
 ---
 
 # Commitlint Configuration Package - Architecture
@@ -36,6 +38,9 @@ auto-detection of DCO requirements, workspace scopes, and versioning strategies.
 11. [Testing Strategy](#testing-strategy)
 12. [Future Enhancements](#future-enhancements)
 13. [Related Documentation](#related-documentation)
+
+Note: The Custom Plugin System and Factory Implementation are subsections of
+the Dynamic Configuration API section.
 
 ---
 
@@ -221,58 +226,57 @@ export default CommitlintConfig.silk({
 
 ### Directory Structure
 
+This is a single-package repository. Source code is at the repo root under
+`src/`, not in a `pkgs/` subdirectory.
+
 ```text
-pkgs/commitlint/
-  src/
-    index.ts                    # Main entry: CommitlintConfig factory
-    static.ts                   # Static config export (no detection)
+src/
+  index.ts                      # Main entry: CommitlintConfig class
+  static.ts                     # Static config export (no detection)
+  static.test.ts                # Static config tests
 
-    config/
-      factory.ts                # CommitlintConfig.silk() implementation
-      schema.ts                 # Zod schemas for config options
-      types.ts                  # TypeScript type definitions
-      rules.ts                  # Rule definitions and defaults
+  config/
+    factory.ts                  # createConfig() implementation
+    factory.test.ts             # Factory unit tests
+    schema.ts                   # Zod schemas + ConfigOptions interface
+    types.ts                    # TypeScript type definitions
+    rules.ts                    # Rule definitions and defaults
+    plugins.ts                  # Custom commitlint plugin (silk/ rules)
+    plugins.test.ts             # Plugin rule tests
 
-    detection/
-      index.ts                  # Detection barrel export
-      dco.ts                    # DCO file detection
-      scopes.ts                 # Workspace package scope detection
-      versioning.ts             # Release format detection
+  detection/
+    dco.ts                      # DCO file detection
+    dco.test.ts                 # DCO detection tests
+    scopes.ts                   # Workspace package scope detection
+    versioning.ts               # Release format + strategy detection
+    utils.ts                    # Detection utility helpers
 
-    prompt/
-      index.ts                  # Prompt module exports
-      config.ts                 # Prompt configuration for cz-commitlint
-      emojis.ts                 # Emoji definitions (shortcodes + Unicode)
-      prompter.ts               # Commitizen adapter implementation
+  prompt/
+    index.ts                    # Prompt module exports
+    config.ts                   # Prompt configuration for cz-commitlint
+    config.test.ts              # Prompt config tests
+    emojis.ts                   # Emoji definitions (shortcodes + Unicode)
+    prompter.ts                 # Commitizen adapter implementation
 
-    formatter/
-      index.ts                  # Custom formatter entry
-      format.ts                 # Formatting implementation
-      messages.ts               # Error message templates
+  formatter/
+    index.ts                    # Custom formatter entry
+    format.ts                   # Formatting implementation
+    format.test.ts              # Formatter tests
+    messages.ts                 # Error message templates
 
-    cli/
-      index.ts                  # Effect CLI entry point
-      commands/
-        index.ts                # Commands barrel
-        init.ts                 # Bootstrap husky hooks
-        check.ts                # Validate current setup
-        migrate.ts              # Migrate from other configs
-
-    __tests__/
-      config.test.ts            # Config factory tests
-      detection.test.ts         # Detection tests
-      formatter.test.ts         # Formatter tests
-      integration/
-        lint.test.ts            # Integration with commitlint
+  cli/
+    index.ts                    # Effect CLI entry (runCli, exports)
+    commands/
+      index.ts                  # Commands barrel (init, check)
+      init.ts                   # Bootstrap husky hooks (managed section)
+      check.ts                  # Validate current setup + managed status
 
   bin/
     cli.ts                      # CLI bin entry point
 
-  package.json
-  tsconfig.json
-  rslib.config.ts
-  README.md
-  CLAUDE.md
+package.json
+tsconfig.json
+rslib.config.ts
 ```
 
 ### Package Exports
@@ -314,199 +318,200 @@ pkgs/commitlint/
 
 ### Main Factory
 
+The `CommitlintConfig` is implemented as a class with a private constructor
+and static methods. This prevents instantiation while providing a clean API
+namespace for configuration creation.
+
 ```typescript
 // src/index.ts
-import { z } from "zod";
 import { createConfig } from "./config/factory.js";
+import type { ConfigOptions } from "./config/schema.js";
 import { ConfigOptionsSchema } from "./config/schema.js";
-import type { ConfigOptions, CommitlintUserConfig } from "./config/types.js";
+import type { CommitlintUserConfig } from "./config/types.js";
 
-export type { ConfigOptions, CommitlintUserConfig };
+export type { CommitlintUserConfig, ConfigOptions };
 
-/**
- * Dynamic commitlint configuration factory.
- *
- * @example
- * ```typescript
- * import { CommitlintConfig } from "@savvy-web/commitlint";
- *
- * // Auto-detect everything
- * export default CommitlintConfig.silk();
- *
- * // With overrides
- * export default CommitlintConfig.silk({
- *   dco: true,
- *   emojis: true,
- *   scopes: ["api", "cli"],
- * });
- * ```
- */
-export const CommitlintConfig = {
-  /**
-   * Create a commitlint configuration with auto-detection.
-   *
-   * @param options - Optional configuration overrides
-   * @returns Commitlint UserConfig object
-   */
-  silk(options: ConfigOptions = {}): CommitlintUserConfig {
+export class CommitlintConfig {
+  static silk(options: ConfigOptions = {}): CommitlintUserConfig {
     const validated = ConfigOptionsSchema.parse(options);
     return createConfig(validated);
-  },
-} as const;
+  }
+
+  private constructor() {
+    // Prevent instantiation - use static methods only
+  }
+}
 
 export default CommitlintConfig;
 ```
 
+The module also re-exports all public types, constants, detection utilities,
+and schema definitions for consumers who need fine-grained access.
+
 ### Configuration Schema
+
+The configuration uses a dual-definition pattern: a Zod schema for runtime
+validation and a manually-written `ConfigOptions` interface for better JSDoc
+documentation. The interface is the public-facing type; the schema is used
+internally by `CommitlintConfig.silk()` to validate and apply defaults.
 
 ```typescript
 // src/config/schema.ts
 import { z } from "zod";
 
-/**
- * Release format for the release commit type.
- * - "semver": release: v1.2.3
- * - "packages": release: version packages
- * - "scoped": release(pkg): v1.2.3
- */
 export const ReleaseFormatSchema = z.enum(["semver", "packages", "scoped"]);
+export type ReleaseFormat = z.infer<typeof ReleaseFormatSchema>;
 
-/**
- * Configuration options for CommitlintConfig.silk()
- */
+// Internal: Zod schema for validation and defaults
 export const ConfigOptionsSchema = z.object({
-  /**
-   * Enable DCO signoff requirement.
-   * - true: Always require signoff
-   * - false: Never require signoff
-   * - undefined: Auto-detect from DCO file presence
-   */
   dco: z.boolean().optional(),
-
-  /**
-   * Allowed scopes for commits.
-   * - string[]: Merge with auto-detected scopes
-   * - undefined: Auto-detect from workspace packages
-   */
   scopes: z.array(z.string()).optional(),
-
-  /**
-   * Additional scopes to add (does not replace auto-detected).
-   */
   additionalScopes: z.array(z.string()).optional(),
-
-  /**
-   * Release commit format.
-   * - "semver": release: v1.2.3
-   * - "packages": release: version packages
-   * - "scoped": release(pkg): v1.2.3
-   * - undefined: Auto-detect from versioning strategy
-   */
   releaseFormat: ReleaseFormatSchema.optional(),
-
-  /**
-   * Enable emojis in prompt configuration.
-   * @default false
-   */
   emojis: z.boolean().default(false),
-
-  /**
-   * Maximum body line length.
-   * @default 300
-   */
   bodyMaxLineLength: z.number().positive().default(300),
-
-  /**
-   * Reject markdown formatting in commit messages.
-   * When enabled, rejects headers, numbered lists, code fences,
-   * links, and bold/italic formatting.
-   * Simple unordered lists (- or *) are allowed for readability.
-   * @default true
-   */
   noMarkdown: z.boolean().default(true),
-
-  /**
-   * Working directory for detection.
-   * @default process.cwd()
-   */
   cwd: z.string().optional(),
 });
 
-export type ConfigOptions = z.input<typeof ConfigOptionsSchema>;
+// Public: manually-written interface with rich JSDoc
+export interface ConfigOptions {
+  /** Enable DCO signoff requirement (auto-detected from DCO file if omitted) */
+  dco?: boolean;
+  /** Allowed scopes (replaces auto-detected when provided) */
+  scopes?: string[];
+  /** Additional scopes to merge with auto-detected */
+  additionalScopes?: string[];
+  /** Release commit format (auto-detected from versioning strategy if omitted) */
+  releaseFormat?: ReleaseFormat;
+  /** Enable emojis in prompt configuration @defaultValue false */
+  emojis?: boolean;
+  /** Maximum body line length @defaultValue 300 */
+  bodyMaxLineLength?: number;
+  /** Reject markdown formatting in commit messages @defaultValue true */
+  noMarkdown?: boolean;
+  /** Working directory for auto-detection @defaultValue process.cwd() */
+  cwd?: string;
+}
+
+// Resolved type after Zod parsing applies defaults (internal)
 export type ResolvedConfigOptions = z.output<typeof ConfigOptionsSchema>;
 ```
 
-### Markdown Rules
+The `ConfigOptions` interface is manually written rather than inferred from the
+Zod schema (`z.input<typeof ConfigOptionsSchema>`) to provide richer JSDoc
+documentation including `@remarks`, `@defaultValue`, and `@example` tags that
+Zod schemas cannot express. The Zod schema and interface are kept in sync
+manually.
 
-The `noMarkdown` option (enabled by default) enforces plain-text commit messages
-by rejecting common markdown formatting:
+### Custom Plugin System
 
-**Rejected:**
+The package includes a custom commitlint plugin (`silkPlugin`) defined in
+`src/config/plugins.ts` that provides four rules namespaced under `silk/`.
+These rules are loaded into the commitlint configuration via the `plugins`
+array in the factory output.
+
+```typescript
+// src/config/plugins.ts
+export const silkPlugin = {
+  rules: {
+    "silk/body-no-markdown": bodyNoMarkdown,
+    "silk/subject-no-markdown": subjectNoMarkdown,
+    "silk/body-prose-only": bodyProseOnly,
+    "silk/signed-off-by": signedOffBy,
+  },
+};
+```
+
+**Custom Rules:**
+
+| Rule | Purpose | When Active |
+| :--- | :------ | :---------- |
+| `silk/body-no-markdown` | Rejects markdown formatting in commit body (headers, numbered lists, code fences, links, bold, horizontal rules). Allows simple unordered lists and up to 2 inline code spans. | `noMarkdown: true` (default) |
+| `silk/subject-no-markdown` | Rejects markdown formatting in commit subject line. | `noMarkdown: true` (default) |
+| `silk/body-prose-only` | Stricter rule requiring prose paragraphs only (rejects all list-like structures including `-` and `*`). | Not enabled by default; available for opt-in. |
+| `silk/signed-off-by` | Case-insensitive DCO signoff check. Replaces the built-in `signed-off-by` rule which is case-sensitive. Matches `Signed-off-by:`, `signed-off-by:`, etc. | `dco: true` (or auto-detected) |
+
+The `silk/signed-off-by` rule replaces the built-in commitlint `signed-off-by`
+rule because the built-in version is case-sensitive, which causes false failures
+when tools produce different casing of the trailer.
+
+**Markdown Detection:**
+
+The markdown detection function checks for these patterns:
 
 - Headers (`#`, `##`, etc.)
 - Numbered lists (`1.`, `2.`)
 - Code fences (triple backticks)
+- Bold formatting (`**text**` or `__text__`)
 - Links (`[text](url)`)
-- Bold/italic formatting (`**text**`, `*text*`)
-- Horizontal rules (`---`)
+- Horizontal rules (`---`, `***`, `___`)
+- Excessive inline code (more than 2 backtick-delimited spans)
 
-**Allowed:**
-
-- Simple unordered lists (`- item` or `* item`)
-- Single inline code backticks (up to 2 instances)
-- Plain prose paragraphs
-
-This helps ensure commit messages are readable in terminals, `git log`, and
-tools that don't render markdown.
+Simple unordered lists (`- item` or `* item`) are intentionally allowed for
+readability.
 
 ### Factory Implementation
 
+The factory (`src/config/factory.ts`) assembles the full commitlint
+configuration by combining auto-detected settings with user overrides.
+
+Key implementation details that differ from the earlier design:
+
+1. The `silkPlugin` is loaded via the `plugins` array (not built-in rules)
+2. DCO uses the custom `silk/signed-off-by` rule instead of the built-in one
+3. An environment variable `COMMITLINT_SKIP_DCO` can disable DCO checks
+   (useful for CI PR title validation)
+4. `subject-case` is explicitly disabled (`[0]`) to tolerate AI-generated
+   capitalized subjects
+5. Scopes are sorted after deduplication
+
 ```typescript
 // src/config/factory.ts
-import type { UserConfig } from "@commitlint/types";
 import { detectDCO } from "../detection/dco.js";
 import { detectScopes } from "../detection/scopes.js";
-import { detectReleaseFormat } from "../detection/versioning.js";
-import type { ResolvedConfigOptions } from "./schema.js";
+import { createPromptConfig } from "../prompt/config.js";
+import { silkPlugin } from "./plugins.js";
 import { COMMIT_TYPES } from "./rules.js";
+import type { ResolvedConfigOptions } from "./schema.js";
+import type { CommitlintUserConfig, RulesConfig } from "./types.js";
 
-export function createConfig(options: ResolvedConfigOptions): UserConfig {
+export function createConfig(options: ResolvedConfigOptions): CommitlintUserConfig {
   const cwd = options.cwd ?? process.cwd();
 
-  // Auto-detect settings
-  const dco = options.dco ?? detectDCO(cwd);
+  // COMMITLINT_SKIP_DCO=1 disables DCO check (useful for PR title validation)
+  const skipDco =
+    process.env.COMMITLINT_SKIP_DCO === "1" ||
+    process.env.COMMITLINT_SKIP_DCO === "true";
+  const dco = skipDco ? false : (options.dco ?? detectDCO(cwd));
   const detectedScopes = detectScopes(cwd);
   const scopes = options.scopes ?? detectedScopes;
-  const allScopes = [...new Set([...scopes, ...(options.additionalScopes ?? [])])];
-  const releaseFormat = options.releaseFormat ?? detectReleaseFormat(cwd);
+  const allScopes = [...new Set([...scopes, ...(options.additionalScopes ?? [])])].sort();
 
-  const rules: UserConfig["rules"] = {
-    // Increase body line length for detailed commit messages
+  const rules: RulesConfig = {
     "body-max-line-length": [2, "always", options.bodyMaxLineLength],
-
-    // Extended type enum with release type
-    "type-enum": [2, "always", COMMIT_TYPES],
+    "type-enum": [2, "always", [...COMMIT_TYPES]],
+    "subject-case": [0],  // Allow any case (AI tools often capitalize)
   };
 
-  // Add scope enum if scopes were detected or provided
   if (allScopes.length > 0) {
     rules["scope-enum"] = [2, "always", allScopes];
   }
 
-  // Add DCO signoff rule if enabled
   if (dco) {
-    rules["signed-off-by"] = [2, "always", "Signed-off-by:"];
+    rules["silk/signed-off-by"] = [2, "always"];
+  }
+
+  if (options.noMarkdown) {
+    rules["silk/body-no-markdown"] = [2, "always"];
+    rules["silk/subject-no-markdown"] = [2, "always"];
   }
 
   return {
     extends: ["@commitlint/config-conventional"],
+    plugins: [silkPlugin],
     rules,
-    prompt: {
-      settings: {
-        enableMultipleScopes: true,
-        scopeEnumSeparator: ",",
-      },
-    },
+    prompt: createPromptConfig({ emojis: options.emojis, ...(allScopes.length > 0 ? { scopes: allScopes } : {}) }),
   };
 }
 ```
@@ -619,153 +624,135 @@ export function detectReleaseFormat(cwd: string = process.cwd()): ReleaseFormat 
 
 ### CLI Entry Point
 
+The CLI uses `@effect/cli` with Effect for functional error handling. The
+`runCli()` function is exported for the bin entry point. Only `init` and
+`check` subcommands are currently implemented (no `migrate` command yet).
+
 ```typescript
 // src/cli/index.ts
 import { Command } from "@effect/cli";
 import { NodeContext, NodeRuntime } from "@effect/platform-node";
-import { Effect, Layer } from "effect";
-
-import { initCommand, checkCommand, migrateCommand } from "./commands/index.js";
+import { Effect } from "effect";
+import { checkCommand, initCommand } from "./commands/index.js";
 
 const rootCommand = Command.make("savvy-commit").pipe(
-  Command.withSubcommands([initCommand, checkCommand, migrateCommand]),
+  Command.withSubcommands([initCommand, checkCommand]),
 );
 
 const cli = Command.run(rootCommand, {
   name: "savvy-commit",
-  version: process.env.__PACKAGE_VERSION__,
+  version: process.env.__PACKAGE_VERSION__ ?? "0.0.0",
 });
 
-const main = Effect.suspend(() => cli(process.argv)).pipe(
-  Effect.provide(NodeContext.layer),
-);
+export function runCli(): void {
+  const main = Effect.suspend(() => cli(process.argv)).pipe(
+    Effect.provide(NodeContext.layer),
+  );
+  NodeRuntime.runMain(main);
+}
 
-NodeRuntime.runMain(main);
+export { checkCommand, initCommand, rootCommand };
 ```
 
-### Init Command
+### Init Command - Managed Section Pattern
+
+The init command (`src/cli/commands/init.ts`) uses a **managed section pattern**
+with BEGIN/END markers in the husky hook. This allows users to add custom hooks
+above or below the managed block without them being overwritten on updates.
+
+**Options:**
+
+- `--force` / `-f`: Overwrite the entire hook file, not just the managed section
+- `--config` / `-c`: Relative path for the commitlint config file (default:
+  `lib/configs/commitlint.config.ts`)
+
+**Managed Section Markers:**
+
+```bash
+# --- BEGIN SAVVY-COMMIT MANAGED SECTION ---
+# DO NOT EDIT between these markers - managed by savvy-commit
+# ... managed content ...
+# --- END SAVVY-COMMIT MANAGED SECTION ---
+```
+
+**Key Functions:**
+
+| Function | Purpose |
+| :------- | :------ |
+| `generateManagedContent(configPath)` | Returns the inner content between markers. Includes package manager detection, CI skip guard, and commitlint invocation. |
+| `generateFullHookContent(configPath)` | Wraps managed content with shebang and markers for fresh files. |
+| `extractManagedSection(content)` | Parses existing hook file to find `beforeSection`, `managedSection`, `afterSection`, and a `found` flag. |
+| `updateManagedSection(existingContent, configPath)` | Replaces existing managed block or appends one if not found. |
+
+The markers and helpers are exported for use by the check command:
 
 ```typescript
-// src/cli/commands/init.ts
-import { Command, Options } from "@effect/cli";
-import { FileSystem } from "@effect/platform";
-import { Effect } from "effect";
-
-const forceOption = Options.boolean("force").pipe(
-  Options.withAlias("f"),
-  Options.withDescription("Overwrite existing files"),
-  Options.withDefault(false),
-);
-
-export const initCommand = Command.make(
-  "init",
-  { force: forceOption },
-  ({ force }) =>
-    Effect.gen(function* () {
-      const fs = yield* FileSystem.FileSystem;
-
-      // Create .husky/commit-msg if it doesn't exist
-      const commitMsgPath = ".husky/commit-msg";
-      const commitMsgContent = `#!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
-
-npx --no -- commitlint --edit "$1"
-`;
-
-      const exists = yield* fs.exists(commitMsgPath);
-      if (exists && !force) {
-        yield* Effect.logWarning(`${commitMsgPath} already exists. Use --force to overwrite.`);
-        return;
-      }
-
-      yield* fs.makeDirectory(".husky", { recursive: true });
-      yield* fs.writeFileString(commitMsgPath, commitMsgContent);
-      yield* Effect.log(`Created ${commitMsgPath}`);
-
-      // Create commitlint.config.ts
-      const configPath = "commitlint.config.ts";
-      const configContent = `import { CommitlintConfig } from "@savvy-web/commitlint";
-
-export default CommitlintConfig.silk();
-`;
-
-      const configExists = yield* fs.exists(configPath);
-      if (configExists && !force) {
-        yield* Effect.logWarning(`${configPath} already exists. Use --force to overwrite.`);
-        return;
-      }
-
-      yield* fs.writeFileString(configPath, configContent);
-      yield* Effect.log(`Created ${configPath}`);
-
-      yield* Effect.log("Commitlint configuration initialized successfully!");
-    }),
-).pipe(Command.withDescription("Initialize commitlint configuration and husky hooks"));
+export { BEGIN_MARKER, END_MARKER, extractManagedSection, generateManagedContent };
 ```
 
-### Check Command
+**CI Skip Guard:**
+
+The managed section uses an `if ! { ... }; then ... fi` pattern instead of
+`exit 0` so that user code outside the managed block still runs even in CI:
+
+```bash
+if ! { [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; }; then
+  # ... commitlint invocation ...
+fi
+```
+
+**Three-Branch Hook Handling:**
+
+1. **Exists + no force**: Read existing content, update only the managed
+   section (preserving user code above/below). Logs "Updated managed section"
+   or "Added managed section" as appropriate.
+2. **Exists + force**: Overwrite the entire file with
+   `generateFullHookContent()`. Logs "Replaced (--force)".
+3. **New file**: Create `.husky/` directory and write fresh hook with
+   `generateFullHookContent()`. Logs "Created".
+
+The command also handles the commitlint config file creation, respecting the
+`--config` path option and creating parent directories as needed.
+
+### Check Command - Managed Section Status
+
+The check command (`src/cli/commands/check.ts`) validates the current commitlint
+setup and reports detected settings, including managed section status.
+
+**Imports from init.ts:**
 
 ```typescript
-// src/cli/commands/check.ts
-import { Command } from "@effect/cli";
-import { FileSystem } from "@effect/platform";
-import { Effect } from "effect";
-
-import { detectDCO } from "../../detection/dco.js";
-import { detectScopes } from "../../detection/scopes.js";
-import { detectReleaseFormat } from "../../detection/versioning.js";
-
-export const checkCommand = Command.make("check", {}, () =>
-  Effect.gen(function* () {
-    const fs = yield* FileSystem.FileSystem;
-    const cwd = process.cwd();
-
-    yield* Effect.log("Checking commitlint configuration...\n");
-
-    // Check for config file
-    const configFiles = [
-      "commitlint.config.ts",
-      "commitlint.config.js",
-      "commitlint.config.mjs",
-      ".commitlintrc.js",
-      ".commitlintrc.json",
-    ];
-
-    let foundConfig = false;
-    for (const file of configFiles) {
-      if (yield* fs.exists(file)) {
-        yield* Effect.log(`Config file: ${file}`);
-        foundConfig = true;
-        break;
-      }
-    }
-
-    if (!foundConfig) {
-      yield* Effect.logWarning("No commitlint config file found");
-    }
-
-    // Check husky hook
-    const huskyHook = ".husky/commit-msg";
-    if (yield* fs.exists(huskyHook)) {
-      yield* Effect.log(`Husky hook: ${huskyHook}`);
-    } else {
-      yield* Effect.logWarning("No husky commit-msg hook found");
-    }
-
-    // Show detected settings
-    yield* Effect.log("\nDetected settings:");
-    yield* Effect.log(`  DCO required: ${detectDCO(cwd)}`);
-    yield* Effect.log(`  Release format: ${detectReleaseFormat(cwd)}`);
-
-    const scopes = detectScopes(cwd);
-    if (scopes.length > 0) {
-      yield* Effect.log(`  Detected scopes: ${scopes.join(", ")}`);
-    } else {
-      yield* Effect.log("  Detected scopes: (none)");
-    }
-  }),
-).pipe(Command.withDescription("Check current commitlint configuration"));
+import {
+  BEGIN_MARKER, END_MARKER,
+  extractManagedSection, generateManagedContent,
+} from "./init.js";
 ```
+
+**Key Functions:**
+
+| Function | Purpose |
+| :------- | :------ |
+| `findConfigFile(fs)` | Searches for commitlint config across 16 possible file names in priority order. |
+| `extractConfigPathFromManaged(managedContent)` | Extracts the config path from the `commitlint --config "$ROOT/{path}"` pattern in the managed section. |
+| `checkManagedSectionStatus(existingManaged)` | Compares the current managed section against what would be generated to determine if it is up-to-date. |
+
+**Managed Section Status Reporting:**
+
+The check command reports one of three states for the managed section:
+
+- **Up-to-date**: Managed section matches what `generateManagedContent()` would
+  produce (with whitespace normalization for comparison).
+- **Outdated**: Managed section exists but content has drifted. Suggests running
+  `savvy-commit init` to update.
+- **Not found**: No managed section markers detected. Suggests running
+  `savvy-commit init` to add one.
+
+**Additional Checks:**
+
+- Config file presence (searches 16 possible filenames)
+- Husky hook presence
+- DCO file presence
+- Detected settings (DCO, release format, scopes)
 
 ---
 
@@ -984,13 +971,23 @@ export { default } from "@savvy-web/commitlint/static";
 
 ### Husky Integration
 
-In `.husky/commit-msg`:
+Run `savvy-commit init` to generate `.husky/commit-msg` with a managed section.
+The generated hook auto-detects the package manager and uses the correct
+`dlx`/`npx` equivalent. Users can add custom hooks above or below the managed
+section markers without them being overwritten on subsequent `init` runs.
 
 ```bash
 #!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
+# Custom hooks can go here (above managed section)
 
-npx --no -- commitlint --edit "$1"
+# --- BEGIN SAVVY-COMMIT MANAGED SECTION ---
+# DO NOT EDIT between these markers - managed by savvy-commit
+if ! { [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; }; then
+  # ... package manager detection and commitlint invocation ...
+fi
+# --- END SAVVY-COMMIT MANAGED SECTION ---
+
+# Custom hooks can go here (below managed section)
 ```
 
 ### Formatter Configuration
@@ -1066,7 +1063,7 @@ The `CommitlintConfig.silk()` factory includes full prompt configuration in the
 
 ### Monorepo Template Integration
 
-Update the template's `lib/configs/commitlint.config.ts`:
+Update the consuming project's `lib/configs/commitlint.config.ts`:
 
 ```typescript
 import { CommitlintConfig } from "@savvy-web/commitlint";
@@ -1080,7 +1077,7 @@ export default CommitlintConfig.silk();
 
 ### Unit Tests
 
-**Location:** `pkgs/commitlint/src/__tests__/`
+**Location:** Co-located test files (`src/**/*.test.ts`)
 
 **Config Factory Tests:**
 
@@ -1149,7 +1146,7 @@ describe("detectDCO", () => {
 
 ### Integration Tests
 
-**Location:** `pkgs/commitlint/src/__tests__/integration/`
+**Location:** Co-located test files or dedicated integration test directory
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -1220,8 +1217,10 @@ describe("commitlint integration", () => {
 - [x] Custom commitizen adapter (`prompter` function)
 - [x] Unicode emojis for terminal display
 - [x] Markdown rejection rules (with list allowance)
+- [x] Custom plugin system (`silk/` namespaced rules)
 - [x] TypeScript types
-- [ ] CLI init/check commands
+- [x] CLI init command (managed section pattern)
+- [x] CLI check command (managed section status reporting)
 - [ ] Documentation
 
 ### Phase 2: Enhanced CLI
@@ -1253,10 +1252,14 @@ describe("commitlint integration", () => {
 
 - None yet (this is the first design doc for commitlint)
 
+**Implementation Plans:**
+
+- `.claude/plans/wondrous-purring-bee.md` - Add managed section to
+  savvy-commit init hook (completed)
+
 **Package Documentation:**
 
-- `pkgs/commitlint/README.md` - Package overview (to be created)
-- `pkgs/commitlint/CLAUDE.md` - Development guide (to be created)
+- `README.md` - Package overview (to be created)
 
 **External Resources:**
 
@@ -1269,7 +1272,7 @@ describe("commitlint integration", () => {
 
 ---
 
-**Document Status:** Current - Core implementation complete
+**Document Status:** Current - Core implementation complete, CLI implemented
 
 **Completed:**
 
@@ -1280,11 +1283,14 @@ describe("commitlint integration", () => {
 5. ~~Implement prompt configuration with emojis~~
 6. ~~Implement custom formatter~~
 7. ~~Implement custom commitizen adapter~~
+8. ~~Implement custom plugin system (`silk/` rules)~~
+9. ~~Implement CLI init command (managed section pattern)~~
+10. ~~Implement CLI check command (managed section status)~~
 
 **Next Steps:**
 
-1. Implement CLI init/check commands with Effect
-2. Add comprehensive integration tests
-3. Publish to npm registries
-4. Update monorepo template to use the package
-5. Add shell completions for CLI
+1. Add comprehensive integration tests
+2. Publish to npm registries
+3. Update monorepo template to use the package
+4. Add shell completions for CLI
+5. Implement `migrate` command for converting from other configs
