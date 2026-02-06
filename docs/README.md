@@ -45,10 +45,16 @@ export { default } from "@savvy-web/commitlint/static";
 
 This package requires:
 
-- `@commitlint/cli` ^20.4.1
-- `@commitlint/config-conventional` ^20.4.1
-- `husky` ^9.1.7
+- `@commitlint/cli` (required)
+- `@commitlint/config-conventional` (required)
+- `husky` (required)
 
 Optional peer for interactive commits:
 
-- `commitizen` ^4.3.1 (optional)
+- `commitizen` (optional)
+
+Install all required peers:
+
+```bash
+npm install -D @commitlint/cli @commitlint/config-conventional husky
+```

@@ -9,7 +9,7 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { findProjectRoot, getWorkspaces } from "workspace-tools";
+import { findProjectRoot, getWorkspaceInfos } from "workspace-tools";
 import type { ReleaseFormat } from "../config/schema.js";
 
 /**
@@ -151,7 +151,10 @@ function readChangesetConfig(root: string): ChangesetConfig | null {
  * @internal
  */
 function getAllWorkspacePackages(root: string): WorkspacePackageInfo[] {
-	const workspaces = getWorkspaces(root);
+	const workspaces = getWorkspaceInfos(root);
+	if (!workspaces) {
+		return [];
+	}
 	const packages: WorkspacePackageInfo[] = [];
 
 	for (const workspace of workspaces) {

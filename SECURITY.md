@@ -3,12 +3,18 @@
 ## Supported Versions
 
 | Version | Supported |
-| ------- | --------- |
-| Latest  | Yes       |
+| --- | --- |
+| 0.2.x | Yes |
+| < 0.2 | No |
+
+As a pre-1.0 package, only the latest minor version receives security fixes.
 
 ## Reporting a Vulnerability
 
-To report a security vulnerability, please email [security@savvyweb.systems](mailto:security@savvyweb.systems).
+To report a security vulnerability, please use one of the following methods:
+
+- **Preferred**: [GitHub Security Advisories](https://github.com/savvy-web/commitlint/security/advisories/new)
+- **Email**: [security@savvyweb.systems](mailto:security@savvyweb.systems)
 
 Please include:
 
@@ -17,4 +23,11 @@ Please include:
 - Potential impact
 - Any suggested fixes (optional)
 
-We will acknowledge receipt within 72 hours and provide updates as we investigate. We appreciate responsible disclosure and will credit reporters in release notes unless anonymity is requested.
+## Response Timeline
+
+- **Acknowledgment**: Within 72 hours of report
+- **Initial assessment**: Within 1 week
+- **Fix or mitigation**: Dependent on severity and complexity
+
+We appreciate responsible disclosure and will credit reporters in release notes
+unless anonymity is requested.

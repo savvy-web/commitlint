@@ -17,12 +17,13 @@ rules for every project.
 - **Type-safe** - Full TypeScript support with Zod schema validation
 - **Extended types** - Includes `ai` and `release` commit types beyond
   conventional commits
-- **CLI included** - Bootstrap and validate configurations with `savvy-commit`
+- **Interactive prompts** - Built-in commitizen adapter with emoji support
+- **CLI tooling** - Bootstrap and validate configurations with `savvy-commit`
 
 ## Installation
 
 ```bash
-npm install -D @savvy-web/commitlint @commitlint/cli
+npm install -D @savvy-web/commitlint @commitlint/cli @commitlint/config-conventional husky
 ```
 
 ## Quick Start
@@ -34,57 +35,28 @@ import { CommitlintConfig } from "@savvy-web/commitlint";
 export default CommitlintConfig.silk();
 ```
 
-For static configuration without auto-detection:
+Or use the static configuration without auto-detection:
 
 ```typescript
 // commitlint.config.ts
 export { default } from "@savvy-web/commitlint/static";
 ```
 
-## Interactive Commits
-
-The package includes a built-in [commitizen](https://github.com/commitizen/cz-cli)
-adapter for interactive commit prompts with emoji support.
-
-### Setup
+Bootstrap your project automatically with the CLI:
 
 ```bash
-npm install -D commitizen
+npx savvy-commit init
 ```
-
-Add to `package.json`:
-
-```json
-{
-  "scripts": {
-    "commit": "cz"
-  },
-  "config": {
-    "commitizen": {
-      "path": "@savvy-web/commitlint/prompt"
-    }
-  }
-}
-```
-
-### Usage
-
-```bash
-git add .
-npm run commit
-```
-
-The interactive prompt guides you through:
-
-- Type selection with emojis (🤖 ai, ✨ feat, 🐛 fix, etc.)
-- Scope selection
-- Subject and body input
-- Breaking changes and issue references
 
 ## Documentation
 
 For configuration options, API reference, and advanced usage, see
 [docs/](./docs/).
+
+- [Configuration Guide](./docs/configuration.md) - All configuration options
+- [Auto-Detection](./docs/auto-detection.md) - How automatic detection works
+- [CLI Reference](./docs/cli.md) - Command-line interface usage
+- [Commit Types](./docs/commit-types.md) - Available types and their usage
 
 ## License
 

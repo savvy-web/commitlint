@@ -9,6 +9,7 @@ import { Effect } from "effect";
 import { detectDCO } from "../../detection/dco.js";
 import { detectScopes } from "../../detection/scopes.js";
 import { detectReleaseFormat } from "../../detection/versioning.js";
+import { BEGIN_MARKER, END_MARKER, extractManagedSection, generateManagedContent } from "./init.js";
 
 /** Unicode checkmark symbol. */
 const CHECK_MARK = "\u2713";
@@ -39,6 +40,9 @@ const CONFIG_FILES = [
 	".commitlintrc.mts",
 ] as const;
 
+/** Unicode warning symbol. */
+const WARNING = "\u26A0";
+
 /** Husky commit-msg hook path. */
 const HUSKY_HOOK_PATH = ".husky/commit-msg";
 
@@ -60,6 +64,47 @@ function findConfigFile(fs: FileSystem.FileSystem) {
 		}
 		return null;
 	});
+}
+
+/**
+ * Extract the config path from the managed section.
+ *
+ * @param managedContent - The content between managed section markers
+ * @returns The config path found, or null if not found
+ */
+function extractConfigPathFromManaged(managedContent: string): string | null {
+	// Look for: commitlint --config "$ROOT/{path}"
+	const match = managedContent.match(/commitlint --config "\$ROOT\/([^"]+)"/);
+	return match ? match[1] : null;
+}
+
+/**
+ * Check if the managed section is up-to-date.
+ *
+ * @param existingManaged - The existing managed section content
+ * @returns Object with isUpToDate flag and any differences
+ */
+function checkManagedSectionStatus(existingManaged: string): {
+	isUpToDate: boolean;
+	configPath: string | null;
+	needsUpdate: boolean;
+} {
+	const configPath = extractConfigPathFromManaged(existingManaged);
+
+	if (!configPath) {
+		return { isUpToDate: false, configPath: null, needsUpdate: true };
+	}
+
+	// Generate expected content with same config path
+	const expectedContent = `${BEGIN_MARKER}\n${generateManagedContent(configPath)}\n${END_MARKER}`;
+
+	// Normalize whitespace for comparison
+	const normalizedExisting = existingManaged.trim().replace(/\s+/g, " ");
+	const normalizedExpected = expectedContent.trim().replace(/\s+/g, " ");
+
+	const isUpToDate = normalizedExisting === normalizedExpected;
+
+	return { isUpToDate, configPath, needsUpdate: !isUpToDate };
 }
 
 /**
@@ -89,6 +134,23 @@ export const checkCommand = Command.make("check", {}, () =>
 			yield* Effect.log(`${CROSS_MARK} No husky commit-msg hook found`);
 		}
 
+		// Managed section status
+		if (hasHuskyHook) {
+			const hookContent = yield* fs.readFileString(HUSKY_HOOK_PATH);
+			const { managedSection, found } = extractManagedSection(hookContent);
+
+			if (found) {
+				const status = checkManagedSectionStatus(managedSection);
+				if (status.isUpToDate) {
+					yield* Effect.log(`${CHECK_MARK} Managed section: up-to-date`);
+				} else {
+					yield* Effect.log(`${WARNING} Managed section: outdated (run 'savvy-commit init' to update)`);
+				}
+			} else {
+				yield* Effect.log(`${BULLET} Managed section: not found (run 'savvy-commit init' to add)`);
+			}
+		}
+
 		const hasDCOFile = yield* fs.exists(DCO_FILE_PATH);
 		if (hasDCOFile) {
 			yield* Effect.log(`${CHECK_MARK} DCO file: ${DCO_FILE_PATH}`);
@@ -105,10 +167,11 @@ export const checkCommand = Command.make("check", {}, () =>
 		yield* Effect.log(`  Detected scopes: ${scopeDisplay}`);
 
 		yield* Effect.log("");
-		if (foundConfig) {
-			yield* Effect.log(`${CHECK_MARK} Commitlint is configured correctly.`);
-		} else {
+		const hasIssues = !foundConfig || !hasHuskyHook;
+		if (hasIssues) {
 			yield* Effect.log(`${CROSS_MARK} Commitlint needs configuration. Run: savvy-commit init`);
+		} else {
+			yield* Effect.log(`${CHECK_MARK} Commitlint is configured correctly.`);
 		}
 	}),
 ).pipe(Command.withDescription("Check current commitlint configuration and detected settings"));

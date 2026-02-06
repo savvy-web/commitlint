@@ -13,10 +13,11 @@ import { CommitlintConfig } from "@savvy-web/commitlint";
 
 export default CommitlintConfig.silk({
   dco: true,                    // Override DCO detection
-  scopes: ["api", "cli"],       // Replace auto-detected scopes
-  additionalScopes: ["deps"],   // Add to auto-detected scopes
+  scopes: ["api", "cli"],       // Enforce scope allowlist
+  additionalScopes: ["deps"],   // Merge additional scopes
   releaseFormat: "semver",      // Override versioning detection
   emojis: true,                 // Enable emojis in prompts
+  noMarkdown: true,             // Reject markdown in commits (default)
   bodyMaxLineLength: 500,       // Custom body length (default: 300)
   cwd: "/path/to/repo",         // Working directory for detection
 });
@@ -48,12 +49,13 @@ CommitlintConfig.silk({ dco: false });
 
 | Type | Default |
 | ---- | ------- |
-| `string[] \| undefined` | Auto-detect from workspaces |
+| `string[] \| undefined` | `undefined` (no restriction) |
 
-Replaces the auto-detected scopes with a custom list.
+Enforces a `scope-enum` rule restricting commits to only these scopes.
+When omitted, any scope is allowed.
 
 ```typescript
-// Use only these scopes (ignore auto-detection)
+// Restrict commits to only these scopes
 CommitlintConfig.silk({
   scopes: ["core", "api", "cli", "docs"],
 });
@@ -65,11 +67,13 @@ CommitlintConfig.silk({
 | ---- | ------- |
 | `string[] \| undefined` | `[]` |
 
-Adds scopes to the auto-detected list without replacing them.
+Additional scopes merged with `scopes` (deduplicated and sorted). Can be
+used alone or together with `scopes` to form the full allowlist.
 
 ```typescript
-// Add "deps" and "config" to auto-detected scopes
+// Combine with scopes for a complete allowlist
 CommitlintConfig.silk({
+  scopes: ["core", "api"],
   additionalScopes: ["deps", "config"],
 });
 ```
@@ -119,6 +123,22 @@ Maximum allowed line length in the commit body. Set higher than the standard
 CommitlintConfig.silk({ bodyMaxLineLength: 500 });
 ```
 
+### noMarkdown
+
+| Type | Default |
+| ---- | ------- |
+| `boolean` | `true` |
+
+Rejects markdown formatting in commit messages. When enabled, messages
+containing headers, numbered lists, code fences, links, or bold/italic
+formatting will be rejected. Simple unordered lists (`-` or `*`) are
+allowed for readability.
+
+```typescript
+// Allow markdown in commit messages
+CommitlintConfig.silk({ noMarkdown: false });
+```
+
 ### cwd
 
 | Type | Default |
@@ -130,6 +150,18 @@ different directory than the repository root.
 
 ```typescript
 CommitlintConfig.silk({ cwd: "/path/to/repo" });
+```
+
+## Environment Variables
+
+### COMMITLINT_SKIP_DCO
+
+Set to `"1"` or `"true"` to disable the DCO signoff check at runtime.
+Useful for CI environments that validate PR titles rather than individual
+commit messages.
+
+```bash
+COMMITLINT_SKIP_DCO=1 commitlint --edit
 ```
 
 ## Static Configuration
@@ -162,8 +194,10 @@ The configuration generates these commitlint rules:
 | ---- | ----- | --------- |
 | `body-max-line-length` | Configurable (default 300) | Always |
 | `type-enum` | Extended type list | Always |
-| `scope-enum` | Detected/provided scopes | When scopes exist |
-| `signed-off-by` | `Signed-off-by:` | When DCO enabled |
+| `scope-enum` | Provided scopes | When scopes or additionalScopes set |
+| `silk/signed-off-by` | `Signed-off-by:` | When DCO enabled |
+| `silk/body-no-markdown` | Reject markdown in body | When noMarkdown enabled |
+| `silk/subject-no-markdown` | Reject markdown in subject | When noMarkdown enabled |
 | `subject-case` | Disabled | Always (allows AI-style capitalization) |
 
 ## Validation
