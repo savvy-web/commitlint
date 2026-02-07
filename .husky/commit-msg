@@ -1,14 +1,6 @@
-#!/bin/sh
-
-# Re-exec with zsh if not already running in zsh (for GUI git clients like GitKraken)
-if [ -z "$ZSH_VERSION" ]; then
-  exec /bin/zsh "$0" "$@"
-fi
-
-# Ensure pnpm is in PATH for GUI git clients
-# Source nvm to get access to node/pnpm
-source ~/.zshenv
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+#!/usr/bin/env sh
+# Commit-msg hook with savvy-commit managed section
+# Custom hooks can go above or below the managed section
 
 # --- BEGIN SAVVY-COMMIT MANAGED SECTION ---
 # DO NOT EDIT between these markers - managed by savvy-commit
@@ -44,9 +36,9 @@ detect_pm() {
 # Run commitlint via the detected package manager
 PM=$(detect_pm)
 case "$PM" in
-  pnpm) pnpm exec commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1" ;;
-  yarn) yarn exec commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1" ;;
-  bun)  bunx commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1" ;;
+  pnpm) pnpm dlx commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1" ;;
+  yarn) yarn dlx commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1" ;;
+  bun)  bun x commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1" ;;
   *)    npx --no -- commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1" ;;
 esac
 

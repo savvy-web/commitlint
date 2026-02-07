@@ -13,10 +13,12 @@ export default NodeLibraryBuilder.create({
 	transform({ pkg }) {
 		delete pkg.devDependencies;
 		delete pkg.bundleDependencies;
-		delete pkg.scripts;
 		delete pkg.publishConfig;
 		delete pkg.devEngines;
 		delete pkg.config;
+		pkg.scripts = {
+			postinstall: "savvy-commit check --quiet || true",
+		};
 		return pkg;
 	},
 });
