@@ -24,7 +24,7 @@ export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 
 # --- BEGIN SAVVY-LINT MANAGED SECTION ---
 # DO NOT EDIT between these markers - managed by savvy-lint
-# Skip managed section in CI environment
+# Skip in CI environment
 if ! { [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; }; then
 
 # Get repo root directory
@@ -53,7 +53,7 @@ detect_pm() {
   fi
 }
 
-# Run lint-staged via the detected package manager
+# Run lint-staged with the detected package manager
 PM=$(detect_pm)
 case "$PM" in
   pnpm) pnpm exec lint-staged --config "$ROOT/lib/configs/lint-staged.config.ts" ;;
