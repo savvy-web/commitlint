@@ -1,5 +1,15 @@
 # @savvy-web/commitlint
 
+## 0.3.1
+
+### Patch Changes
+
+- d106029: Update dependencies:
+
+  **Dependencies:**
+
+  - @savvy-web/lint-staged: ^0.2.2 → ^0.3.1
+
 ## 0.3.0
 
 ### Minor Changes
