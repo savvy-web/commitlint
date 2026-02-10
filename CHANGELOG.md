@@ -1,5 +1,15 @@
 # @savvy-web/commitlint
 
+## 0.3.2
+
+### Patch Changes
+
+- 71ddb1a: Update dependencies:
+
+  **Dependencies:**
+  - @savvy-web/lint-staged: ^0.3.1 → ^0.4.0
+  - @savvy-web/rslib-builder: ^0.12.0 → ^0.12.1
+
 ## 0.3.1
 
 ### Patch Changes
@@ -7,7 +17,6 @@
 - d106029: Update dependencies:
 
   **Dependencies:**
-
   - @savvy-web/lint-staged: ^0.2.2 → ^0.3.1
 
 ## 0.3.0
@@ -33,7 +42,6 @@
 ### Minor Changes
 
 - 92cd2f7: Add interactive commit prompt with commitizen adapter
-
   - Add built-in commitizen adapter at `@savvy-web/commitlint/prompt` with `prompter` function
   - Use Unicode emojis for terminal display (🤖, ✨, 🐛, etc.)
   - Allow simple unordered lists (`-` and `*`) in commit bodies while still rejecting other markdown
@@ -45,7 +53,6 @@
 ### Patch Changes
 
 - 6d18e93: Update husky commit-msg hook template for modern Husky compatibility
-
   - Remove deprecated `dirname` sourcing (no longer needed in Husky v9+)
   - Add CI environment skip for GitHub Actions
   - Use `git rev-parse --show-toplevel` for reliable repo root detection
