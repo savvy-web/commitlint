@@ -1,5 +1,16 @@
 # @savvy-web/commitlint
 
+## 0.3.3
+
+### Patch Changes
+
+- e4524ff: ## Features
+  - Support for @savvy-web/changesets
+- 00dffc2: ## Dependencies
+  - @savvy-web/rslib-builder: ^0.12.1 → ^0.12.2
+- 5a32404: ## Dependencies
+  - @savvy-web/rslib-builder: ^0.12.2 → ^0.14.1
+
 ## 0.3.2
 
 ### Patch Changes
