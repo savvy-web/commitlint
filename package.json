@@ -74,13 +74,11 @@
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
-		"@changesets/cli": "catalog:silk",
 		"@commitlint/cli": "catalog:silk",
 		"@commitlint/config-conventional": "catalog:silk",
 		"@commitlint/lint": "^20.4.1",
 		"@commitlint/types": "^20.4.0",
-		"@microsoft/api-extractor": "catalog:silk",
-		"@rslib/core": "catalog:silk",
+		"@savvy-web/changesets": "^0.1.1",
 		"@savvy-web/lint-staged": "^0.4.0",
 		"@savvy-web/rslib-builder": "^0.14.1",
 		"@types/node": "catalog:silk",
