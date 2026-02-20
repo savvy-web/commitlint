@@ -16,14 +16,20 @@ import { z } from "zod";
  *
  * @internal
  */
-export const ReleaseFormatSchema = z.enum(["semver", "packages", "scoped"]);
-
 /**
- * Release format type derived from the schema.
+ * Release format type for the release commit type.
+ *
+ * @remarks
+ * Determines how release commits are formatted based on versioning strategy:
+ * - `semver`: `release: v1.2.3` (for single/fixed-group versioning)
+ * - `packages`: `release: version packages` (for independent versioning)
+ * - `scoped`: `release(pkg): v1.2.3` (for per-package releases)
  *
  * @public
  */
-export type ReleaseFormat = z.infer<typeof ReleaseFormatSchema>;
+export type ReleaseFormat = "semver" | "packages" | "scoped";
+
+export const ReleaseFormatSchema = z.enum(["semver", "packages", "scoped"]);
 
 /**
  * Zod schema for validating {@link ConfigOptions}.

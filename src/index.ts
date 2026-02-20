@@ -33,24 +33,16 @@ export type { CommitType } from "./config/rules.js";
 // Commit type constants
 export { COMMIT_TYPES, COMMIT_TYPE_DEFINITIONS } from "./config/rules.js";
 export type { ReleaseFormat } from "./config/schema.js";
-export type { CommitTypeDefinition } from "./config/types.js";
-// Detection utilities
-export { detectDCO } from "./detection/dco.js";
-export { detectScopes } from "./detection/scopes.js";
 export type {
-	ChangesetConfig,
-	PackageAccess,
-	VersioningStrategy,
-	VersioningStrategyType,
-	WorkspacePackageInfo,
-} from "./detection/versioning.js";
-export {
-	detectReleaseFormat,
-	detectVersioningStrategy,
-	getPackageTag,
-	isPackagePublishable,
-} from "./detection/versioning.js";
-
+	CommitTypeDefinition,
+	CommitlintPlugin,
+	PromptConfig,
+	PromptSettings,
+	RuleApplicability,
+	RuleConfigTuple,
+	RuleSeverity,
+	RulesConfig,
+} from "./config/types.js";
 /**
  * Dynamic commitlint configuration factory.
  *
