@@ -66,7 +66,7 @@ const staticConfig: CommitlintUserConfig = {
 
 export default staticConfig;
 
-export type { CommitType, CommitTypeDefinition } from "./config/rules.js";
+export type { CommitType } from "./config/rules.js";
 // Re-export useful constants for manual configuration
 export {
 	COMMIT_TYPES,
@@ -76,6 +76,7 @@ export {
 } from "./config/rules.js";
 // Re-export types for public API
 export type {
+	CommitTypeDefinition,
 	CommitlintPlugin,
 	CommitlintUserConfig,
 	PromptConfig,

@@ -31,6 +31,51 @@ export interface TypeEnumEntry {
 }
 
 /**
+ * Question definition for the prompt configuration.
+ *
+ * @public
+ */
+export interface PromptQuestion {
+	/** Human-readable prompt description */
+	description: string;
+
+	/** Enum restriction for values (type enum or scope list) */
+	enum?: Record<CommitType, TypeEnumEntry> | string[];
+}
+
+/**
+ * Resolved prompt configuration returned by {@link createPromptConfig}.
+ *
+ * @remarks
+ * This is the fully-resolved shape with all fields populated.
+ * Compatible with commitlint's `PromptConfig` interface.
+ *
+ * @public
+ */
+export interface ResolvedPromptConfig {
+	/** Prompt settings for scope behavior */
+	settings: {
+		enableMultipleScopes: boolean;
+		scopeEnumSeparator: string;
+	};
+
+	/** Human-readable prompt messages */
+	messages: Record<string, string>;
+
+	/** Question definitions keyed by question name */
+	questions: {
+		type: { description: string; enum: Record<CommitType, TypeEnumEntry> };
+		scope: { description: string; enum?: string[] };
+		subject: { description: string };
+		body: { description: string };
+		isBreaking: { description: string };
+		breakingBody: { description: string };
+		isIssueAffected: { description: string };
+		issuesBody: { description: string };
+	};
+}
+
+/**
  * Options for creating a prompt configuration.
  *
  * @public
@@ -97,7 +142,7 @@ export function createTypeEnum(emojis: boolean): Record<CommitType, TypeEnumEntr
  * const promptConfig = createPromptConfig({ emojis: true });
  * ```
  */
-export function createPromptConfig(options: PromptConfigOptions = {}) {
+export function createPromptConfig(options: PromptConfigOptions = {}): ResolvedPromptConfig {
 	const { emojis = false, scopes } = options;
 
 	const scopeQuestion: { description: string; enum?: string[] } = {

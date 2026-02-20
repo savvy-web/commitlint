@@ -27,30 +27,14 @@ import type { ConfigOptions } from "./config/schema.js";
 import { ConfigOptionsSchema } from "./config/schema.js";
 import type { CommitlintUserConfig } from "./config/types.js";
 
-// Re-export types for public API
+// Primary API types
 export type { CommitlintUserConfig, ConfigOptions };
 export type { CommitType } from "./config/rules.js";
-// Re-export constants for public API
-export {
-	COMMIT_TYPES,
-	COMMIT_TYPE_DEFINITIONS,
-	DCO_SIGNOFF_TEXT,
-	DEFAULT_BODY_MAX_LINE_LENGTH,
-} from "./config/rules.js";
-export type { ReleaseFormat, ResolvedConfigOptions } from "./config/schema.js";
-export { ConfigOptionsSchema, ReleaseFormatSchema } from "./config/schema.js";
-export type {
-	CommitTypeDefinition,
-	CommitlintPlugin,
-	PromptConfig,
-	PromptSettings,
-	RuleApplicability,
-	RuleConfig,
-	RuleConfigTuple,
-	RuleSeverity,
-	RulesConfig,
-} from "./config/types.js";
-// Re-export detection utilities for public API
+// Commit type constants
+export { COMMIT_TYPES, COMMIT_TYPE_DEFINITIONS } from "./config/rules.js";
+export type { ReleaseFormat } from "./config/schema.js";
+export type { CommitTypeDefinition } from "./config/types.js";
+// Detection utilities
 export { detectDCO } from "./detection/dco.js";
 export { detectScopes } from "./detection/scopes.js";
 export type {

@@ -11,7 +11,8 @@
 import { Command } from "@effect/cli";
 import { NodeContext, NodeRuntime } from "@effect/platform-node";
 import { Effect } from "effect";
-import { checkCommand, initCommand } from "./commands/index.js";
+import { checkCommand } from "./commands/check.js";
+import { initCommand } from "./commands/init.js";
 
 /** Root command for the CLI with all subcommands. */
 const rootCommand = Command.make("savvy-commit").pipe(Command.withSubcommands([initCommand, checkCommand]));

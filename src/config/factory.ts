@@ -53,15 +53,13 @@ export function createConfig(options: ResolvedConfigOptions): CommitlintUserConf
 		rules["silk/subject-no-markdown"] = [2, "always"];
 	}
 
-	const promptOptions = { emojis: options.emojis };
-	if (allScopes.length > 0) {
-		Object.assign(promptOptions, { scopes: allScopes });
-	}
-
 	return {
 		extends: ["@commitlint/config-conventional"],
 		plugins: [silkPlugin],
 		rules,
-		prompt: createPromptConfig(promptOptions),
+		prompt: createPromptConfig({
+			emojis: options.emojis,
+			...(allScopes.length > 0 && { scopes: allScopes }),
+		}),
 	};
 }

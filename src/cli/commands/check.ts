@@ -9,10 +9,8 @@ import { Effect } from "effect";
 import { detectDCO } from "../../detection/dco.js";
 import { detectScopes } from "../../detection/scopes.js";
 import { detectReleaseFormat } from "../../detection/versioning.js";
+import { CHECK_MARK, HUSKY_HOOK_PATH, WARNING } from "./constants.js";
 import { BEGIN_MARKER, END_MARKER, extractManagedSection, generateManagedContent } from "./init.js";
-
-/** Unicode checkmark symbol. */
-const CHECK_MARK = "\u2713";
 
 /** Unicode cross symbol. */
 const CROSS_MARK = "\u2717";
@@ -39,12 +37,6 @@ const CONFIG_FILES = [
 	".commitlintrc.cts",
 	".commitlintrc.mts",
 ] as const;
-
-/** Unicode warning symbol. */
-const WARNING = "\u26A0";
-
-/** Husky commit-msg hook path. */
-const HUSKY_HOOK_PATH = ".husky/commit-msg";
 
 /** DCO file path. */
 const DCO_FILE_PATH = "DCO";

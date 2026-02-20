@@ -7,27 +7,19 @@ import { dirname } from "node:path";
 import { Command, Options } from "@effect/cli";
 import { FileSystem } from "@effect/platform";
 import { Effect } from "effect";
-
-/** Unicode checkmark symbol. */
-const CHECK_MARK = "\u2713";
-
-/** Unicode warning symbol. */
-const WARNING = "\u26A0";
+import { CHECK_MARK, HUSKY_HOOK_PATH, WARNING } from "./constants.js";
 
 /** Executable file permission mode. */
 const EXECUTABLE_MODE = 0o755;
-
-/** Path for the husky commit-msg hook. */
-const HUSKY_HOOK_PATH = ".husky/commit-msg";
 
 /** Default path for the commitlint config file. */
 const DEFAULT_CONFIG_PATH = "lib/configs/commitlint.config.ts";
 
 /** Begin marker for managed section. */
-const BEGIN_MARKER = "# --- BEGIN SAVVY-COMMIT MANAGED SECTION ---";
+export const BEGIN_MARKER = "# --- BEGIN SAVVY-COMMIT MANAGED SECTION ---";
 
 /** End marker for managed section. */
-const END_MARKER = "# --- END SAVVY-COMMIT MANAGED SECTION ---";
+export const END_MARKER = "# --- END SAVVY-COMMIT MANAGED SECTION ---";
 
 /**
  * Generate the managed section content for the commit-msg hook.
@@ -35,7 +27,7 @@ const END_MARKER = "# --- END SAVVY-COMMIT MANAGED SECTION ---";
  * @param configPath - Path to the commitlint config file
  * @returns The managed section content (without markers)
  */
-function generateManagedContent(configPath: string): string {
+export function generateManagedContent(configPath: string): string {
 	return `# DO NOT EDIT between these markers - managed by savvy-commit
 # Skip managed section in CI environment
 if ! { [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; }; then
@@ -101,7 +93,7 @@ ${END_MARKER}
  * @param content - The existing hook file content
  * @returns Object with beforeSection, managedSection, afterSection, and found flag
  */
-function extractManagedSection(content: string): {
+export function extractManagedSection(content: string): {
 	beforeSection: string;
 	managedSection: string;
 	afterSection: string;
@@ -245,5 +237,3 @@ export const initCommand = Command.make("init", { force: forceOption, config: co
 		yield* Effect.log("\nDone! Install @commitlint/cli if not already installed.");
 	}),
 ).pipe(Command.withDescription("Initialize commitlint configuration and husky hooks"));
-
-export { BEGIN_MARKER, END_MARKER, extractManagedSection, generateManagedContent };
