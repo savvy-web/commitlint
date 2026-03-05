@@ -1,5 +1,11 @@
 # @savvy-web/commitlint
 
+## 0.4.0
+
+### Features
+
+* [`a8cc358`](https://github.com/savvy-web/commitlint/commit/a8cc358330a804b1d7fecee093e96666da6fc39c) Reverts control of peerDependencies to package
+
 ## 0.3.4
 
 ### Dependencies
