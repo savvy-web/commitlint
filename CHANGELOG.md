@@ -1,5 +1,13 @@
 # @savvy-web/commitlint
 
+## 0.4.1
+
+### Dependencies
+
+* [`0d6fe25`](https://github.com/savvy-web/commitlint/commit/0d6fe259b813d831ab556fbd218911690f13bd1a) @savvy-web/lint-staged: ^0.4.6 → ^0.5.0
+* @savvy-web/rslib-builder: ^0.15.0 → ^0.16.0
+* @savvy-web/vitest: ^0.1.0 → ^0.2.0
+
 ## 0.4.0
 
 ### Features
