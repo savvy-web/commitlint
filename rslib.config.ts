@@ -17,9 +17,7 @@ export default NodeLibraryBuilder.create({
 		delete pkg.packageManager;
 		delete pkg.devEngines;
 		delete pkg.config;
-		pkg.scripts = {
-			postinstall: "savvy-commit check --quiet || true",
-		};
+		delete pkg.scripts;
 		return pkg;
 	},
 });
