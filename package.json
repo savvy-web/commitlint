@@ -66,9 +66,9 @@
 		}
 	},
 	"dependencies": {
-		"@effect/cli": "^0.73.2",
-		"@effect/platform": "^0.94.3",
-		"@effect/platform-node": "^0.104.1",
+		"@effect/cli": "^0.74.0",
+		"@effect/platform": "^0.95.0",
+		"@effect/platform-node": "^0.105.0",
 		"effect": "^3.19.18",
 		"workspace-tools": "^0.41.0",
 		"zod": "^4.3.6"
