@@ -66,10 +66,15 @@
 		}
 	},
 	"dependencies": {
-		"@effect/cli": "^0.73.2",
-		"@effect/platform": "^0.94.3",
-		"@effect/platform-node": "^0.104.1",
-		"effect": "^3.19.18",
+		"@effect/cli": "catalog:silk",
+		"@effect/cluster": "catalog:silk",
+		"@effect/platform": "catalog:silk",
+		"@effect/platform-node": "catalog:silk",
+		"@effect/printer": "catalog:silk",
+		"@effect/printer-ansi": "catalog:silk",
+		"@effect/rpc": "catalog:silk",
+		"@effect/sql": "catalog:silk",
+		"effect": "catalog:silk",
 		"workspace-tools": "^0.41.0",
 		"zod": "^4.3.6"
 	},
