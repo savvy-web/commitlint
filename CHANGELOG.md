@@ -1,5 +1,20 @@
 # @savvy-web/commitlint
 
+## 0.4.2
+
+### Bug Fixes
+
+* [`f1ee488`](https://github.com/savvy-web/commitlint/commit/f1ee4884d94e1f8be5a478cb896527e37e490c73) Migrate Effect dependencies to `catalog:silk` for centralized version management via `@savvy-web/pnpm-plugin-silk`. Adds required transitive peer dependencies (`@effect/cluster`, `@effect/printer`, `@effect/printer-ansi`, `@effect/rpc`, `@effect/sql`). Closes #66.
+
+### Dependencies
+
+* | [`bccdea2`](https://github.com/savvy-web/commitlint/commit/bccdea243ce388fcf4eac041a4850efac31b0d4d) | Dependency | Type    | Action  | From    | To |
+  | :--------------------------------------------------------------------------------------------------- | :--------- | :------ | :------ | :------ | -- |
+  | @savvy-web/changesets                                                                                | dependency | updated | ^0.4.1  | ^0.5.1  |    |
+  | @savvy-web/lint-staged                                                                               | dependency | updated | ^0.5.0  | ^0.6.0  |    |
+  | @savvy-web/rslib-builder                                                                             | dependency | updated | ^0.16.0 | ^0.18.2 |    |
+  | @savvy-web/vitest                                                                                    | dependency | updated | ^0.2.0  | ^0.2.1  |    |
+
 ## 0.4.1
 
 ### Bug Fixes
