@@ -1,5 +1,16 @@
 # @savvy-web/commitlint
 
+## 0.4.3
+
+### Dependencies
+
+* | [`be5e7e6`](https://github.com/savvy-web/commitlint/commit/be5e7e6989eec7bb81a9a7bc851df15e4a552fff) | Dependency | Type    | Action  | From    | To |
+  | :--------------------------------------------------------------------------------------------------- | :--------- | :------ | :------ | :------ | -- |
+  | @savvy-web/changesets                                                                                | dependency | updated | ^0.5.1  | ^0.5.3  |    |
+  | @savvy-web/lint-staged                                                                               | dependency | updated | ^0.6.0  | ^0.6.2  |    |
+  | @savvy-web/rslib-builder                                                                             | dependency | updated | ^0.18.2 | ^0.19.0 |    |
+  | @savvy-web/vitest                                                                                    | dependency | updated | ^0.2.1  | ^0.3.0  |    |
+
 ## 0.4.2
 
 ### Bug Fixes
