@@ -53,7 +53,16 @@ jobs:
           config-dependencies: |
             @savvy-web/pnpm-plugin-silk
           dependencies: |
+            @commitlint/cli
+            @commitlint/config-conventional
             @savvy-web/*
+            commitizen
+            husky
+          peer-minor: |
+            @commitlint/cli
+            @commitlint/config-conventional
+            husky
+            commitizen
           run: |
             pnpm savvy-lint init
             pnpm savvy-changesets init

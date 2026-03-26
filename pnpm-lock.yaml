@@ -33,10 +33,6 @@ catalogs:
     effect:
       specifier: ^3.21.0
       version: 3.21.0
-  silkPeers:
-    husky:
-      specifier: ^9.1.0
-      version: 9.1.7
 
 overrides:
   '@isaacs/brace-expansion': ^5.0.1
@@ -78,9 +74,6 @@ importers:
       effect:
         specifier: catalog:silk
         version: 3.21.0
-      husky:
-        specifier: catalog:silkPeers
-        version: 9.1.7
       workspace-tools:
         specifier: ^0.41.0
         version: 0.41.0
@@ -115,6 +108,9 @@ importers:
       commitizen:
         specifier: ^4.3.1
         version: 4.3.1(@types/node@25.5.0)(typescript@5.9.3)
+      husky:
+        specifier: ^9.1.7
+        version: 9.1.7
 
 packages:
 
