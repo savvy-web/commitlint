@@ -27,8 +27,6 @@ import type { ConfigOptions } from "./config/schema.js";
 import { ConfigOptionsSchema } from "./config/schema.js";
 import type { CommitlintUserConfig } from "./config/types.js";
 
-// Primary API types
-export type { CommitlintUserConfig, ConfigOptions };
 export type { CommitType } from "./config/rules.js";
 // Commit type constants
 export { COMMIT_TYPES, COMMIT_TYPE_DEFINITIONS } from "./config/rules.js";
@@ -43,6 +41,8 @@ export type {
 	RuleSeverity,
 	RulesConfig,
 } from "./config/types.js";
+// Primary API types
+export type { CommitlintUserConfig, ConfigOptions };
 /**
  * Dynamic commitlint configuration factory.
  *
