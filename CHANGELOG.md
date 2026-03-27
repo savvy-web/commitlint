@@ -1,5 +1,23 @@
 # @savvy-web/commitlint
 
+## 0.4.4
+
+### Bug Fixes
+
+* [`92f5d91`](https://github.com/savvy-web/commitlint/commit/92f5d9144c6da5de42cd29e94fcecc9b301d8ab6) Pins workspace-tools to 0.41.0 due to breaking change introduced upstream.
+
+### Dependencies
+
+* | [`eca1694`](https://github.com/savvy-web/commitlint/commit/eca16942ed33da3b6bfe14922b0362096e5441dc) | Dependency     | Type    | Action  | From    | To |
+  | :--------------------------------------------------------------------------------------------------- | :------------- | :------ | :------ | :------ | -- |
+  | @commitlint/cli                                                                                      | devDependency  | updated | ^20.4.3 | ^20.5.0 |    |
+  | @commitlint/config-conventional                                                                      | devDependency  | updated | ^20.4.3 | ^20.5.0 |    |
+  | @savvy-web/changesets                                                                                | devDependency  | updated | ^0.5.3  | ^0.7.0  |    |
+  | @savvy-web/lint-staged                                                                               | devDependency  | updated | ^0.6.2  | ^0.6.4  |    |
+  | @savvy-web/vitest                                                                                    | devDependency  | updated | ^0.3.0  | ^1.0.1  |    |
+  | @commitlint/cli                                                                                      | peerDependency | updated | ^20.4.3 | ^20.5.0 |    |
+  | @commitlint/config-conventional                                                                      | peerDependency | updated | ^20.4.3 | ^20.5.0 |    |
+
 ## 0.4.3
 
 ### Dependencies
