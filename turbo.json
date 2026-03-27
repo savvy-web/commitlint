@@ -17,7 +17,7 @@
 				"README.md",
 				"LICENSE"
 			],
-			"outputLogs": "full",
+			"outputLogs": "errors-only",
 			"outputs": ["dist/dev/**", ".rslib/declarations/dev/**"]
 		},
 		"build:prod": {
@@ -41,7 +41,19 @@
 		"types:check": {
 			"cache": true,
 			"dependsOn": [],
-			"inputs": ["*.ts", "lib/**/*.ts", "lib/**/*.mts"],
+			"inputs": [
+				"$TURBO_DEFAULT$",
+				"$TURBO_ROOT$/package.json",
+				"$TURBO_ROOT$/pnpm-lock.yaml",
+				"$TURBO_ROOT$/pnpm-workspace.yaml",
+				"package.json",
+				"rslib.config.ts",
+				"tsconfig.json",
+				"lib/**/*.ts",
+				"lib/**/*.mts",
+				"src/**/*.ts",
+				"*.ts"
+			],
 			"outputLogs": "errors-only",
 			"outputs": []
 		}

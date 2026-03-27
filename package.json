@@ -39,11 +39,11 @@
 		"savvy-commit": "./src/bin/cli.ts"
 	},
 	"scripts": {
-		"build": "turbo run build:dev build:prod --log-order=grouped",
+		"build": "turbo run build:dev build:prod --log-order=grouped --log-prefix=none",
 		"build:dev": "rslib build --config-loader native --env-mode dev",
 		"build:inspect": "rslib inspect --config-loader native --env-mode npm --verbose",
 		"build:prod": "rslib build --config-loader native --env-mode npm",
-		"ci:build": "CI=\"true\" turbo run build:dev build:prod --log-order=grouped --output-logs=full",
+		"ci:build": "CI=\"true\" turbo run build:dev build:prod --log-order=grouped --output-logs=full --log-prefix=none",
 		"ci:test": "CI=\"true\" vitest run --coverage",
 		"ci:version": "savvy-changesets version && biome format --write .",
 		"commit": "cz",
@@ -75,7 +75,7 @@
 		"@effect/rpc": "catalog:silk",
 		"@effect/sql": "catalog:silk",
 		"effect": "catalog:silk",
-		"workspace-tools": "^0.41.0",
+		"workspace-tools": "0.41.0",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
@@ -83,9 +83,9 @@
 		"@commitlint/config-conventional": "^20.5.0",
 		"@commitlint/lint": "^20.4.3",
 		"@commitlint/types": "^20.4.3",
-		"@savvy-web/changesets": "^0.7.0",
-		"@savvy-web/lint-staged": "^0.6.4",
-		"@savvy-web/rslib-builder": "^0.19.0",
+		"@savvy-web/changesets": "^0.7.1",
+		"@savvy-web/lint-staged": "^0.6.5",
+		"@savvy-web/rslib-builder": "^0.19.1",
 		"@savvy-web/vitest": "^1.0.1",
 		"commitizen": "^4.3.1",
 		"husky": "^9.1.7"
