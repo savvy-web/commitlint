@@ -1,5 +1,13 @@
 # @savvy-web/commitlint
 
+## 0.4.5
+
+### Dependencies
+
+* | [`7ce01c0`](https://github.com/savvy-web/commitlint/commit/7ce01c0e57121a76a6ab39dfd6608686531e3aae) | Dependency    | Type    | Action | From   | To |
+  | :--------------------------------------------------------------------------------------------------- | :------------ | :------ | :----- | :----- | -- |
+  | @savvy-web/vitest                                                                                    | devDependency | updated | ^1.0.1 | ^1.1.0 |    |
+
 ## 0.4.4
 
 ### Bug Fixes
