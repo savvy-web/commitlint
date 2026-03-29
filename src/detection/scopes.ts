@@ -4,7 +4,8 @@
  * @internal
  */
 import { Effect } from "effect";
-import { WorkspaceDiscovery, type WorkspaceDiscoveryError } from "workspaces-effect";
+import type { WorkspaceDiscoveryError } from "workspaces-effect";
+import { WorkspaceDiscovery } from "workspaces-effect";
 
 /**
  * Extract scope-friendly name from a package name.
@@ -33,22 +34,20 @@ function extractScopeName(name: string): string | undefined {
  *
  * @public
  */
-export const detectScopes: Effect.Effect<
-	string[],
-	WorkspaceDiscoveryError,
-	WorkspaceDiscovery
-> = Effect.gen(function* () {
-	const discovery = yield* WorkspaceDiscovery;
-	const packages = yield* discovery.listPackages();
+export const detectScopes: Effect.Effect<string[], WorkspaceDiscoveryError, WorkspaceDiscovery> = Effect.gen(
+	function* () {
+		const discovery = yield* WorkspaceDiscovery;
+		const packages = yield* discovery.listPackages();
 
-	const scopes: string[] = [];
+		const scopes: string[] = [];
 
-	for (const pkg of packages) {
-		const scopeName = extractScopeName(pkg.name);
-		if (scopeName) {
-			scopes.push(scopeName);
+		for (const pkg of packages) {
+			const scopeName = extractScopeName(pkg.name);
+			if (scopeName) {
+				scopes.push(scopeName);
+			}
 		}
-	}
 
-	return scopes.sort();
-});
+		return scopes.sort();
+	},
+);

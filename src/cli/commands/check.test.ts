@@ -5,8 +5,8 @@ import { NodeContext } from "@effect/platform-node";
 import { ManagedSectionLive } from "@savvy-web/silk-effects/hooks";
 import { ChangesetConfigReaderLive, VersioningStrategyLive } from "@savvy-web/silk-effects/versioning";
 import { Effect, Layer } from "effect";
-import { WorkspaceDiscovery, WorkspaceRootLive } from "workspaces-effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { WorkspaceDiscovery, WorkspaceRootLive } from "workspaces-effect";
 import { checkCommand } from "./check.js";
 import { generateManagedContent } from "./init.js";
 

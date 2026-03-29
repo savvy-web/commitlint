@@ -115,9 +115,6 @@ importers:
       husky:
         specifier: ^9.1.7
         version: 9.1.7
-      workspace-tools:
-        specifier: 0.41.0
-        version: 0.41.0
 
 packages:
 
