@@ -74,9 +74,9 @@
 		"@effect/printer-ansi": "catalog:silk",
 		"@effect/rpc": "catalog:silk",
 		"@effect/sql": "catalog:silk",
-		"@savvy-web/silk-effects": "^0.1.0",
+		"@savvy-web/silk-effects": "^0.2.0",
 		"effect": "catalog:silk",
-		"workspaces-effect": "^0.1.0",
+		"workspaces-effect": "^0.2.0",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
@@ -87,7 +87,7 @@
 		"@savvy-web/changesets": "^0.7.1",
 		"@savvy-web/lint-staged": "^0.6.6",
 		"@savvy-web/rslib-builder": "^0.19.1",
-		"@savvy-web/vitest": "^1.1.0",
+		"@savvy-web/vitest": "^1.2.0",
 		"commitizen": "^4.3.1",
 		"husky": "^9.1.7"
 	},
