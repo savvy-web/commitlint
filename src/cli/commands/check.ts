@@ -88,12 +88,11 @@ function extractConfigPathFromManaged(managedContent: string): string | null {
 function checkManagedSectionStatus(existingManaged: string): {
 	isUpToDate: boolean;
 	configPath: string | null;
-	needsUpdate: boolean;
 } {
 	const configPath = extractConfigPathFromManaged(existingManaged);
 
 	if (!configPath) {
-		return { isUpToDate: false, configPath: null, needsUpdate: true };
+		return { isUpToDate: false, configPath: null };
 	}
 
 	const expectedContent = generateManagedContent(configPath);
@@ -103,7 +102,7 @@ function checkManagedSectionStatus(existingManaged: string): {
 
 	const isUpToDate = normalizedExisting === normalizedExpected;
 
-	return { isUpToDate, configPath, needsUpdate: !isUpToDate };
+	return { isUpToDate, configPath };
 }
 
 /**
@@ -115,7 +114,7 @@ const detectReleaseFormat = Effect.gen(function* () {
 	const versioning = yield* VersioningStrategy;
 	const discovery = yield* WorkspaceDiscovery;
 
-	const packages = yield* Effect.catchAll(discovery.listPackages(), () => Effect.succeed([] as const));
+	const packages = yield* Effect.catchAll(discovery.listPackages(), () => Effect.succeed([]));
 
 	const publishableNames = packages
 		.filter((pkg) => !pkg.private || pkg.publishConfig?.access !== undefined)
