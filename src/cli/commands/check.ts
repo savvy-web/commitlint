@@ -5,12 +5,15 @@
  */
 import { Command } from "@effect/cli";
 import { FileSystem } from "@effect/platform";
+import { ManagedSection } from "@savvy-web/silk-effects/hooks";
+import { VersioningStrategy } from "@savvy-web/silk-effects/versioning";
 import { Effect } from "effect";
+import { WorkspaceDiscovery } from "workspaces-effect";
+import type { ReleaseFormat } from "../../config/schema.js";
 import { detectDCO } from "../../detection/dco.js";
 import { detectScopes } from "../../detection/scopes.js";
-import { detectReleaseFormat } from "../../detection/versioning.js";
 import { CHECK_MARK, HUSKY_HOOK_PATH, WARNING } from "./constants.js";
-import { BEGIN_MARKER, END_MARKER, extractManagedSection, generateManagedContent } from "./init.js";
+import { generateManagedContent } from "./init.js";
 
 /** Unicode cross symbol. */
 const CROSS_MARK = "\u2717";
@@ -41,6 +44,13 @@ const CONFIG_FILES = [
 /** DCO file path. */
 const DCO_FILE_PATH = "DCO";
 
+/** Maps versioning strategy types to release formats. */
+const STRATEGY_TO_FORMAT: Record<string, ReleaseFormat> = {
+	single: "semver",
+	"fixed-group": "semver",
+	independent: "packages",
+};
+
 /**
  * Find the first existing config file.
  *
@@ -65,16 +75,15 @@ function findConfigFile(fs: FileSystem.FileSystem) {
  * @returns The config path found, or null if not found
  */
 function extractConfigPathFromManaged(managedContent: string): string | null {
-	// Look for: commitlint --config "$ROOT/{path}"
 	const match = managedContent.match(/commitlint --config "\$ROOT\/([^"]+)"/);
 	return match ? match[1] : null;
 }
 
 /**
- * Check if the managed section is up-to-date.
+ * Check if the managed section content is up-to-date.
  *
- * @param existingManaged - The existing managed section content
- * @returns Object with isUpToDate flag and any differences
+ * @param existingManaged - The existing managed content (between markers)
+ * @returns Object with status flags
  */
 function checkManagedSectionStatus(existingManaged: string): {
 	isUpToDate: boolean;
@@ -87,10 +96,8 @@ function checkManagedSectionStatus(existingManaged: string): {
 		return { isUpToDate: false, configPath: null, needsUpdate: true };
 	}
 
-	// Generate expected content with same config path
-	const expectedContent = `${BEGIN_MARKER}\n${generateManagedContent(configPath)}\n${END_MARKER}`;
+	const expectedContent = generateManagedContent(configPath);
 
-	// Normalize whitespace for comparison
 	const normalizedExisting = existingManaged.trim().replace(/\s+/g, " ");
 	const normalizedExpected = expectedContent.trim().replace(/\s+/g, " ");
 
@@ -98,6 +105,28 @@ function checkManagedSectionStatus(existingManaged: string): {
 
 	return { isUpToDate, configPath, needsUpdate: !isUpToDate };
 }
+
+/**
+ * Detect the release format using silk-effects versioning service.
+ *
+ * @returns Effect yielding the release format string
+ */
+const detectReleaseFormat = Effect.gen(function* () {
+	const versioning = yield* VersioningStrategy;
+	const discovery = yield* WorkspaceDiscovery;
+
+	const packages = yield* Effect.catchAll(discovery.listPackages(), () => Effect.succeed([] as const));
+
+	const publishableNames = packages
+		.filter((pkg) => !pkg.private || pkg.publishConfig?.access !== undefined)
+		.map((pkg) => pkg.name);
+
+	const result = yield* Effect.catchAll(versioning.detect(publishableNames, process.cwd()), () =>
+		Effect.succeed({ type: "single" as const }),
+	);
+
+	return STRATEGY_TO_FORMAT[result.type] ?? ("semver" as ReleaseFormat);
+});
 
 /**
  * Check command implementation.
@@ -108,7 +137,7 @@ function checkManagedSectionStatus(existingManaged: string): {
 export const checkCommand = Command.make("check", {}, () =>
 	Effect.gen(function* () {
 		const fs = yield* FileSystem.FileSystem;
-		const cwd = process.cwd();
+		const ms = yield* ManagedSection;
 
 		yield* Effect.log("Checking commitlint configuration...\n");
 
@@ -128,11 +157,10 @@ export const checkCommand = Command.make("check", {}, () =>
 
 		// Managed section status
 		if (hasHuskyHook) {
-			const hookContent = yield* fs.readFileString(HUSKY_HOOK_PATH);
-			const { managedSection, found } = extractManagedSection(hookContent);
+			const result = yield* ms.read(HUSKY_HOOK_PATH, "savvy-commit");
 
-			if (found) {
-				const status = checkManagedSectionStatus(managedSection);
+			if (result) {
+				const status = checkManagedSectionStatus(result.managed);
 				if (status.isUpToDate) {
 					yield* Effect.log(`${CHECK_MARK} Managed section: up-to-date`);
 				} else {
@@ -151,10 +179,12 @@ export const checkCommand = Command.make("check", {}, () =>
 		}
 
 		yield* Effect.log("\nDetected settings:");
-		yield* Effect.log(`  DCO required: ${detectDCO(cwd)}`);
-		yield* Effect.log(`  Release format: ${detectReleaseFormat(cwd)}`);
+		yield* Effect.log(`  DCO required: ${detectDCO()}`);
 
-		const scopes = detectScopes(cwd);
+		const releaseFormat = yield* detectReleaseFormat;
+		yield* Effect.log(`  Release format: ${releaseFormat}`);
+
+		const scopes = yield* Effect.catchAll(detectScopes, () => Effect.succeed([] as string[]));
 		const scopeDisplay = scopes.length > 0 ? scopes.join(", ") : "(none - not a monorepo or no packages found)";
 		yield* Effect.log(`  Detected scopes: ${scopeDisplay}`);
 

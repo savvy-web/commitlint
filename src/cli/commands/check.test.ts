@@ -1,11 +1,35 @@
 import { execSync } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { NodeFileSystem } from "@effect/platform-node";
-import { Effect } from "effect";
+import { NodeContext } from "@effect/platform-node";
+import { ManagedSectionLive } from "@savvy-web/silk-effects/hooks";
+import { ChangesetConfigReaderLive, VersioningStrategyLive } from "@savvy-web/silk-effects/versioning";
+import { Effect, Layer } from "effect";
+import { WorkspaceDiscovery, WorkspaceRootLive } from "workspaces-effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { checkCommand } from "./check.js";
-import { BEGIN_MARKER, END_MARKER, generateManagedContent } from "./init.js";
+import { generateManagedContent } from "./init.js";
+
+/** Marker format used by silk-effects ManagedSection for "savvy-commit" tool. */
+const BEGIN_MARKER = "# --- BEGIN SAVVY-COMMIT MANAGED SECTION ---";
+const END_MARKER = "# --- END SAVVY-COMMIT MANAGED SECTION ---";
+
+/** Stub WorkspaceDiscovery that returns empty packages (no workspace root needed). */
+const WorkspaceDiscoveryStub = Layer.succeed(
+	WorkspaceDiscovery,
+	WorkspaceDiscovery.of({
+		listPackages: () => Effect.succeed([]),
+		getPackage: () => Effect.die("not implemented"),
+	}),
+);
+
+/** Test layer combining all required services. */
+const TestLayer = Layer.mergeAll(
+	ManagedSectionLive,
+	VersioningStrategyLive.pipe(Layer.provide(ChangesetConfigReaderLive)),
+	WorkspaceDiscoveryStub,
+	WorkspaceRootLive,
+).pipe(Layer.provideMerge(NodeContext.layer));
 
 describe("checkCommand", () => {
 	it("is a valid Effect CLI command", () => {
@@ -40,7 +64,6 @@ describe("checkCommand Effect program", () => {
 		originalCwd = process.cwd();
 		rmSync(testDir, { recursive: true, force: true });
 		mkdirSync(testDir, { recursive: true });
-		// Initialize a git repo so workspace-tools doesn't throw
 		execSync("git init", { cwd: testDir, stdio: "ignore" });
 		writeFileSync(join(testDir, "package.json"), JSON.stringify({ name: "test-pkg", private: true }));
 		process.chdir(testDir);
@@ -53,14 +76,14 @@ describe("checkCommand Effect program", () => {
 
 	it("runs without errors when no config exists", async () => {
 		const handler = checkCommand.handler({});
-		await Effect.runPromise(Effect.provide(handler, NodeFileSystem.layer));
+		await Effect.runPromise(Effect.provide(handler, TestLayer));
 	});
 
 	it("runs when config file exists", async () => {
 		writeFileSync(join(testDir, "commitlint.config.ts"), "export default {};");
 
 		const handler = checkCommand.handler({});
-		await Effect.runPromise(Effect.provide(handler, NodeFileSystem.layer));
+		await Effect.runPromise(Effect.provide(handler, TestLayer));
 	});
 
 	it("runs when husky hook exists without managed section", async () => {
@@ -68,7 +91,7 @@ describe("checkCommand Effect program", () => {
 		writeFileSync(join(testDir, ".husky/commit-msg"), "#!/usr/bin/env sh\necho test\n");
 
 		const handler = checkCommand.handler({});
-		await Effect.runPromise(Effect.provide(handler, NodeFileSystem.layer));
+		await Effect.runPromise(Effect.provide(handler, TestLayer));
 	});
 
 	it("runs when husky hook has managed section", async () => {
@@ -78,7 +101,7 @@ describe("checkCommand Effect program", () => {
 		writeFileSync(join(testDir, ".husky/commit-msg"), hookContent);
 
 		const handler = checkCommand.handler({});
-		await Effect.runPromise(Effect.provide(handler, NodeFileSystem.layer));
+		await Effect.runPromise(Effect.provide(handler, TestLayer));
 	});
 
 	it("runs when husky hook has outdated managed section", async () => {
@@ -87,7 +110,7 @@ describe("checkCommand Effect program", () => {
 		writeFileSync(join(testDir, ".husky/commit-msg"), hookContent);
 
 		const handler = checkCommand.handler({});
-		await Effect.runPromise(Effect.provide(handler, NodeFileSystem.layer));
+		await Effect.runPromise(Effect.provide(handler, TestLayer));
 	});
 
 	it("runs when DCO file exists", async () => {
@@ -97,13 +120,13 @@ describe("checkCommand Effect program", () => {
 		writeFileSync(join(testDir, ".husky/commit-msg"), "#!/usr/bin/env sh\n");
 
 		const handler = checkCommand.handler({});
-		await Effect.runPromise(Effect.provide(handler, NodeFileSystem.layer));
+		await Effect.runPromise(Effect.provide(handler, TestLayer));
 	});
 
 	it("detects various config file types", async () => {
 		writeFileSync(join(testDir, ".commitlintrc.json"), "{}");
 
 		const handler = checkCommand.handler({});
-		await Effect.runPromise(Effect.provide(handler, NodeFileSystem.layer));
+		await Effect.runPromise(Effect.provide(handler, TestLayer));
 	});
 });
