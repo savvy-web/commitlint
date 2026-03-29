@@ -4,42 +4,54 @@
  * @internal
  */
 import { existsSync } from "node:fs";
-import { join } from "node:path";
-import { safelyFindProjectRoot } from "./utils.js";
+import { dirname, join, resolve } from "node:path";
 
 /** Filename for the DCO file that indicates signoff is required. */
 const DCO_FILENAME = "DCO";
+
+/** Markers that indicate a project root directory. */
+const ROOT_MARKERS = ["pnpm-workspace.yaml", ".git", "package.json"];
+
+/**
+ * Walk up the directory tree to find the project root.
+ *
+ * @param cwd - Starting directory
+ * @returns Project root path or null if not found
+ *
+ * @internal
+ */
+function findProjectRoot(cwd: string): string | null {
+	let dir = resolve(cwd);
+
+	while (true) {
+		for (const marker of ROOT_MARKERS) {
+			if (existsSync(join(dir, marker))) {
+				return dir;
+			}
+		}
+		const parent = dirname(dir);
+		if (parent === dir) {
+			return null;
+		}
+		dir = parent;
+	}
+}
 
 /**
  * Detect if DCO signoff should be required.
  *
  * @remarks
  * Checks for the presence of a DCO file at the repository root.
- * Uses workspace-tools to find the actual repo root, since git commit
- * can be called from anywhere in the repository.
- *
- * The DCO file indicates that the project requires contributors
- * to sign off on their commits using the Developer Certificate of Origin.
+ * Walks up the directory tree to find the project root by looking
+ * for workspace markers (pnpm-workspace.yaml, .git, package.json).
  *
  * @param cwd - Working directory (defaults to process.cwd())
  * @returns `true` if DCO file exists at repo root, `false` otherwise
  *
- * @see https://developercertificate.org/ - Developer Certificate of Origin specification
- * @see {@link CommitlintConfig.silk} for using this in configuration
- *
  * @public
- *
- * @example
- * ```typescript
- * import { detectDCO } from "@savvy-web/commitlint";
- *
- * if (detectDCO()) {
- *   console.log("DCO signoff required");
- * }
- * ```
  */
 export function detectDCO(cwd: string = process.cwd()): boolean {
-	const repoRoot = safelyFindProjectRoot(cwd);
+	const repoRoot = findProjectRoot(cwd);
 	const searchDir = repoRoot ?? cwd;
 	return existsSync(join(searchDir, DCO_FILENAME));
 }

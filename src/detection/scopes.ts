@@ -3,8 +3,15 @@
  *
  * @internal
  */
-import { getWorkspaceInfos } from "workspace-tools";
-import { safelyFindProjectRoot } from "./utils.js";
+import { findProjectRoot, getWorkspaceInfos } from "workspace-tools";
+
+function safelyFindProjectRoot(cwd: string): string | null {
+	try {
+		return findProjectRoot(cwd);
+	} catch {
+		return null;
+	}
+}
 
 /**
  * Extract scope-friendly name from a package name.
