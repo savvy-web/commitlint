@@ -6,6 +6,7 @@
 import { dirname } from "node:path";
 import { Command, Options } from "@effect/cli";
 import { FileSystem } from "@effect/platform";
+import { ManagedSection } from "@savvy-web/silk-effects/hooks";
 import { Effect } from "effect";
 import { CHECK_MARK, HUSKY_HOOK_PATH, WARNING } from "./constants.js";
 
@@ -15,11 +16,8 @@ const EXECUTABLE_MODE = 0o755;
 /** Default path for the commitlint config file. */
 const DEFAULT_CONFIG_PATH = "lib/configs/commitlint.config.ts";
 
-/** Begin marker for managed section. */
-export const BEGIN_MARKER = "# --- BEGIN SAVVY-COMMIT MANAGED SECTION ---";
-
-/** End marker for managed section. */
-export const END_MARKER = "# --- END SAVVY-COMMIT MANAGED SECTION ---";
+/** Tool name used for managed section markers. */
+const TOOL_NAME = "savvy-commit";
 
 /**
  * Generate the managed section content for the commit-msg hook.
@@ -71,74 +69,21 @@ fi`;
 }
 
 /**
- * Generate the full husky commit-msg hook content for a fresh file.
+ * Write a fresh hook file with header and managed section.
  *
+ * @param path - Hook file path
  * @param configPath - Path to the commitlint config file
- * @returns Complete shell script content for the hook
+ * @returns Effect that creates the hook file
  */
-function generateFullHookContent(configPath: string): string {
-	return `#!/usr/bin/env sh
-# Commit-msg hook with savvy-commit managed section
-# Custom hooks can go above or below the managed section
-
-${BEGIN_MARKER}
-${generateManagedContent(configPath)}
-${END_MARKER}
-`;
-}
-
-/**
- * Extract the managed section from existing hook content.
- *
- * @param content - The existing hook file content
- * @returns Object with beforeSection, managedSection, afterSection, and found flag
- */
-export function extractManagedSection(content: string): {
-	beforeSection: string;
-	managedSection: string;
-	afterSection: string;
-	found: boolean;
-} {
-	const beginIndex = content.indexOf(BEGIN_MARKER);
-	const endIndex = content.indexOf(END_MARKER);
-
-	if (beginIndex === -1 || endIndex === -1 || endIndex <= beginIndex) {
-		return {
-			beforeSection: content,
-			managedSection: "",
-			afterSection: "",
-			found: false,
-		};
-	}
-
-	return {
-		beforeSection: content.slice(0, beginIndex),
-		managedSection: content.slice(beginIndex, endIndex + END_MARKER.length),
-		afterSection: content.slice(endIndex + END_MARKER.length),
-		found: true,
-	};
-}
-
-/**
- * Update existing hook content with new managed section.
- *
- * @param existingContent - The existing hook file content
- * @param configPath - Path to the commitlint config file
- * @returns Updated hook content
- */
-function updateManagedSection(existingContent: string, configPath: string): string {
-	const { beforeSection, afterSection, found } = extractManagedSection(existingContent);
-
-	const newManagedSection = `${BEGIN_MARKER}\n${generateManagedContent(configPath)}\n${END_MARKER}`;
-
-	if (found) {
-		// Replace existing managed section
-		return `${beforeSection}${newManagedSection}${afterSection}`;
-	}
-
-	// No existing managed section - append at end
-	const trimmedContent = existingContent.trimEnd();
-	return `${trimmedContent}\n\n${newManagedSection}\n`;
+function writeFullHook(path: string, configPath: string) {
+	return Effect.gen(function* () {
+		const fs = yield* FileSystem.FileSystem;
+		const ms = yield* ManagedSection;
+		const header =
+			"#!/usr/bin/env sh\n# Commit-msg hook with savvy-commit managed section\n# Custom hooks can go above or below the managed section\n\n";
+		yield* fs.writeFileString(path, header);
+		yield* ms.write(path, TOOL_NAME, generateManagedContent(configPath));
+	});
 }
 
 /** Content for the commitlint config file. */
@@ -166,7 +111,7 @@ const configOption = Options.text("config").pipe(
  * @returns Effect that makes the file executable
  */
 function makeExecutable(path: string) {
-	return Effect.tryPromise(() => import("node:fs/promises").then((fs) => fs.chmod(path, EXECUTABLE_MODE)));
+	return Effect.tryPromise(() => import("node:fs/promises").then((fsp) => fsp.chmod(path, EXECUTABLE_MODE)));
 }
 
 /**
@@ -183,6 +128,7 @@ function makeExecutable(path: string) {
 export const initCommand = Command.make("init", { force: forceOption, config: configOption }, ({ force, config }) =>
 	Effect.gen(function* () {
 		const fs = yield* FileSystem.FileSystem;
+		const ms = yield* ManagedSection;
 
 		if (config.startsWith("/")) {
 			yield* Effect.fail(new Error("Config path must be relative to repository root, not absolute"));
@@ -194,28 +140,27 @@ export const initCommand = Command.make("init", { force: forceOption, config: co
 		const huskyExists = yield* fs.exists(HUSKY_HOOK_PATH);
 
 		if (huskyExists && !force) {
-			// Read existing content and update managed section
-			const existingContent = yield* fs.readFileString(HUSKY_HOOK_PATH);
-			const { found } = extractManagedSection(existingContent);
+			// Read existing content and check for managed section
+			const existing = yield* ms.read(HUSKY_HOOK_PATH, TOOL_NAME);
 
-			const updatedContent = updateManagedSection(existingContent, config);
-			yield* fs.writeFileString(HUSKY_HOOK_PATH, updatedContent);
+			// Write/update managed section (preserves content outside markers)
+			yield* ms.write(HUSKY_HOOK_PATH, TOOL_NAME, generateManagedContent(config));
 			yield* makeExecutable(HUSKY_HOOK_PATH);
 
-			if (found) {
+			if (existing) {
 				yield* Effect.log(`${CHECK_MARK} Updated managed section in ${HUSKY_HOOK_PATH}`);
 			} else {
 				yield* Effect.log(`${CHECK_MARK} Added managed section to ${HUSKY_HOOK_PATH}`);
 			}
 		} else if (huskyExists && force) {
 			// Force: overwrite entire file
-			yield* fs.writeFileString(HUSKY_HOOK_PATH, generateFullHookContent(config));
+			yield* writeFullHook(HUSKY_HOOK_PATH, config);
 			yield* makeExecutable(HUSKY_HOOK_PATH);
 			yield* Effect.log(`${CHECK_MARK} Replaced ${HUSKY_HOOK_PATH} (--force)`);
 		} else {
 			// Create new hook
 			yield* fs.makeDirectory(".husky", { recursive: true });
-			yield* fs.writeFileString(HUSKY_HOOK_PATH, generateFullHookContent(config));
+			yield* writeFullHook(HUSKY_HOOK_PATH, config);
 			yield* makeExecutable(HUSKY_HOOK_PATH);
 			yield* Effect.log(`${CHECK_MARK} Created ${HUSKY_HOOK_PATH}`);
 		}
