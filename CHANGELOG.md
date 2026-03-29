@@ -1,5 +1,31 @@
 # @savvy-web/commitlint
 
+## 0.4.5
+
+### Refactoring
+
+* [`184c43b`](https://github.com/savvy-web/commitlint/commit/184c43bd1f4d70e0fa8e2d026460de4761067992) Replaced `workspace-tools` with `@savvy-web/silk-effects` and `workspaces-effect` across the CLI command layer. The public API (`CommitlintConfig.silk()`) is unchanged.
+* `init` command now uses the `ManagedSection` service for hook marker management instead of direct string manipulation.
+* `check` command now delegates to `VersioningStrategy`, `WorkspaceDiscovery`, and `ManagedSection` services from `workspaces-effect`.
+* `scopes` detection is now effectful, returning an `Effect` rather than a synchronous array.
+* CLI layer composition wires all `silk-effects` and `workspaces-effect` layers at the entry point.
+* Deleted `src/detection/versioning.ts` (superseded by `VersioningStrategy` service) and `src/detection/utils.ts` (`findProjectRoot` inlined into `dco.ts`).
+
+### Dependencies
+
+* | [`7ce01c0`](https://github.com/savvy-web/commitlint/commit/7ce01c0e57121a76a6ab39dfd6608686531e3aae) | Dependency    | Type    | Action | From   | To |
+  | :--------------------------------------------------------------------------------------------------- | :------------ | :------ | :----- | :----- | -- |
+  | @savvy-web/vitest                                                                                    | devDependency | updated | ^1.0.1 | ^1.1.0 |    |
+
+- | [`184c43b`](https://github.com/savvy-web/commitlint/commit/184c43bd1f4d70e0fa8e2d026460de4761067992) | Dependency | Type  | Action | From   | To |
+  | :--------------------------------------------------------------------------------------------------- | :--------- | :---- | :----- | :----- | -- |
+  | `@savvy-web/silk-effects`                                                                            | dependency | added | —      | ^0.1.0 |    |
+  | `workspaces-effect`                                                                                  | dependency | added | —      | ^0.1.0 |    |
+
+* | [`8abc683`](https://github.com/savvy-web/commitlint/commit/8abc6831466b0da1491caf43fe284f4b5afca314) | Dependency    | Type    | Action | From   | To |
+  | :--------------------------------------------------------------------------------------------------- | :------------ | :------ | :----- | :----- | -- |
+  | @savvy-web/lint-staged                                                                               | devDependency | updated | ^0.6.5 | ^0.6.6 |    |
+
 ## 0.4.4
 
 ### Bug Fixes
