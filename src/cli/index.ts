@@ -10,8 +10,7 @@
  */
 import { Command } from "@effect/cli";
 import { NodeContext, NodeRuntime } from "@effect/platform-node";
-import { ManagedSectionLive } from "@savvy-web/silk-effects/hooks";
-import { ChangesetConfigReaderLive, VersioningStrategyLive } from "@savvy-web/silk-effects/versioning";
+import { ChangesetConfigReaderLive, ManagedSectionLive, VersioningStrategyLive } from "@savvy-web/silk-effects";
 import { Effect, Layer } from "effect";
 import { WorkspaceDiscoveryLive, WorkspaceRootLive } from "workspaces-effect";
 import { checkCommand } from "./commands/check.js";

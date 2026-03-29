@@ -5,15 +5,14 @@
  */
 import { Command } from "@effect/cli";
 import { FileSystem } from "@effect/platform";
-import { ManagedSection } from "@savvy-web/silk-effects/hooks";
-import { VersioningStrategy } from "@savvy-web/silk-effects/versioning";
+import { CheckResult, ManagedSection, VersioningStrategy } from "@savvy-web/silk-effects";
 import { Effect } from "effect";
 import { WorkspaceDiscovery } from "workspaces-effect";
 import type { ReleaseFormat } from "../../config/schema.js";
 import { detectDCO } from "../../detection/dco.js";
 import { detectScopes } from "../../detection/scopes.js";
 import { CHECK_MARK, HUSKY_HOOK_PATH, WARNING } from "./constants.js";
-import { generateManagedContent } from "./init.js";
+import { SECTION_DEF, generateManagedContent } from "./init.js";
 
 /** Unicode cross symbol. */
 const CROSS_MARK = "\u2717";
@@ -69,7 +68,7 @@ function findConfigFile(fs: FileSystem.FileSystem) {
 }
 
 /**
- * Extract the config path from the managed section.
+ * Extract the config path from managed section content.
  *
  * @param managedContent - The content between managed section markers
  * @returns The config path found, or null if not found
@@ -77,32 +76,6 @@ function findConfigFile(fs: FileSystem.FileSystem) {
 function extractConfigPathFromManaged(managedContent: string): string | null {
 	const match = managedContent.match(/commitlint --config "\$ROOT\/([^"]+)"/);
 	return match ? match[1] : null;
-}
-
-/**
- * Check if the managed section content is up-to-date.
- *
- * @param existingManaged - The existing managed content (between markers)
- * @returns Object with status flags
- */
-function checkManagedSectionStatus(existingManaged: string): {
-	isUpToDate: boolean;
-	configPath: string | null;
-} {
-	const configPath = extractConfigPathFromManaged(existingManaged);
-
-	if (!configPath) {
-		return { isUpToDate: false, configPath: null };
-	}
-
-	const expectedContent = generateManagedContent(configPath);
-
-	const normalizedExisting = existingManaged.trim().replace(/\s+/g, " ");
-	const normalizedExpected = expectedContent.trim().replace(/\s+/g, " ");
-
-	const isUpToDate = normalizedExisting === normalizedExpected;
-
-	return { isUpToDate, configPath };
 }
 
 /**
@@ -156,12 +129,19 @@ export const checkCommand = Command.make("check", {}, () =>
 
 		// Managed section status
 		if (hasHuskyHook) {
-			const result = yield* ms.read(HUSKY_HOOK_PATH, "savvy-commit");
+			const block = yield* ms.read(HUSKY_HOOK_PATH, SECTION_DEF);
 
-			if (result) {
-				const status = checkManagedSectionStatus(result.managed);
-				if (status.isUpToDate) {
-					yield* Effect.log(`${CHECK_MARK} Managed section: up-to-date`);
+			if (block) {
+				const configPath = extractConfigPathFromManaged(block.content);
+				if (configPath) {
+					const expected = SECTION_DEF.block(generateManagedContent(configPath));
+					const status = yield* ms.check(HUSKY_HOOK_PATH, expected);
+
+					if (CheckResult.$is("Found")(status) && status.isUpToDate) {
+						yield* Effect.log(`${CHECK_MARK} Managed section: up-to-date`);
+					} else {
+						yield* Effect.log(`${WARNING} Managed section: outdated (run 'savvy-commit init' to update)`);
+					}
 				} else {
 					yield* Effect.log(`${WARNING} Managed section: outdated (run 'savvy-commit init' to update)`);
 				}

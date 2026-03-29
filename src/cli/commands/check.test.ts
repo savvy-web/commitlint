@@ -2,8 +2,7 @@ import { execSync } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { NodeContext } from "@effect/platform-node";
-import { ManagedSectionLive } from "@savvy-web/silk-effects/hooks";
-import { ChangesetConfigReaderLive, VersioningStrategyLive } from "@savvy-web/silk-effects/versioning";
+import { ChangesetConfigReaderLive, ManagedSectionLive, VersioningStrategyLive } from "@savvy-web/silk-effects";
 import { Effect, Layer } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { WorkspaceDiscovery, WorkspaceRootLive } from "workspaces-effect";
@@ -20,6 +19,7 @@ const WorkspaceDiscoveryStub = Layer.succeed(
 	WorkspaceDiscovery.of({
 		listPackages: () => Effect.succeed([]),
 		getPackage: () => Effect.die("not implemented"),
+		importerMap: () => Effect.succeed(new Map()),
 	}),
 );
 

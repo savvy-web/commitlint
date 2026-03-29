@@ -16,6 +16,7 @@ const EmptyLayer = Layer.succeed(
 	WorkspaceDiscovery.of({
 		listPackages: () => Effect.succeed([]),
 		getPackage: () => Effect.die("not implemented"),
+		importerMap: () => Effect.succeed(new Map()),
 	}),
 );
 

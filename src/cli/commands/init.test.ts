@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { NodeFileSystem } from "@effect/platform-node";
-import { ManagedSectionLive } from "@savvy-web/silk-effects/hooks";
+import { ManagedSectionLive } from "@savvy-web/silk-effects";
 import { Effect, Layer } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { generateManagedContent, initCommand } from "./init.js";

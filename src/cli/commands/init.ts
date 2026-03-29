@@ -6,7 +6,7 @@
 import { dirname } from "node:path";
 import { Command, Options } from "@effect/cli";
 import { FileSystem } from "@effect/platform";
-import { ManagedSection } from "@savvy-web/silk-effects/hooks";
+import { ManagedSection, SectionDefinition } from "@savvy-web/silk-effects";
 import { Effect } from "effect";
 import { CHECK_MARK, HUSKY_HOOK_PATH, WARNING } from "./constants.js";
 
@@ -16,8 +16,8 @@ const EXECUTABLE_MODE = 0o755;
 /** Default path for the commitlint config file. */
 const DEFAULT_CONFIG_PATH = "lib/configs/commitlint.config.ts";
 
-/** Tool name used for managed section markers. */
-const TOOL_NAME = "savvy-commit";
+/** Section definition for the savvy-commit managed section in shell hooks. */
+export const SECTION_DEF = SectionDefinition.make({ toolName: "savvy-commit" });
 
 /**
  * Generate the managed section content for the commit-msg hook.
@@ -82,7 +82,7 @@ function writeFullHook(path: string, configPath: string) {
 		const header =
 			"#!/usr/bin/env sh\n# Commit-msg hook with savvy-commit managed section\n# Custom hooks can go above or below the managed section\n\n";
 		yield* fs.writeFileString(path, header);
-		yield* ms.write(path, TOOL_NAME, generateManagedContent(configPath));
+		yield* ms.write(path, SECTION_DEF.block(generateManagedContent(configPath)));
 	});
 }
 
@@ -140,17 +140,17 @@ export const initCommand = Command.make("init", { force: forceOption, config: co
 		const huskyExists = yield* fs.exists(HUSKY_HOOK_PATH);
 
 		if (huskyExists && !force) {
-			// Read existing content and check for managed section
-			const existing = yield* ms.read(HUSKY_HOOK_PATH, TOOL_NAME);
-
-			// Write/update managed section (preserves content outside markers)
-			yield* ms.write(HUSKY_HOOK_PATH, TOOL_NAME, generateManagedContent(config));
+			// Sync managed section (creates, updates, or reports unchanged)
+			const block = SECTION_DEF.block(generateManagedContent(config));
+			const result = yield* ms.sync(HUSKY_HOOK_PATH, block);
 			yield* makeExecutable(HUSKY_HOOK_PATH);
 
-			if (existing) {
+			if (result._tag === "Updated") {
 				yield* Effect.log(`${CHECK_MARK} Updated managed section in ${HUSKY_HOOK_PATH}`);
-			} else {
+			} else if (result._tag === "Created") {
 				yield* Effect.log(`${CHECK_MARK} Added managed section to ${HUSKY_HOOK_PATH}`);
+			} else {
+				yield* Effect.log(`${CHECK_MARK} Managed section already up-to-date in ${HUSKY_HOOK_PATH}`);
 			}
 		} else if (huskyExists && force) {
 			// Force: overwrite entire file
