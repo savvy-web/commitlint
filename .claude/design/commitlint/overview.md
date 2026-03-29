@@ -3,12 +3,13 @@ status: current
 module: commitlint
 category: architecture
 created: 2026-02-02
-updated: 2026-02-06
-last-synced: 2026-02-06
+updated: 2026-03-29
+last-synced: 2026-03-29
 completeness: 90
 related: []
 dependencies:
-  - workspace-tools
+  - "@savvy-web/silk-effects"
+  - workspaces-effect
   - "@effect/cli"
   - "@effect/platform-node"
   - effect
@@ -101,17 +102,24 @@ export default {
 3. Custom `type-enum` includes `release` type (not in conventional config)
 4. No DCO signoff rule currently configured (but required per CLAUDE.md)
 
-### Existing Detection Module
+### Detection Architecture (silk-effects Migration)
 
-The repository includes `src/detect-versioning-strategy.ts` which provides:
+The detection modules have been migrated from `workspace-tools` to Effect-based
+services provided by `@savvy-web/silk-effects` and `workspaces-effect`:
 
-- Workspace detection using `workspace-tools`
-- Changeset configuration parsing
-- Versioning strategy detection (single, fixed-group, independent)
-- Package publishability analysis
-
-This module will be integrated into the commitlint config for intelligent
-release scope handling.
+- **Versioning detection**: Deleted `src/detection/versioning.ts` entirely.
+  Replaced by `VersioningStrategy` service from `@savvy-web/silk-effects/versioning`,
+  consumed as an Effect service in the CLI check command.
+- **Scope detection**: `src/detection/scopes.ts` is now effectful, using
+  `WorkspaceDiscovery` from `workspaces-effect` instead of `workspace-tools`.
+  Returns `Effect.Effect<string[], WorkspaceDiscoveryError, WorkspaceDiscovery>`.
+- **DCO detection**: Remains synchronous. Replaced `findProjectRoot` from
+  `workspace-tools` with an inlined implementation that walks up the directory
+  tree looking for root markers (`pnpm-workspace.yaml`, `.git`, `package.json`).
+- **Managed sections**: `init.ts` and `check.ts` use `ManagedSection` service
+  from `@savvy-web/silk-effects/hooks` instead of manual BEGIN/END marker parsing.
+- **Deleted files**: `src/detection/versioning.ts`, `src/detection/versioning.test.ts`,
+  `src/detection/utils.ts`
 
 ### Missing Elements
 
@@ -165,9 +173,12 @@ export default CommitlintConfig.silk({
 
 **Reasoning:**
 
-1. **DCO Detection**: Check for `DCO` file at repo root
-2. **Scope Detection**: Use `workspace-tools` to find package names
-3. **Versioning Detection**: Analyze changeset config for release format
+1. **DCO Detection**: Check for `DCO` file at repo root (synchronous, inlined
+   `findProjectRoot`)
+2. **Scope Detection**: Use `WorkspaceDiscovery` from `workspaces-effect` to
+   find package names (effectful)
+3. **Versioning Detection**: Use `VersioningStrategy` service from
+   `@savvy-web/silk-effects` to analyze changeset config for release format
 4. **Zero Config**: Works out of the box for most repositories
 
 ### Zod for Configuration Validation
@@ -245,11 +256,10 @@ src/
     plugins.test.ts             # Plugin rule tests
 
   detection/
-    dco.ts                      # DCO file detection
+    dco.ts                      # DCO file detection (synchronous, inlined findProjectRoot)
     dco.test.ts                 # DCO detection tests
-    scopes.ts                   # Workspace package scope detection
-    versioning.ts               # Release format + strategy detection
-    utils.ts                    # Detection utility helpers
+    scopes.ts                   # Workspace scope detection (effectful, uses WorkspaceDiscovery)
+    scopes.test.ts              # Scope detection tests
 
   prompt/
     index.ts                    # Prompt module exports
@@ -469,7 +479,6 @@ Key implementation details that differ from the earlier design:
 ```typescript
 // src/config/factory.ts
 import { detectDCO } from "../detection/dco.js";
-import { detectScopes } from "../detection/scopes.js";
 import { createPromptConfig } from "../prompt/config.js";
 import { silkPlugin } from "./plugins.js";
 import { COMMIT_TYPES } from "./rules.js";
@@ -484,8 +493,9 @@ export function createConfig(options: ResolvedConfigOptions): CommitlintUserConf
     process.env.COMMITLINT_SKIP_DCO === "1" ||
     process.env.COMMITLINT_SKIP_DCO === "true";
   const dco = skipDco ? false : (options.dco ?? detectDCO(cwd));
-  const detectedScopes = detectScopes(cwd);
-  const scopes = options.scopes ?? detectedScopes;
+  // Scopes no longer auto-detected here; detectScopes is effectful and
+  // used only by the CLI check command. The factory defaults to empty scopes.
+  const scopes = options.scopes ?? [];
   const allScopes = [...new Set([...scopes, ...(options.additionalScopes ?? [])])].sort();
 
   const rules: RulesConfig = {
@@ -522,101 +532,118 @@ export function createConfig(options: ResolvedConfigOptions): CommitlintUserConf
 
 ### DCO Detection
 
+DCO detection remains synchronous. It now inlines a `findProjectRoot` helper
+that walks up the directory tree looking for root markers, replacing the
+previous dependency on `workspace-tools.findProjectRoot`.
+
 ```typescript
 // src/detection/dco.ts
 import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
-/**
- * Detect if DCO signoff should be required.
- *
- * Checks for the presence of a DCO file at the repository root.
- *
- * @param cwd - Working directory (defaults to process.cwd())
- * @returns true if DCO file exists
- */
+const ROOT_MARKERS = ["pnpm-workspace.yaml", ".git", "package.json"];
+
+function findProjectRoot(cwd: string): string | null {
+  let dir = resolve(cwd);
+  while (true) {
+    for (const marker of ROOT_MARKERS) {
+      if (existsSync(join(dir, marker))) {
+        return dir;
+      }
+    }
+    const parent = dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+}
+
 export function detectDCO(cwd: string = process.cwd()): boolean {
-  const dcoPath = join(cwd, "DCO");
-  return existsSync(dcoPath);
+  const repoRoot = findProjectRoot(cwd);
+  const searchDir = repoRoot ?? cwd;
+  return existsSync(join(searchDir, "DCO"));
 }
 ```
 
-### Scope Detection
+### Scope Detection (Effectful)
+
+Scope detection is now effectful, using `WorkspaceDiscovery` from
+`workspaces-effect` instead of the synchronous `workspace-tools` API.
 
 ```typescript
 // src/detection/scopes.ts
-import { findProjectRoot, getWorkspaces } from "workspace-tools";
+import { Effect } from "effect";
+import type { WorkspaceDiscoveryError } from "workspaces-effect";
+import { WorkspaceDiscovery } from "workspaces-effect";
 
-/**
- * Detect package scopes from workspace configuration.
- *
- * Uses workspace-tools to find all packages and extracts their names
- * as potential commit scopes.
- *
- * @param cwd - Working directory (defaults to process.cwd())
- * @returns Array of scope names (package names without scope prefix)
- */
-export function detectScopes(cwd: string = process.cwd()): string[] {
-  try {
-    const root = findProjectRoot(cwd);
-    if (!root) return [];
-
-    const workspaces = getWorkspaces(root);
-    const scopes: string[] = [];
-
-    for (const workspace of workspaces) {
-      const name = workspace.packageJson.name;
-      if (!name) continue;
-
-      // Extract scope-friendly name
-      // @scope/package-name -> package-name
-      // package-name -> package-name
-      const scopeName = name.startsWith("@")
-        ? name.split("/")[1]
-        : name;
-
-      if (scopeName) {
-        scopes.push(scopeName);
-      }
-    }
-
-    return scopes.sort();
-  } catch {
-    return [];
+function extractScopeName(name: string): string | undefined {
+  if (name.startsWith("@")) {
+    return name.split("/")[1];
   }
+  return name;
 }
+
+export const detectScopes: Effect.Effect<
+  string[],
+  WorkspaceDiscoveryError,
+  WorkspaceDiscovery
+> = Effect.gen(function* () {
+  const discovery = yield* WorkspaceDiscovery;
+  const packages = yield* discovery.listPackages();
+
+  const scopes: string[] = [];
+  for (const pkg of packages) {
+    const scopeName = extractScopeName(pkg.name);
+    if (scopeName) {
+      scopes.push(scopeName);
+    }
+  }
+
+  return scopes.sort();
+});
 ```
 
-### Versioning Strategy Detection
+### Versioning Strategy Detection (Service-Based)
+
+The versioning detection module (`src/detection/versioning.ts`) has been
+**deleted**. Versioning strategy detection is now handled by the
+`VersioningStrategy` service from `@savvy-web/silk-effects/versioning`,
+consumed directly in the CLI check command:
 
 ```typescript
-// src/detection/versioning.ts
-import { detectVersioningStrategy } from "./versioning-strategy.js";
-import type { ReleaseFormat } from "../config/schema.js";
+// In src/cli/commands/check.ts
+import { VersioningStrategy } from "@savvy-web/silk-effects/versioning";
 
-/**
- * Detect the appropriate release commit format.
- *
- * - single/fixed-group: "semver" (release: v1.2.3)
- * - independent: "packages" (release: version packages)
- *
- * @param cwd - Working directory (defaults to process.cwd())
- * @returns Release format to use
- */
-export function detectReleaseFormat(cwd: string = process.cwd()): ReleaseFormat {
-  const strategy = detectVersioningStrategy(cwd);
+const STRATEGY_TO_FORMAT: Record<string, ReleaseFormat> = {
+  single: "semver",
+  "fixed-group": "semver",
+  independent: "packages",
+};
 
-  switch (strategy.type) {
-    case "single":
-    case "fixed-group":
-      return "semver";
-    case "independent":
-      return "packages";
-    default:
-      return "semver";
-  }
-}
+const detectReleaseFormat = Effect.gen(function* () {
+  const versioning = yield* VersioningStrategy;
+  const discovery = yield* WorkspaceDiscovery;
+
+  const packages = yield* Effect.catchAll(
+    discovery.listPackages(),
+    () => Effect.succeed([] as const),
+  );
+
+  const publishableNames = packages
+    .filter((pkg) => !pkg.private || pkg.publishConfig?.access !== undefined)
+    .map((pkg) => pkg.name);
+
+  const result = yield* Effect.catchAll(
+    versioning.detect(publishableNames, process.cwd()),
+    () => Effect.succeed({ type: "single" as const }),
+  );
+
+  return STRATEGY_TO_FORMAT[result.type] ?? ("semver" as ReleaseFormat);
+});
 ```
+
+This approach replaces the deleted `src/detection/versioning.ts` and
+`src/detection/utils.ts` modules entirely. The versioning service is provided
+via the CLI layer composition (see CLI Entry Point below).
 
 ---
 
@@ -628,12 +655,19 @@ The CLI uses `@effect/cli` with Effect for functional error handling. The
 `runCli()` function is exported for the bin entry point. Only `init` and
 `check` subcommands are currently implemented (no `migrate` command yet).
 
+The CLI composes a layer stack providing all silk-effects and workspaces-effect
+services needed by the commands:
+
 ```typescript
 // src/cli/index.ts
 import { Command } from "@effect/cli";
 import { NodeContext, NodeRuntime } from "@effect/platform-node";
-import { Effect } from "effect";
-import { checkCommand, initCommand } from "./commands/index.js";
+import { ManagedSectionLive } from "@savvy-web/silk-effects/hooks";
+import { ChangesetConfigReaderLive, VersioningStrategyLive } from "@savvy-web/silk-effects/versioning";
+import { Effect, Layer } from "effect";
+import { WorkspaceDiscoveryLive, WorkspaceRootLive } from "workspaces-effect";
+import { checkCommand } from "./commands/check.js";
+import { initCommand } from "./commands/init.js";
 
 const rootCommand = Command.make("savvy-commit").pipe(
   Command.withSubcommands([initCommand, checkCommand]),
@@ -644,9 +678,19 @@ const cli = Command.run(rootCommand, {
   version: process.env.__PACKAGE_VERSION__ ?? "0.0.0",
 });
 
+const WorkspaceLive = WorkspaceDiscoveryLive.pipe(
+  Layer.provideMerge(WorkspaceRootLive),
+);
+
+const CliLive = Layer.mergeAll(
+  ManagedSectionLive,
+  VersioningStrategyLive.pipe(Layer.provide(ChangesetConfigReaderLive)),
+  WorkspaceLive,
+).pipe(Layer.provideMerge(NodeContext.layer));
+
 export function runCli(): void {
   const main = Effect.suspend(() => cli(process.argv)).pipe(
-    Effect.provide(NodeContext.layer),
+    Effect.provide(CliLive),
   );
   NodeRuntime.runMain(main);
 }
@@ -654,11 +698,25 @@ export function runCli(): void {
 export { checkCommand, initCommand, rootCommand };
 ```
 
+**Layer composition:**
+
+| Layer | Service Provided | Source |
+| :---- | :--------------- | :----- |
+| `ManagedSectionLive` | `ManagedSection` (BEGIN/END marker file management) | `@savvy-web/silk-effects/hooks` |
+| `VersioningStrategyLive` | `VersioningStrategy` (changeset-based detection) | `@savvy-web/silk-effects/versioning` |
+| `ChangesetConfigReaderLive` | `ChangesetConfigReader` (dependency of versioning) | `@savvy-web/silk-effects/versioning` |
+| `WorkspaceDiscoveryLive` | `WorkspaceDiscovery` (package listing) | `workspaces-effect` |
+| `WorkspaceRootLive` | `WorkspaceRoot` (root directory detection) | `workspaces-effect` |
+| `NodeContext.layer` | `FileSystem`, `Path`, `Terminal` | `@effect/platform-node` |
+
 ### Init Command - Managed Section Pattern
 
-The init command (`src/cli/commands/init.ts`) uses a **managed section pattern**
-with BEGIN/END markers in the husky hook. This allows users to add custom hooks
-above or below the managed block without them being overwritten on updates.
+The init command (`src/cli/commands/init.ts`) uses the `ManagedSection` service
+from `@savvy-web/silk-effects/hooks` to manage BEGIN/END markers in the husky
+hook. This replaces the previous manual marker parsing with a service-based
+approach. The service handles reading, writing, and updating managed sections
+in files, allowing users to add custom hooks above or below the managed block
+without them being overwritten on updates.
 
 **Options:**
 
@@ -666,29 +724,21 @@ above or below the managed block without them being overwritten on updates.
 - `--config` / `-c`: Relative path for the commitlint config file (default:
   `lib/configs/commitlint.config.ts`)
 
-**Managed Section Markers:**
-
-```bash
-# --- BEGIN SAVVY-COMMIT MANAGED SECTION ---
-# DO NOT EDIT between these markers - managed by savvy-commit
-# ... managed content ...
-# --- END SAVVY-COMMIT MANAGED SECTION ---
-```
-
 **Key Functions:**
 
 | Function | Purpose |
 | :------- | :------ |
 | `generateManagedContent(configPath)` | Returns the inner content between markers. Includes package manager detection, CI skip guard, and commitlint invocation. |
-| `generateFullHookContent(configPath)` | Wraps managed content with shebang and markers for fresh files. |
-| `extractManagedSection(content)` | Parses existing hook file to find `beforeSection`, `managedSection`, `afterSection`, and a `found` flag. |
-| `updateManagedSection(existingContent, configPath)` | Replaces existing managed block or appends one if not found. |
+| `writeFullHook(path, configPath)` | Writes a fresh hook file with shebang header, then delegates to `ManagedSection.write()` for the managed block. |
 
-The markers and helpers are exported for use by the check command:
+**ManagedSection service usage:**
 
-```typescript
-export { BEGIN_MARKER, END_MARKER, extractManagedSection, generateManagedContent };
-```
+- `ms.read(path, toolName)` - Read existing managed section content from a file
+- `ms.write(path, toolName, content)` - Write/update managed section in a file
+
+The `extractManagedSection` and `updateManagedSection` functions from the
+previous implementation have been removed; their logic is now encapsulated
+in the `ManagedSection` service.
 
 **CI Skip Guard:**
 
@@ -717,15 +767,16 @@ The command also handles the commitlint config file creation, respecting the
 ### Check Command - Managed Section Status
 
 The check command (`src/cli/commands/check.ts`) validates the current commitlint
-setup and reports detected settings, including managed section status.
+setup and reports detected settings, including managed section status. It uses
+both `ManagedSection` from `@savvy-web/silk-effects/hooks` and
+`VersioningStrategy` from `@savvy-web/silk-effects/versioning`.
 
-**Imports from init.ts:**
+**Service dependencies:**
 
 ```typescript
-import {
-  BEGIN_MARKER, END_MARKER,
-  extractManagedSection, generateManagedContent,
-} from "./init.js";
+import { ManagedSection } from "@savvy-web/silk-effects/hooks";
+import { VersioningStrategy } from "@savvy-web/silk-effects/versioning";
+import { WorkspaceDiscovery } from "workspaces-effect";
 ```
 
 **Key Functions:**
@@ -735,6 +786,7 @@ import {
 | `findConfigFile(fs)` | Searches for commitlint config across 16 possible file names in priority order. |
 | `extractConfigPathFromManaged(managedContent)` | Extracts the config path from the `commitlint --config "$ROOT/{path}"` pattern in the managed section. |
 | `checkManagedSectionStatus(existingManaged)` | Compares the current managed section against what would be generated to determine if it is up-to-date. |
+| `detectReleaseFormat` | Effect that uses `VersioningStrategy` and `WorkspaceDiscovery` services to detect the release format. |
 
 **Managed Section Status Reporting:**
 
@@ -904,21 +956,26 @@ Users who prefer `@commitlint/cz-commitlint` can install it separately.
 ```json
 {
   "dependencies": {
-    "workspace-tools": "^0.36.0",
-    "zod": "^3.24.0"
+    "@savvy-web/silk-effects": "^0.1.0",
+    "workspaces-effect": "^0.1.0",
+    "zod": "^4.3.6"
   }
 }
 ```
 
-### CLI Dependencies (bundled)
+Note: `workspace-tools` has been fully removed. Its functionality is replaced
+by `workspaces-effect` (for workspace/scope discovery) and
+`@savvy-web/silk-effects` (for managed sections and versioning strategy).
+
+### CLI Dependencies (bundled via Effect catalog)
 
 ```json
 {
   "dependencies": {
-    "@effect/cli": "^0.52.0",
-    "@effect/platform": "^0.76.0",
-    "@effect/platform-node": "^0.72.0",
-    "effect": "^3.12.0"
+    "@effect/cli": "catalog:silk",
+    "@effect/platform": "catalog:silk",
+    "@effect/platform-node": "catalog:silk",
+    "effect": "catalog:silk"
   }
 }
 ```
@@ -1266,13 +1323,17 @@ describe("commitlint integration", () => {
 - [Commitlint Documentation](https://commitlint.js.org/)
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Developer Certificate of Origin](https://developercertificate.org/)
-- [workspace-tools](https://github.com/nicolo-ribaudo/workspace-tools)
+- [@savvy-web/silk-effects](https://github.com/savvy-web/silk-effects) -
+  Managed sections and versioning strategy services
+- [workspaces-effect](https://github.com/savvy-web/workspaces-effect) -
+  Effect-based workspace discovery
 - [Effect CLI](https://effect.website/docs/platform/cli)
 - [Zod](https://zod.dev/)
 
 ---
 
-**Document Status:** Current - Core implementation complete, CLI implemented
+**Document Status:** Current - Core implementation complete, CLI implemented,
+migrated to silk-effects
 
 **Completed:**
 
@@ -1286,6 +1347,11 @@ describe("commitlint integration", () => {
 8. ~~Implement custom plugin system (`silk/` rules)~~
 9. ~~Implement CLI init command (managed section pattern)~~
 10. ~~Implement CLI check command (managed section status)~~
+11. ~~Migrate from workspace-tools to silk-effects/workspaces-effect~~
+12. ~~Delete versioning detection module (replaced by VersioningStrategy service)~~
+13. ~~Make scope detection effectful (WorkspaceDiscovery)~~
+14. ~~Inline findProjectRoot for DCO detection~~
+15. ~~Compose CLI layer stack with all silk-effects services~~
 
 **Next Steps:**
 

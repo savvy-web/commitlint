@@ -1,16 +1,18 @@
 /**
- * CLI entry point using `\@effect/cli`.
+ * CLI entry point using `@effect/cli`.
  *
  * @remarks
  * This module provides the CLI application for managing commitlint
  * configuration. It uses Effect for functional error handling and
- * `\@effect/cli` for command parsing.
+ * `@effect/cli` for command parsing.
  *
  * @internal
  */
 import { Command } from "@effect/cli";
 import { NodeContext, NodeRuntime } from "@effect/platform-node";
-import { Effect } from "effect";
+import { ChangesetConfigReaderLive, ManagedSectionLive, VersioningStrategyLive } from "@savvy-web/silk-effects";
+import { Effect, Layer } from "effect";
+import { WorkspaceDiscoveryLive, WorkspaceRootLive } from "workspaces-effect";
 import { checkCommand } from "./commands/check.js";
 import { initCommand } from "./commands/init.js";
 
@@ -23,6 +25,16 @@ const cli = Command.run(rootCommand, {
 	version: process.env.__PACKAGE_VERSION__ ?? "0.0.0",
 });
 
+/** Workspace discovery wired on top of workspace root. */
+const WorkspaceLive = WorkspaceDiscoveryLive.pipe(Layer.provideMerge(WorkspaceRootLive));
+
+/** Combined layer providing all services needed by CLI commands. */
+const CliLive = Layer.mergeAll(
+	ManagedSectionLive,
+	VersioningStrategyLive.pipe(Layer.provide(ChangesetConfigReaderLive)),
+	WorkspaceLive,
+).pipe(Layer.provideMerge(NodeContext.layer));
+
 /**
  * Run the CLI application.
  *
@@ -33,7 +45,7 @@ const cli = Command.run(rootCommand, {
  * @internal
  */
 export function runCli(): void {
-	const main = Effect.suspend(() => cli(process.argv)).pipe(Effect.provide(NodeContext.layer));
+	const main = Effect.suspend(() => cli(process.argv)).pipe(Effect.provide(CliLive));
 	NodeRuntime.runMain(main);
 }
 
