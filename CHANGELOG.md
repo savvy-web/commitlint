@@ -1,5 +1,13 @@
 # @savvy-web/commitlint
 
+## 0.4.6
+
+### Dependencies
+
+* | [`96542c9`](https://github.com/savvy-web/commitlint/commit/96542c91f583b3ca59b7b3a64ec01aded2d58239) | Dependency    | Type    | Action | From   | To |
+  | :--------------------------------------------------------------------------------------------------- | :------------ | :------ | :----- | :----- | -- |
+  | @savvy-web/lint-staged                                                                               | devDependency | updated | ^0.6.6 | ^0.7.0 |    |
+
 ## 0.4.5
 
 ### Refactoring
