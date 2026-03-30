@@ -2,6 +2,6 @@
 "@savvy-web/commitlint": patch
 ---
 
-## Maintenance
+## Bug Fixes
 
-- Convert plugin SessionStart hook from plain text stdout to structured JSON hookSpecificOutput.additionalContext response
+Convert plugin SessionStart hook from plain text stdout to structured JSON hookSpecificOutput.additionalContext response
