@@ -16,13 +16,13 @@
 	},
 	"modules": {
 		"commitlint": {
-			"path": "src",
+			"path": "package",
 			"designDocsPath": ".claude/design/commitlint",
 			"categories": ["architecture", "integration", "testing"],
 			"maintainer": "C. Spencer Beggs",
 			"userDocs": {
-				"readme": "README.md",
-				"repoDocs": null,
+				"readme": "package/README.md",
+				"repoDocs": "../docs",
 				"siteDocs": null
 			}
 		}

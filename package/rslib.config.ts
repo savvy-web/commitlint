@@ -10,6 +10,11 @@ export default NodeLibraryBuilder.create({
 		"@commitlint/lint",
 	],
 	dtsBundledPackages: ["@commitlint/types"],
+	apiModel: {
+		tsdoc: {
+			tagDefinitions: [{ tagName: "@since", syntaxKind: "block" }],
+		},
+	},
 	transform({ pkg }) {
 		delete pkg.devDependencies;
 		delete pkg.bundleDependencies;

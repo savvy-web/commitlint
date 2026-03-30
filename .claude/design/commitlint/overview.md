@@ -3,8 +3,8 @@ status: current
 module: commitlint
 category: architecture
 created: 2026-02-02
-updated: 2026-03-29
-last-synced: 2026-03-29
+updated: 2026-03-30
+last-synced: 2026-03-30
 completeness: 90
 related: []
 dependencies:
@@ -107,19 +107,19 @@ export default {
 The detection modules have been migrated from `workspace-tools` to Effect-based
 services provided by `@savvy-web/silk-effects` and `workspaces-effect`:
 
-- **Versioning detection**: Deleted `src/detection/versioning.ts` entirely.
+- **Versioning detection**: Deleted `package/src/detection/versioning.ts` entirely.
   Replaced by `VersioningStrategy` service from `@savvy-web/silk-effects/versioning`,
   consumed as an Effect service in the CLI check command.
-- **Scope detection**: `src/detection/scopes.ts` is now effectful, using
+- **Scope detection**: `package/src/detection/scopes.ts` is now effectful, using
   `WorkspaceDiscovery` from `workspaces-effect` instead of `workspace-tools`.
   Returns `Effect.Effect<string[], WorkspaceDiscoveryError, WorkspaceDiscovery>`.
 - **DCO detection**: Remains synchronous. Replaced `findProjectRoot` from
   `workspace-tools` with an inlined implementation that walks up the directory
   tree looking for root markers (`pnpm-workspace.yaml`, `.git`, `package.json`).
 - **Managed sections**: `init.ts` and `check.ts` use `ManagedSection` service
-  from `@savvy-web/silk-effects/hooks` instead of manual BEGIN/END marker parsing.
-- **Deleted files**: `src/detection/versioning.ts`, `src/detection/versioning.test.ts`,
-  `src/detection/utils.ts`
+  from `@savvy-web/silk-effects` instead of manual BEGIN/END marker parsing.
+- **Deleted files**: `package/src/detection/versioning.ts`, `package/src/detection/versioning.test.ts`,
+  `package/src/detection/utils.ts`
 
 ### Missing Elements
 
@@ -178,7 +178,8 @@ export default CommitlintConfig.silk({
 2. **Scope Detection**: Use `WorkspaceDiscovery` from `workspaces-effect` to
    find package names (effectful)
 3. **Versioning Detection**: Use `VersioningStrategy` service from
-   `@savvy-web/silk-effects` to analyze changeset config for release format
+   `@savvy-web/silk-effects` (via `VersioningStrategyLive` layer) to analyze
+   changeset config for release format
 4. **Zero Config**: Works out of the box for most repositories
 
 ### Zod for Configuration Validation
@@ -237,56 +238,73 @@ export default CommitlintConfig.silk({
 
 ### Directory Structure
 
-This is a single-package repository. Source code is at the repo root under
-`src/`, not in a `pkgs/` subdirectory.
+This is a monorepo with two top-level directories: `package/` contains the
+`@savvy-web/commitlint` npm package, and `plugin/` contains a Claude Code
+sidecar plugin that informs agents about commit conventions via hooks.
 
 ```text
-src/
-  index.ts                      # Main entry: CommitlintConfig class
-  static.ts                     # Static config export (no detection)
-  static.test.ts                # Static config tests
+package/
+  src/
+    index.ts                      # Main entry: CommitlintConfig class
+    static.ts                     # Static config export (no detection)
+    static.test.ts                # Static config tests
 
-  config/
-    factory.ts                  # createConfig() implementation
-    factory.test.ts             # Factory unit tests
-    schema.ts                   # Zod schemas + ConfigOptions interface
-    types.ts                    # TypeScript type definitions
-    rules.ts                    # Rule definitions and defaults
-    plugins.ts                  # Custom commitlint plugin (silk/ rules)
-    plugins.test.ts             # Plugin rule tests
+    config/
+      factory.ts                  # createConfig() implementation
+      factory.test.ts             # Factory unit tests
+      schema.ts                   # Zod schemas + ConfigOptions interface
+      types.ts                    # TypeScript type definitions
+      rules.ts                    # Rule definitions and defaults
+      plugins.ts                  # Custom commitlint plugin (silk/ rules)
+      plugins.test.ts             # Plugin rule tests
 
-  detection/
-    dco.ts                      # DCO file detection (synchronous, inlined findProjectRoot)
-    dco.test.ts                 # DCO detection tests
-    scopes.ts                   # Workspace scope detection (effectful, uses WorkspaceDiscovery)
-    scopes.test.ts              # Scope detection tests
+    detection/
+      dco.ts                      # DCO file detection (synchronous, inlined findProjectRoot)
+      dco.test.ts                 # DCO detection tests
+      scopes.ts                   # Workspace scope detection (effectful, uses WorkspaceDiscovery)
+      scopes.test.ts              # Scope detection tests
 
-  prompt/
-    index.ts                    # Prompt module exports
-    config.ts                   # Prompt configuration for cz-commitlint
-    config.test.ts              # Prompt config tests
-    emojis.ts                   # Emoji definitions (shortcodes + Unicode)
-    prompter.ts                 # Commitizen adapter implementation
+    prompt/
+      index.ts                    # Prompt module exports
+      index.test.ts               # Prompt module export tests
+      config.ts                   # Prompt configuration for cz-commitlint
+      config.test.ts              # Prompt config tests
+      emojis.ts                   # Emoji definitions (shortcodes + Unicode)
+      emojis.test.ts              # Emoji definition tests
+      prompter.ts                 # Commitizen adapter implementation
+      prompter.test.ts            # Commitizen adapter tests
 
-  formatter/
-    index.ts                    # Custom formatter entry
-    format.ts                   # Formatting implementation
-    format.test.ts              # Formatter tests
-    messages.ts                 # Error message templates
+    formatter/
+      index.ts                    # Custom formatter entry
+      index.test.ts               # Formatter entry tests
+      format.ts                   # Formatting implementation
+      format.test.ts              # Formatter tests
+      messages.ts                 # Error message templates
 
-  cli/
-    index.ts                    # Effect CLI entry (runCli, exports)
-    commands/
-      index.ts                  # Commands barrel (init, check)
-      init.ts                   # Bootstrap husky hooks (managed section)
-      check.ts                  # Validate current setup + managed status
+    cli/
+      index.ts                    # Effect CLI entry (runCli, exports)
+      index.test.ts               # CLI integration tests
+      commands/
+        constants.ts              # Shared constants (CHECK_MARK, WARNING, paths)
+        init.ts                   # Bootstrap husky hooks (managed section)
+        init.test.ts              # Init command tests
+        check.ts                  # Validate current setup + managed status
+        check.test.ts             # Check command tests
 
-  bin/
-    cli.ts                      # CLI bin entry point
+    bin/
+      cli.ts                      # CLI bin entry point
+      cli.test.ts                 # CLI bin tests
 
-package.json
-tsconfig.json
-rslib.config.ts
+  package.json
+  tsconfig.json
+  rslib.config.ts
+
+plugin/
+  .claude-plugin/
+    plugin.json                   # Plugin manifest
+  hooks/
+    hooks.json                    # Hook registration (SessionStart)
+    session-start.sh              # SessionStart hook for commit conventions
 ```
 
 ### Package Exports
@@ -333,7 +351,7 @@ and static methods. This prevents instantiation while providing a clean API
 namespace for configuration creation.
 
 ```typescript
-// src/index.ts
+// package/src/index.ts
 import { createConfig } from "./config/factory.js";
 import type { ConfigOptions } from "./config/schema.js";
 import { ConfigOptionsSchema } from "./config/schema.js";
@@ -366,11 +384,11 @@ documentation. The interface is the public-facing type; the schema is used
 internally by `CommitlintConfig.silk()` to validate and apply defaults.
 
 ```typescript
-// src/config/schema.ts
+// package/src/config/schema.ts
 import { z } from "zod";
 
+export type ReleaseFormat = "semver" | "packages" | "scoped";
 export const ReleaseFormatSchema = z.enum(["semver", "packages", "scoped"]);
-export type ReleaseFormat = z.infer<typeof ReleaseFormatSchema>;
 
 // Internal: Zod schema for validation and defaults
 export const ConfigOptionsSchema = z.object({
@@ -417,12 +435,12 @@ manually.
 ### Custom Plugin System
 
 The package includes a custom commitlint plugin (`silkPlugin`) defined in
-`src/config/plugins.ts` that provides four rules namespaced under `silk/`.
+`package/src/config/plugins.ts` that provides four rules namespaced under `silk/`.
 These rules are loaded into the commitlint configuration via the `plugins`
 array in the factory output.
 
 ```typescript
-// src/config/plugins.ts
+// package/src/config/plugins.ts
 export const silkPlugin = {
   rules: {
     "silk/body-no-markdown": bodyNoMarkdown,
@@ -463,7 +481,7 @@ readability.
 
 ### Factory Implementation
 
-The factory (`src/config/factory.ts`) assembles the full commitlint
+The factory (`package/src/config/factory.ts`) assembles the full commitlint
 configuration by combining auto-detected settings with user overrides.
 
 Key implementation details that differ from the earlier design:
@@ -477,7 +495,7 @@ Key implementation details that differ from the earlier design:
 5. Scopes are sorted after deduplication
 
 ```typescript
-// src/config/factory.ts
+// package/src/config/factory.ts
 import { detectDCO } from "../detection/dco.js";
 import { createPromptConfig } from "../prompt/config.js";
 import { silkPlugin } from "./plugins.js";
@@ -537,7 +555,7 @@ that walks up the directory tree looking for root markers, replacing the
 previous dependency on `workspace-tools.findProjectRoot`.
 
 ```typescript
-// src/detection/dco.ts
+// package/src/detection/dco.ts
 import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
@@ -570,7 +588,7 @@ Scope detection is now effectful, using `WorkspaceDiscovery` from
 `workspaces-effect` instead of the synchronous `workspace-tools` API.
 
 ```typescript
-// src/detection/scopes.ts
+// package/src/detection/scopes.ts
 import { Effect } from "effect";
 import type { WorkspaceDiscoveryError } from "workspaces-effect";
 import { WorkspaceDiscovery } from "workspaces-effect";
@@ -604,14 +622,14 @@ export const detectScopes: Effect.Effect<
 
 ### Versioning Strategy Detection (Service-Based)
 
-The versioning detection module (`src/detection/versioning.ts`) has been
+The versioning detection module (`package/src/detection/versioning.ts`) has been
 **deleted**. Versioning strategy detection is now handled by the
 `VersioningStrategy` service from `@savvy-web/silk-effects/versioning`,
 consumed directly in the CLI check command:
 
 ```typescript
-// In src/cli/commands/check.ts
-import { VersioningStrategy } from "@savvy-web/silk-effects/versioning";
+// In package/src/cli/commands/check.ts
+import { VersioningStrategy } from "@savvy-web/silk-effects";
 
 const STRATEGY_TO_FORMAT: Record<string, ReleaseFormat> = {
   single: "semver",
@@ -641,8 +659,8 @@ const detectReleaseFormat = Effect.gen(function* () {
 });
 ```
 
-This approach replaces the deleted `src/detection/versioning.ts` and
-`src/detection/utils.ts` modules entirely. The versioning service is provided
+This approach replaces the deleted `package/src/detection/versioning.ts` and
+`package/src/detection/utils.ts` modules entirely. The versioning service is provided
 via the CLI layer composition (see CLI Entry Point below).
 
 ---
@@ -659,11 +677,10 @@ The CLI composes a layer stack providing all silk-effects and workspaces-effect
 services needed by the commands:
 
 ```typescript
-// src/cli/index.ts
+// package/src/cli/index.ts
 import { Command } from "@effect/cli";
 import { NodeContext, NodeRuntime } from "@effect/platform-node";
-import { ManagedSectionLive } from "@savvy-web/silk-effects/hooks";
-import { ChangesetConfigReaderLive, VersioningStrategyLive } from "@savvy-web/silk-effects/versioning";
+import { ChangesetConfigReaderLive, ManagedSectionLive, VersioningStrategyLive } from "@savvy-web/silk-effects";
 import { Effect, Layer } from "effect";
 import { WorkspaceDiscoveryLive, WorkspaceRootLive } from "workspaces-effect";
 import { checkCommand } from "./commands/check.js";
@@ -702,17 +719,17 @@ export { checkCommand, initCommand, rootCommand };
 
 | Layer | Service Provided | Source |
 | :---- | :--------------- | :----- |
-| `ManagedSectionLive` | `ManagedSection` (BEGIN/END marker file management) | `@savvy-web/silk-effects/hooks` |
-| `VersioningStrategyLive` | `VersioningStrategy` (changeset-based detection) | `@savvy-web/silk-effects/versioning` |
-| `ChangesetConfigReaderLive` | `ChangesetConfigReader` (dependency of versioning) | `@savvy-web/silk-effects/versioning` |
+| `ManagedSectionLive` | `ManagedSection` (BEGIN/END marker file management) | `@savvy-web/silk-effects` |
+| `VersioningStrategyLive` | `VersioningStrategy` (changeset-based detection) | `@savvy-web/silk-effects` |
+| `ChangesetConfigReaderLive` | `ChangesetConfigReader` (dependency of versioning) | `@savvy-web/silk-effects` |
 | `WorkspaceDiscoveryLive` | `WorkspaceDiscovery` (package listing) | `workspaces-effect` |
 | `WorkspaceRootLive` | `WorkspaceRoot` (root directory detection) | `workspaces-effect` |
 | `NodeContext.layer` | `FileSystem`, `Path`, `Terminal` | `@effect/platform-node` |
 
 ### Init Command - Managed Section Pattern
 
-The init command (`src/cli/commands/init.ts`) uses the `ManagedSection` service
-from `@savvy-web/silk-effects/hooks` to manage BEGIN/END markers in the husky
+The init command (`package/src/cli/commands/init.ts`) uses the `ManagedSection` service
+from `@savvy-web/silk-effects` to manage BEGIN/END markers in the husky
 hook. This replaces the previous manual marker parsing with a service-based
 approach. The service handles reading, writing, and updating managed sections
 in files, allowing users to add custom hooks above or below the managed block
@@ -733,8 +750,10 @@ without them being overwritten on updates.
 
 **ManagedSection service usage:**
 
-- `ms.read(path, toolName)` - Read existing managed section content from a file
-- `ms.write(path, toolName, content)` - Write/update managed section in a file
+- `SectionDefinition.make({ toolName })` - Create a section definition
+- `sectionDef.block(content)` - Create a block with content for the section
+- `ms.sync(path, block)` - Sync managed section (creates, updates, or reports unchanged)
+- `ms.write(path, block)` - Write/overwrite managed section in a file
 
 The `extractManagedSection` and `updateManagedSection` functions from the
 previous implementation have been removed; their logic is now encapsulated
@@ -753,9 +772,9 @@ fi
 
 **Three-Branch Hook Handling:**
 
-1. **Exists + no force**: Read existing content, update only the managed
-   section (preserving user code above/below). Logs "Updated managed section"
-   or "Added managed section" as appropriate.
+1. **Exists + no force**: Sync managed section via `ms.sync()` which returns
+   a tagged result (`Updated`, `Created`, or `Unchanged`). Preserves user
+   code above/below the markers.
 2. **Exists + force**: Overwrite the entire file with
    `generateFullHookContent()`. Logs "Replaced (--force)".
 3. **New file**: Create `.husky/` directory and write fresh hook with
@@ -766,16 +785,15 @@ The command also handles the commitlint config file creation, respecting the
 
 ### Check Command - Managed Section Status
 
-The check command (`src/cli/commands/check.ts`) validates the current commitlint
+The check command (`package/src/cli/commands/check.ts`) validates the current commitlint
 setup and reports detected settings, including managed section status. It uses
-both `ManagedSection` from `@savvy-web/silk-effects/hooks` and
-`VersioningStrategy` from `@savvy-web/silk-effects/versioning`.
+`CheckResult`, `ManagedSection`, and `VersioningStrategy` from
+`@savvy-web/silk-effects`.
 
 **Service dependencies:**
 
 ```typescript
-import { ManagedSection } from "@savvy-web/silk-effects/hooks";
-import { VersioningStrategy } from "@savvy-web/silk-effects/versioning";
+import { CheckResult, ManagedSection, VersioningStrategy } from "@savvy-web/silk-effects";
 import { WorkspaceDiscovery } from "workspaces-effect";
 ```
 
@@ -834,7 +852,7 @@ The prompt module provides both GitHub shortcodes (for markdown rendering) and
 Unicode emojis (for terminal display):
 
 ```typescript
-// src/prompt/emojis.ts
+// package/src/prompt/emojis.ts
 
 // GitHub/GitLab shortcodes (render in markdown)
 export const TYPE_EMOJIS = {
@@ -932,21 +950,16 @@ export default {
 ```json
 {
   "peerDependencies": {
-    "@commitlint/cli": "^20.4.1",
-    "@commitlint/config-conventional": "^20.4.1",
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "commitizen": "^4.3.1",
-    "husky": "^9.1.7"
-  },
-  "peerDependenciesMeta": {
-    "commitizen": {
-      "optional": true
-    }
+    "husky": "^9.1.0"
   }
 }
 ```
 
 - `@commitlint/cli` and `@commitlint/config-conventional` are required
-- `commitizen` is optional (for interactive commits using built-in adapter)
+- `commitizen` is required (for interactive commits using built-in adapter)
 - `husky` is required for git hooks
 
 Users who prefer `@commitlint/cz-commitlint` can install it separately.
@@ -956,8 +969,8 @@ Users who prefer `@commitlint/cz-commitlint` can install it separately.
 ```json
 {
   "dependencies": {
-    "@savvy-web/silk-effects": "^0.1.0",
-    "workspaces-effect": "^0.1.0",
+    "@savvy-web/silk-effects": "^0.2.2",
+    "workspaces-effect": "^0.3.0",
     "zod": "^4.3.6"
   }
 }
@@ -1134,7 +1147,7 @@ export default CommitlintConfig.silk();
 
 ### Unit Tests
 
-**Location:** Co-located test files (`src/**/*.test.ts`)
+**Location:** Co-located test files (`package/src/**/*.test.ts`)
 
 **Config Factory Tests:**
 
@@ -1316,7 +1329,9 @@ describe("commitlint integration", () => {
 
 **Package Documentation:**
 
-- `README.md` - Package overview (to be created)
+- `package/README.md` - Package overview (Level 1)
+- `README.md` - Repository root README
+- `CONTRIBUTING.md`, `SECURITY.md`, and `docs/` remain at the repo root
 
 **External Resources:**
 
