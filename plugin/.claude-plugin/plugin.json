@@ -1,0 +1,22 @@
+{
+	"name": "commitlint",
+	"version": "0.4.5",
+	"description": "Companion plugin for @savvy-web/commitlint that informs agents about commit standards",
+	"author": {
+		"name": "C. Spencer Beggs",
+		"email": "spencer@savvyweb.systems"
+	},
+	"repository": "https://github.com/savvy-web/commitlint.git",
+	"license": "MIT",
+	"keywords": [
+		"commitlint",
+		"conventional-commits",
+		"commit-lint",
+		"git-hooks",
+		"dco",
+		"developer-certificate-of-origin",
+		"monorepo",
+		"workspaces",
+		"effect-ts"
+	]
+}

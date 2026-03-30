@@ -2,57 +2,22 @@
 	"$schema": "https://turborepo.com/schema.v2.json",
 	"globalPassThroughEnv": ["GITHUB_ACTIONS", "CI"],
 	"tasks": {
-		"build:dev": {
-			"cache": true,
-			"dependsOn": ["types:check"],
-			"inputs": [
-				"$TURBO_DEFAULT$",
-				"$TURBO_ROOT$/package.json",
-				"$TURBO_ROOT$/pnpm-lock.yaml",
-				"$TURBO_ROOT$/pnpm-workspace.yaml",
-				"package.json",
-				"rslib.config.ts",
-				"tsconfig.json",
-				"src/**/*.ts",
-				"README.md",
-				"LICENSE"
-			],
-			"outputLogs": "errors-only",
-			"outputs": ["dist/dev/**", ".rslib/declarations/dev/**"]
-		},
-		"build:prod": {
-			"cache": true,
-			"dependsOn": ["types:check"],
-			"inputs": [
-				"$TURBO_DEFAULT$",
-				"$TURBO_ROOT$/package.json",
-				"$TURBO_ROOT$/pnpm-lock.yaml",
-				"$TURBO_ROOT$/pnpm-workspace.yaml",
-				"package.json",
-				"rslib.config.ts",
-				"tsconfig.json",
-				"src/**/*.ts",
-				"README.md",
-				"LICENSE"
-			],
-			"outputLogs": "full",
-			"outputs": ["dist/npm/**", ".rslib/declarations/npm/**"]
-		},
 		"types:check": {
 			"cache": true,
 			"dependsOn": [],
 			"inputs": [
 				"$TURBO_DEFAULT$",
-				"$TURBO_ROOT$/package.json",
-				"$TURBO_ROOT$/pnpm-lock.yaml",
-				"$TURBO_ROOT$/pnpm-workspace.yaml",
-				"package.json",
-				"rslib.config.ts",
-				"tsconfig.json",
 				"lib/**/*.ts",
-				"lib/**/*.mts",
 				"src/**/*.ts",
-				"*.ts"
+				"!**/*.md",
+				"!.changeset/**",
+				"!.claude/**",
+				"!.github/**",
+				"!.husky/**",
+				"!.vscode/**",
+				"!.rslib/**",
+				"!dist/**",
+				"!.turbo/**"
 			],
 			"outputLogs": "errors-only",
 			"outputs": []

@@ -1,3 +1,3 @@
-import { CommitlintConfig } from "../../src/index.js";
+import { CommitlintConfig } from "@savvy-web/commitlint";
 
-export default CommitlintConfig.silk({ emojis: true });
+export default CommitlintConfig.silk();

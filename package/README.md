@@ -5,9 +5,9 @@
 [![Node.js](https://img.shields.io/badge/Node.js-24%2B-339933?logo=node.js)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9%2B-3178c6?logo=typescript)](https://www.typescriptlang.org/)
 
-Dynamic, intelligent commitlint configuration that auto-detects DCO
-requirements, workspace scopes, and versioning strategies. Stop manually
-configuring commit rules for every project.
+Dynamic, intelligent commitlint configuration that auto-detects DCO requirements,
+workspace scopes, and versioning strategies. Stop manually configuring commit
+rules for every project.
 
 ## Features
 
@@ -20,20 +20,13 @@ configuring commit rules for every project.
 - **Interactive prompts** - Built-in commitizen adapter with emoji support
 - **CLI tooling** - Bootstrap and validate configurations with `savvy-commit`
 
-## Repository Structure
-
-This is a monorepo containing two packages:
-
-| Directory | Description |
-| --- | --- |
-| [`package/`](./package/) | The `@savvy-web/commitlint` npm package. Dynamic commitlint configuration with auto-detection, interactive prompts, and the `savvy-commit` CLI. |
-| [`plugin/`](./plugin/) | A Claude Code sidecar plugin that registers a `SessionStart` hook to inform AI agents about Silk commit conventions enforced by this project. |
-
-## Quick Start
+## Installation
 
 ```bash
 npm install -D @savvy-web/commitlint @commitlint/cli @commitlint/config-conventional husky
 ```
+
+## Quick Start
 
 ```typescript
 // commitlint.config.ts
@@ -42,16 +35,35 @@ import { CommitlintConfig } from "@savvy-web/commitlint";
 export default CommitlintConfig.silk();
 ```
 
-Or bootstrap everything automatically:
+Or use the static configuration without auto-detection:
+
+```typescript
+// commitlint.config.ts
+export { default } from "@savvy-web/commitlint/static";
+```
+
+Bootstrap your project automatically with the CLI:
 
 ```bash
 npx savvy-commit init
 ```
 
-For configuration options, API reference, and advanced usage, see the
-[package README](./package/README.md) and [docs](./docs/).
+## Claude Code Plugin
+
+This package has a companion Claude Code plugin that will remind your agents of commit standards and provide guidance on checking commits:
+
+```bash
+# Add the Savvy Web plugin marketplace (one-time setup)
+/plugin marketplace add savvy-web/systems
+
+# Install the commitlint plugin for this project
+/plugin install commitlint@savvy-web-systems --scope project
+```
 
 ## Documentation
+
+For configuration options, API reference, and advanced usage, see
+[docs/](./docs/).
 
 - [Configuration Guide](./docs/configuration.md) - All configuration options
 - [Auto-Detection](./docs/auto-detection.md) - How automatic detection works
@@ -60,4 +72,4 @@ For configuration options, API reference, and advanced usage, see the
 
 ## License
 
-[MIT](./LICENSE)
+MIT
