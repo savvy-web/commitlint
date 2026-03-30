@@ -1,5 +1,11 @@
 # @savvy-web/commitlint
 
+## 0.5.1
+
+### Bug Fixes
+
+* [`180878a`](https://github.com/savvy-web/commitlint/commit/180878a97c26d556515ea85c6d99ff98ad0f8ae9) Convert plugin SessionStart hook from plain text stdout to structured JSON hookSpecificOutput.additionalContext response
+
 ## 0.5.0
 
 ### Features
