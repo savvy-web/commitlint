@@ -1,29 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# SessionStart hook: inform the agent about Silk commit conventions
-# enforced by @savvy-web/commitlint.
+# SessionStart hook: inject commit convention context into the session.
+# Outputs JSON with additionalContext about the @savvy-web/commitlint conventions,
+# allowed types, rules, and CLI tools so the agent understands commit standards.
 
-# Get repo root directory
-ROOT=$(git rev-parse --show-toplevel)
+# Error trap: surface failures instead of silently producing no output
+trap 'echo "ERROR: session-start.sh failed at line $LINENO (exit $?)" >&2; exit 1' ERR
+
+if [ -z "${CLAUDE_PROJECT_DIR:-}" ]; then
+  echo "ERROR: CLAUDE_PROJECT_DIR is not set" >&2
+  exit 1
+fi
 
 # Detect package manager from package.json or lockfiles
 detect_pm() {
-  # Check packageManager field in package.json (e.g., "pnpm@9.0.0")
-  if [ -f "$ROOT/package.json" ]; then
-    pm=$(jq -r '.packageManager // empty' "$ROOT/package.json" 2>/dev/null | cut -d'@' -f1)
+  local root="$CLAUDE_PROJECT_DIR"
+  if [ -f "$root/package.json" ]; then
+    pm=$(jq -r '.packageManager // empty' "$root/package.json" 2>/dev/null | cut -d'@' -f1)
     if [ -n "$pm" ]; then
       echo "$pm"
       return
     fi
   fi
 
-  # Fallback to lockfile detection
-  if [ -f "$ROOT/pnpm-lock.yaml" ]; then
+  if [ -f "$root/pnpm-lock.yaml" ]; then
     echo "pnpm"
-  elif [ -f "$ROOT/yarn.lock" ]; then
+  elif [ -f "$root/yarn.lock" ]; then
     echo "yarn"
-  elif [ -f "$ROOT/bun.lock" ]; then
+  elif [ -f "$root/bun.lock" ]; then
     echo "bun"
   else
     echo "npm"
@@ -39,21 +44,22 @@ case "$PM" in
   *)    RUN="npx --no --" ;;
 esac
 
-# Static content (quoted heredoc preserves backticks)
-cat <<'STATIC'
+# Build the context as a variable, then wrap in JSON
+CONTEXT=$(cat <<CONTEXT
+<EXTREMELY_IMPORTANT>
 ## Commit Conventions
 
-This project enforces commit message rules via `@savvy-web/commitlint` with the **Silk** preset. All commits are validated by a `commit-msg` hook.
+This project enforces commit message rules via \`@savvy-web/commitlint\` with the **Silk** preset. All commits are validated by a \`commit-msg\` hook.
 
 ### Format
 
-```
+\`\`\`text
 type(scope): subject
 
 body (optional)
 
 trailers
-```
+\`\`\`
 
 ### Allowed Types
 
@@ -75,26 +81,22 @@ trailers
 
 ### Rules
 
-- **DCO signoff required** — If a DCO file is in the project root every commit must end with `Signed-off-by: Name <email>` (auto-detected from DCO file)
-- **No markdown in commits** — headers, numbered lists, code fences, links, and bold/italic are rejected; plain unordered lists (`-` or `*`) are allowed
+- **DCO signoff required** — If a DCO file is in the project root every commit must end with \`Signed-off-by: Name <email>\` (auto-detected from DCO file)
+- **No markdown in commits** — headers, numbered lists, code fences, links, and bold/italic are rejected; plain unordered lists (\`-\` or \`*\`) are allowed
 - **Body max line length: 300** characters (accommodates detailed AI-generated messages)
 - **Subject case: any** — capitalized subjects are acceptable
 - **Scopes** — if the project defines allowed scopes, only those are permitted
 
 ### Example
 
-```
+\`\`\`text
 feat(parser): add support for merge commit messages
 
 Extend the parser to recognize merge commit patterns so they
 pass validation without manual reformatting.
 
 Signed-off-by: C. Spencer Beggs <spencer@savvyweb.systems>
-```
-STATIC
-
-# Dynamic content (unquoted heredoc for variable interpolation)
-cat <<DYNAMIC
+\`\`\`
 
 ### CLI Tools
 
@@ -109,7 +111,15 @@ cat <<DYNAMIC
 - \`${RUN} savvy-commit init --config <path>\` — custom config path (default: \`lib/configs/commitlint.config.ts\`)
 - \`${RUN} savvy-commit init --force\` — overwrite existing hook file entirely
 
-After committing, run \`${RUN} commitlint --last\` to verify the commit message meets standards before pushing.
-DYNAMIC
+After committing, run \`${RUN} commitlint --last\` to verify the commit message meets standards before pushing.</EXTREMELY_IMPORTANT>
+CONTEXT
+)
+
+# Output as JSON with additionalContext
+jq -n --arg ctx "$CONTEXT" '{
+  "hookSpecificOutput": {
+    "additionalContext": $ctx
+  }
+}'
 
 exit 0
