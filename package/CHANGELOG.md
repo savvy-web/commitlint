@@ -1,5 +1,11 @@
 # @savvy-web/commitlint
 
+## 0.5.2
+
+### Bug Fixes
+
+* [`4390e3d`](https://github.com/savvy-web/commitlint/commit/4390e3ddb6f7d80d1b131130d1ff0308cf59c825) Fix session-start hook JSON output validation by adding missing hookEventName field, converting markdown to XML tags in additionalContext, and consuming stdin to prevent broken pipe errors
+
 ## 0.5.1
 
 ### Bug Fixes
