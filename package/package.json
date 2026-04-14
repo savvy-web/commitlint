@@ -69,7 +69,7 @@
 		"@commitlint/config-conventional": "^20.5.0",
 		"@commitlint/lint": "^20.4.3",
 		"@commitlint/types": "^20.4.3",
-		"@savvy-web/rslib-builder": "^0.20.0",
+		"@savvy-web/rslib-builder": "^0.20.1",
 		"@types/node": "catalog:silk",
 		"@typescript/native-preview": "catalog:silk",
 		"commitizen": "^4.3.1",
