@@ -1,5 +1,11 @@
 # @savvy-web/commitlint
 
+## 0.6.0
+
+### Other
+
+* [`2c59c0e`](https://github.com/savvy-web/commitlint/commit/2c59c0eee022f674a5499c89038e2aface964b7c) Support TypeScript v6
+
 ## 0.5.2
 
 ### Bug Fixes
