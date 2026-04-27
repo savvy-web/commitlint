@@ -59,9 +59,9 @@
 		"@effect/printer-ansi": "catalog:silk",
 		"@effect/rpc": "catalog:silk",
 		"@effect/sql": "catalog:silk",
-		"@savvy-web/silk-effects": "^0.2.2",
+		"@savvy-web/silk-effects": "^0.3.0",
 		"effect": "catalog:silk",
-		"workspaces-effect": "^0.3.0",
+		"workspaces-effect": "^0.4.1",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
