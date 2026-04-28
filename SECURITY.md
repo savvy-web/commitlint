@@ -4,8 +4,8 @@
 
 | Version | Supported |
 | --- | --- |
-| 0.2.x | Yes |
-| < 0.2 | No |
+| 0.7.x | Yes |
+| < 0.7 | No |
 
 As a pre-1.0 package, only the latest minor version receives security fixes.
 

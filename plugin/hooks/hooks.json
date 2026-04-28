@@ -7,7 +7,57 @@
 					{
 						"type": "command",
 						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh",
-						"timeout": 5
+						"timeout": 10
+					}
+				]
+			}
+		],
+		"PreToolUse": [
+			{
+				"matcher": "Bash",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use-bash.sh"
+					}
+				]
+			},
+			{
+				"matcher": "mcp__gk__.*|mcp__github(-[^_]+)?__.*",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use-mcp.sh"
+					}
+				]
+			},
+			{
+				"matcher": "Read|Write|Edit",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use-fs.sh"
+					}
+				]
+			}
+		],
+		"PostToolUse": [
+			{
+				"matcher": "Bash",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-use-bash.sh"
+					}
+				]
+			}
+		],
+		"UserPromptSubmit": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/user-prompt-submit.sh"
 					}
 				]
 			}

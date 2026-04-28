@@ -50,7 +50,8 @@ npx savvy-commit init
 
 ## Claude Code Plugin
 
-This package has a companion Claude Code plugin that will remind your agents of commit standards and provide guidance on checking commits:
+This package has a companion Claude Code plugin that helps AI agents follow
+commit standards in your repository:
 
 ```bash
 # Add the Savvy Web plugin marketplace (one-time setup)
@@ -59,6 +60,28 @@ This package has a companion Claude Code plugin that will remind your agents of 
 # Install the commitlint plugin for this project
 /plugin install commitlint@savvy-web-systems --scope project
 ```
+
+Once installed, the plugin:
+
+- **Injects context at session start** with your project's commit conventions,
+  current branch and inferred ticket id, a GPG/SSH signing diagnostic, and a
+  cached list of open issues from `gh`.
+- **Auto-allows safe Bash and curated MCP operations** so the agent does not
+  prompt for read-only commands, common workflow tools, or vetted GitHub /
+  GitKraken operations. Destructive commands (`rm`, `curl`, `git push --force`,
+  package installers, `gh repo delete`, `gh secret`, etc.) are never
+  auto-allowed.
+- **Validates commit messages before they run** by intercepting `git commit`
+  and `gh pr create|edit`, denying messages that contain markdown headers or
+  code fences, or that conflict with your signing config (`--no-gpg-sign`
+  while `commit.gpgsign=true`).
+- **Advises on commit quality** for plan/design path leakage, soft-wrapped
+  bullets, overly long bodies, and missing `Closes/Fixes/Resolves` trailers
+  when the branch encodes a ticket id.
+- **Replays commitlint after each commit** and surfaces signing-status or
+  Closes-trailer issues so the agent can offer an `--amend` fix.
+- **Reminds the agent about commit quality** when a user prompt mentions
+  committing, shipping, opening a PR, amending, or squashing.
 
 ## Documentation
 

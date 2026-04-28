@@ -59,7 +59,7 @@ detect_pm() {
 # Run commitlint via the detected package manager
 PM=$(detect_pm)
 case "$PM" in
-  pnpm) pnpm dlx commitlint --config "$ROOT/${configPath}" --edit "$1" ;;
+  pnpm) pnpm exec commitlint --config "$ROOT/${configPath}" --edit "$1" ;;
   yarn) yarn dlx commitlint --config "$ROOT/${configPath}" --edit "$1" ;;
   bun)  bun x commitlint --config "$ROOT/${configPath}" --edit "$1" ;;
   *)    npx --no -- commitlint --config "$ROOT/${configPath}" --edit "$1" ;;

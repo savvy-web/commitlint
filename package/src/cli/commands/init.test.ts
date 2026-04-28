@@ -34,9 +34,9 @@ describe("generateManagedContent", () => {
 		expect(content).toContain("npm");
 	});
 
-	it("includes pnpm dlx, yarn dlx, bun x, and npx commands", () => {
+	it("includes pnpm exec, yarn dlx, bun x, and npx commands", () => {
 		const content = generateManagedContent("my-config.ts");
-		expect(content).toContain("pnpm dlx commitlint");
+		expect(content).toContain("pnpm exec commitlint");
 		expect(content).toContain("yarn dlx commitlint");
 		expect(content).toContain("bun x commitlint");
 		expect(content).toContain("npx --no -- commitlint");

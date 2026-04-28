@@ -2,7 +2,7 @@
 	"$schema": "https://turborepo.com/schema.v2.json",
 	"globalPassThroughEnv": ["GITHUB_ACTIONS", "CI"],
 	"tasks": {
-		"types:check": {
+		"//#types:check": {
 			"cache": true,
 			"dependsOn": [],
 			"inputs": [

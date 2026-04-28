@@ -19,6 +19,10 @@ configuring commit rules for every project.
   conventional commits
 - **Interactive prompts** - Built-in commitizen adapter with emoji support
 - **CLI tooling** - Bootstrap and validate configurations with `savvy-commit`
+- **Claude Code plugin** - Companion plugin keeps AI agents inside your commit
+  conventions: injects branch and signing context at session start, auto-allows
+  safe Bash and curated MCP operations, validates commit messages before
+  `git commit` runs, and replays commitlint plus signing checks afterwards
 
 ## Repository Structure
 
@@ -27,7 +31,7 @@ This is a monorepo containing two packages:
 | Directory | Description |
 | --- | --- |
 | [`package/`](./package/) | The `@savvy-web/commitlint` npm package. Dynamic commitlint configuration with auto-detection, interactive prompts, and the `savvy-commit` CLI. |
-| [`plugin/`](./plugin/) | A Claude Code sidecar plugin that registers a `SessionStart` hook to inform AI agents about Silk commit conventions enforced by this project. |
+| [`plugin/`](./plugin/) | A Claude Code sidecar plugin that registers `SessionStart`, `PreToolUse`, `PostToolUse`, and `UserPromptSubmit` hooks to inform AI agents about Silk commit conventions, auto-allow safe Bash and curated MCP operations, validate commit messages before they run, and replay commitlint plus signing checks afterwards. |
 
 ## Quick Start
 

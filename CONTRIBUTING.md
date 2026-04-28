@@ -7,6 +7,8 @@ and instructions for development.
 
 - Node.js 24+
 - pnpm 10.28+
+- [bats](https://github.com/bats-core/bats-core) (installed automatically via
+  pnpm; required to run the plugin's bash hook tests)
 
 ## Development Setup
 
@@ -29,13 +31,19 @@ pnpm run test
 
 ```text
 commitlint/
-├── src/                              # Source code
-│   ├── bin/                          # CLI entry point (savvy-commit)
-│   ├── cli/                          # CLI commands (init, check)
-│   ├── config/                       # Configuration factory and schemas
-│   ├── detection/                    # Auto-detection (DCO, scopes, versioning)
-│   ├── formatter/                    # Custom commit message formatter
-│   └── prompt/                       # Commitizen adapter and prompt config
+├── package/                          # @savvy-web/commitlint npm package
+│   └── src/
+│       ├── bin/                      # CLI entry point (savvy-commit)
+│       ├── cli/                      # CLI commands (init, check, hook)
+│       │   └── commands/hooks/       # Internal hook subcommand handlers
+│       ├── config/                   # Configuration factory and schemas
+│       ├── detection/                # Auto-detection (DCO, scopes)
+│       ├── formatter/                # Custom commit message formatter
+│       ├── hook/                     # Hook helpers (envelopes, rules, diagnostics)
+│       └── prompt/                   # Commitizen adapter and prompt config
+├── plugin/                           # Claude Code sidecar plugin
+│   ├── .claude-plugin/plugin.json
+│   └── hooks/                        # Bash hook shims + bats test harness
 ├── docs/                             # User-facing documentation
 ├── lib/
 │   └── configs/                      # Shared configuration files
@@ -91,8 +99,8 @@ The following checks run automatically:
 
 ## Testing
 
-Tests use [Vitest](https://vitest.dev) with v8 coverage and the forks pool
-for Effect-TS compatibility.
+TypeScript tests use [Vitest](https://vitest.dev) with v8 coverage and the
+forks pool for Effect-TS compatibility.
 
 ```bash
 # Run all tests
@@ -103,6 +111,18 @@ pnpm run test:watch
 
 # Run tests with coverage
 pnpm run test:coverage
+```
+
+The Claude Code plugin's bash hook shims under `plugin/hooks/` are exercised
+with [bats](https://github.com/bats-core/bats-core) (installed as a dev
+dependency). The `plugin/hooks/__test__/` directory contains specs for the
+helper scripts (`is-commit-related.bats`, `match-safe-bash.bats`,
+`run-cli.bats`) and integration specs for the `pre-tool-use-{bash,mcp,fs}`
+shims.
+
+```bash
+# Run the bash hook test suite directly
+pnpm exec bats plugin/hooks/__test__
 ```
 
 ## TypeScript

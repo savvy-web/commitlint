@@ -109,6 +109,19 @@ Custom hooks can be placed above or below the managed section markers.
 Re-running `savvy-commit init` updates only the managed block, preserving
 your customizations.
 
+## Internal: `savvy-commit hook`
+
+The CLI also exposes a `hook` parent command with four subcommands
+(`session-start`, `pre-commit-message`, `post-commit-verify`,
+`user-prompt-submit`). These are **internal** and consumed exclusively by the
+companion [Claude Code plugin's](../plugin/) bash hook shims. They read a
+Claude Code hook envelope on stdin and emit a JSON envelope on stdout.
+
+The CLI surface and JSON envelope shape are not stable for third-party
+consumers; expect breaking changes between minor versions until 1.0. There is
+no need to invoke `savvy-commit hook ...` directly from your own scripts —
+install the plugin instead.
+
 ## Manual Setup
 
 If you prefer manual setup over the CLI:
