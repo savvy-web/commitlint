@@ -1,5 +1,28 @@
 # @savvy-web/commitlint
 
+## 0.7.0
+
+### Features
+
+* [`4d34b08`](https://github.com/savvy-web/commitlint/commit/4d34b0834edbefb8ac66fe285702dd681ac453d8) ### Commit message quality hooks
+
+- New `PreToolUse(Bash)` hook auto-allows curated safe commands and routes commit-related Bash invocations through `savvy-commit hook pre-commit-message`. Six rules deny markdown headers and code fences, deny commitlint failures, deny `--no-gpg-sign` when `commit.gpgsign=true`, and advise on plan-file references, soft-wraps inside bullets, body verbosity, and missing `Closes #N` trailers when the branch encodes a ticket.
+- New `PreToolUse` matchers auto-allow curated GitHub MCP and GitKraken MCP operations and Read/Write/Edit calls scoped to the project's `.claude/cache/` directory.
+- New `PostToolUse(Bash)` hook replays `commitlint --last`, verifies the new HEAD's signature against `commit.gpgsign`, and advises when a branch-implied ticket is missing from the commit body.
+- New `UserPromptSubmit` hook injects a compact commit-quality reminder when the prompt mentions commit-related verbs.
+
+### Bug Fixes
+
+* [`4d34b08`](https://github.com/savvy-web/commitlint/commit/4d34b0834edbefb8ac66fe285702dd681ac453d8) `savvy-commit init` now generates a husky `commit-msg` hook that runs commitlint via `pnpm exec` instead of `pnpm dlx`. The dlx form runs commitlint in an isolated package cache that cannot resolve workspace-local imports in `commitlint.config.ts` (e.g., `import { CommitlintConfig } from "@savvy-web/commitlint"`), causing every commit to fail with `Cannot find module '@savvy-web/commitlint'`. `pnpm exec` runs the locally installed binary so workspace package resolution works as expected. Other package managers (yarn, bun, npm) are unchanged.
+
+### Richer SessionStart context
+
+* SessionStart now ships the existing commit conventions plus a quality charter (forbidden body content, soft-wrap rule, dependency-update guidance), a branch context block (current branch, inferred ticket id, open-issue list), and a GPG / SSH signing diagnostic with key resolution and agent responsiveness checks.
+
+### `savvy-commit hook` CLI subcommand tree
+
+* New internal subcommand tree (`session-start`, `pre-commit-message`, `post-commit-verify`, `user-prompt-submit`) consumed by the companion plugin's bash hooks. Not stable for third-party consumption; surface and JSON shape may change between minor versions until 1.0.
+
 ## 0.6.0
 
 ### Other
