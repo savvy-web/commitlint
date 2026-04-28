@@ -3,7 +3,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { NodeContext } from "@effect/platform-node";
 import { ChangesetConfigReaderLive, ManagedSectionLive, VersioningStrategyLive } from "@savvy-web/silk-effects";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, LogLevel, Logger } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { WorkspaceDiscovery, WorkspaceRootLive } from "workspaces-effect";
 import { checkCommand } from "./check.js";
@@ -23,13 +23,13 @@ const WorkspaceDiscoveryStub = Layer.succeed(
 	}),
 );
 
-/** Test layer combining all required services. */
+/** Test layer combining all required services, with logs silenced. */
 const TestLayer = Layer.mergeAll(
 	ManagedSectionLive,
 	VersioningStrategyLive.pipe(Layer.provide(ChangesetConfigReaderLive)),
 	WorkspaceDiscoveryStub,
 	WorkspaceRootLive,
-).pipe(Layer.provideMerge(NodeContext.layer));
+).pipe(Layer.provideMerge(NodeContext.layer), Layer.provide(Logger.minimumLogLevel(LogLevel.None)));
 
 describe("checkCommand", () => {
 	it("is a valid Effect CLI command", () => {
