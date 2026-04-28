@@ -10,7 +10,7 @@ import { Effect, Schema } from "effect";
 import type { BranchInfo } from "../../../hook/diagnostics/branch.js";
 import { readBranchInfo } from "../../../hook/diagnostics/branch.js";
 import type { OpenIssue } from "../../../hook/diagnostics/open-issues.js";
-import { readOpenIssuesFromCache } from "../../../hook/diagnostics/open-issues.js";
+import { ISSUES_CACHE_RELATIVE_PATH, readOpenIssuesFromCache } from "../../../hook/diagnostics/open-issues.js";
 import { readSigningDiagnostic } from "../../../hook/diagnostics/signing.js";
 import { PreToolUseEnvelope } from "../../../hook/envelope.js";
 import type { HookOutput } from "../../../hook/output.js";
@@ -84,7 +84,7 @@ export const preCommitMessageCommand = Command.make("pre-commit-message", {}, ()
 
 		const branchInfo = yield* readBranchInfo();
 		const signing = yield* readSigningDiagnostic();
-		const issuesPath = resolve(process.env.CLAUDE_PROJECT_DIR ?? process.cwd(), ".claude/cache/issues.json");
+		const issuesPath = resolve(process.env.CLAUDE_PROJECT_DIR ?? process.cwd(), ISSUES_CACHE_RELATIVE_PATH);
 		const issues = (yield* readOpenIssuesFromCache(issuesPath)) ?? [];
 
 		const out = yield* Effect.promise(() =>

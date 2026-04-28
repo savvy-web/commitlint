@@ -17,6 +17,9 @@ export interface OpenIssue {
 
 export const ISSUES_CACHE_TTL_SECONDS = 600;
 
+/** Relative path under CLAUDE_PROJECT_DIR where the open-issues cache lives. */
+export const ISSUES_CACHE_RELATIVE_PATH = ".claude/cache/issues.json";
+
 export function readOpenIssuesFromCache(
 	cachePath: string,
 	ttlSeconds: number = ISSUES_CACHE_TTL_SECONDS,

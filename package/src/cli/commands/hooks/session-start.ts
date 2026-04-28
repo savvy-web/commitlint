@@ -8,18 +8,16 @@ import { resolve } from "node:path";
 import { Command } from "@effect/cli";
 import { Effect } from "effect";
 import { readBranchInfo } from "../../../hook/diagnostics/branch.js";
-import { readOrFetchOpenIssues } from "../../../hook/diagnostics/open-issues.js";
+import { ISSUES_CACHE_RELATIVE_PATH, readOrFetchOpenIssues } from "../../../hook/diagnostics/open-issues.js";
 import { readSigningDiagnostic } from "../../../hook/diagnostics/signing.js";
 import { sessionStartContext } from "../../../hook/output.js";
 import { HookSilencer } from "../../../hook/silence-logger.js";
-
-const ISSUES_CACHE = ".claude/cache/issues.json";
 
 export const sessionStartCommand = Command.make("session-start", {}, () =>
 	Effect.gen(function* () {
 		const branch = yield* readBranchInfo();
 		const signing = yield* readSigningDiagnostic();
-		const issuesCachePath = resolve(process.env.CLAUDE_PROJECT_DIR ?? process.cwd(), ISSUES_CACHE);
+		const issuesCachePath = resolve(process.env.CLAUDE_PROJECT_DIR ?? process.cwd(), ISSUES_CACHE_RELATIVE_PATH);
 		const issues = yield* readOrFetchOpenIssues(issuesCachePath);
 
 		const blocks: string[] = [];

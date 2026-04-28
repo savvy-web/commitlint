@@ -27,7 +27,10 @@
 ^[[:space:]]*tr(\b|$)
 ^[[:space:]]*tee(\b|$)
 ^[[:space:]]*date(\b|$)
-^[[:space:]]*env(\b|$)
+# `env` bare is intentionally NOT auto-allowed because it bypasses the hard-exclusion
+# checks in match-safe-bash.sh (`env rm -rf .`, `env curl ...`). Only allow `env` when
+# used as an env-var setter prefixing a known-safe runner.
+^[[:space:]]*env([[:space:]]+[A-Z_][A-Z0-9_]*=[^[:space:]]+)*[[:space:]]+(pnpm|node|git|gh)(\b|$)
 ^[[:space:]]*jq(\b|$)
 ^[[:space:]]*git[[:space:]]+(status|diff|log|show|rev-parse|ls-files|ls-tree|remote|branch|config|stash[[:space:]]+list|stash[[:space:]]+show)(\b|$)
 ^[[:space:]]*gh[[:space:]]+(api|pr[[:space:]]+(view|list|diff|checks)|issue[[:space:]]+(view|list)|repo[[:space:]]+view|run[[:space:]]+(list|view|watch))(\b|$)
@@ -42,8 +45,12 @@
 # They route through the commit-message validation cold path in pre-tool-use-bash.sh.
 ^[[:space:]]*git[[:space:]]+add(\b|$)
 ^[[:space:]]*git[[:space:]]+checkout(\b|$)
-^[[:space:]]*git[[:space:]]+rm(\b|$)
-^[[:space:]]*git[[:space:]]+stash(\b|$)
+# `git rm` enumerates safe forms only. Bare `git rm` and `git rm -rf .` are NOT auto-allowed.
+# Hard exclusion below also denies --force / -rf variants explicitly.
+^[[:space:]]*git[[:space:]]+rm[[:space:]]+--cached\b
+^[[:space:]]*git[[:space:]]+rm[[:space:]]+[^-][^[:space:]]*([[:space:]]+[^-][^[:space:]]*)*$
+# `git stash` enumerates safe operations (push/pop/apply/save/list/show). drop/clear are NOT auto-allowed.
+^[[:space:]]*git[[:space:]]+stash([[:space:]]+(push|pop|apply|save|list|show))?(\b|$)
 ^[[:space:]]*git[[:space:]]+reset[[:space:]]+--soft\b
 ^[[:space:]]*git[[:space:]]+push(\b|$)
 ^[[:space:]]*gh[[:space:]]+(pr[[:space:]]+comment|issue[[:space:]]+(create|close|comment))(\b|$)
