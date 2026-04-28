@@ -1,13 +1,14 @@
 import { NodeContext } from "@effect/platform-node";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, LogLevel, Logger } from "effect";
 import { describe, expect, it } from "vitest";
 import { WorkspaceDiscovery, WorkspaceDiscoveryLive, WorkspaceRootLive } from "workspaces-effect";
 import { detectScopes } from "./scopes.js";
 
-/** Test layer with real workspace services for integration tests. */
+/** Test layer with real workspace services for integration tests, with logs silenced. */
 const TestLayer = WorkspaceDiscoveryLive.pipe(
 	Layer.provideMerge(WorkspaceRootLive),
 	Layer.provideMerge(NodeContext.layer),
+	Layer.provide(Logger.minimumLogLevel(LogLevel.None)),
 );
 
 /** Stub layer that returns empty packages. */

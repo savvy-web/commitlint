@@ -3,9 +3,9 @@ status: current
 module: commitlint
 category: architecture
 created: 2026-02-02
-updated: 2026-03-30
-last-synced: 2026-03-30
-completeness: 90
+updated: 2026-04-28
+last-synced: 2026-04-28
+completeness: 92
 related: []
 dependencies:
   - "@savvy-web/silk-effects"
@@ -14,8 +14,10 @@ dependencies:
   - "@effect/platform-node"
   - effect
   - zod
+  - shell-quote
 implementation-plans:
   - ../plans/wondrous-purring-bee.md
+  - ../plans/2026-04-28-commit-hooks-upgrade.md
 ---
 
 # Commitlint Configuration Package - Architecture
@@ -33,15 +35,17 @@ auto-detection of DCO requirements, workspace scopes, and versioning strategies.
 5. [Dynamic Configuration API](#dynamic-configuration-api)
 6. [Auto-Detection Features](#auto-detection-features)
 7. [CLI Tool](#cli-tool)
-8. [Configuration Options](#configuration-options)
-9. [Peer Dependencies](#peer-dependencies)
-10. [Integration](#integration)
-11. [Testing Strategy](#testing-strategy)
-12. [Future Enhancements](#future-enhancements)
-13. [Related Documentation](#related-documentation)
+8. [Plugin Hook Architecture](#plugin-hook-architecture)
+9. [Configuration Options](#configuration-options)
+10. [Peer Dependencies](#peer-dependencies)
+11. [Integration](#integration)
+12. [Testing Strategy](#testing-strategy)
+13. [Future Enhancements](#future-enhancements)
+14. [Related Documentation](#related-documentation)
 
 Note: The Custom Plugin System and Factory Implementation are subsections of
-the Dynamic Configuration API section.
+the Dynamic Configuration API section. The Hook Subcommand Tree is a
+subsection of CLI Tool.
 
 ---
 
@@ -290,6 +294,34 @@ package/
         init.test.ts              # Init command tests
         check.ts                  # Validate current setup + managed status
         check.test.ts             # Check command tests
+        hook.ts                   # `hook` parent command (internal)
+        hook.test.ts              # Parent-command tests
+        hooks/                    # `hook` subcommand handlers (internal)
+          session-start.ts        # Emits SessionStart additionalContext
+          pre-commit-message.ts   # PreToolUse(Bash) commit-message validator
+          post-commit-verify.ts   # PostToolUse(Bash) verifier (commitlint replay + signature + closes)
+          user-prompt-submit.ts   # UserPromptSubmit reminder injector
+          __test__/               # Co-located hook subcommand tests
+
+    hook/                         # Hook helpers shared by the CLI hook subcommands
+      envelope.ts                 # Effect Schemas for the four hook envelopes
+      output.ts                   # JSON output builders (allow / deny / advise / silent / context)
+      parse-bash-command.ts       # shell-quote-based parser for git commit / gh pr create|edit
+      silence-logger.ts           # HookSilencer Layer (Warning+ only, stdout reserved for envelopes)
+      diagnostics/
+        branch.ts                 # Current branch + inferred ticket id (regex on branch name)
+        signing.ts                # GPG/SSH signing diagnostic (format, autoSign, key resolution, agent)
+        cache.ts                  # JSON file cache with TTL (atomic-ish writes)
+        open-issues.ts            # gh-CLI-backed open issues, cached at .claude/cache/issues.json
+      rules/
+        types.ts                  # Rule<Input,Ctx>, RuleHit, partitionHits
+        forbidden-content.ts      # deny: markdown headers / code fences in body
+        plan-leakage.ts           # advise: .claude/plans|design paths or planning narrative
+        soft-wrap.ts              # advise: short bullet followed by indented continuation
+        verbosity.ts              # advise: body lines > 25 or words > 400
+        closes-trailer.ts         # advise: branch ticket id with no Closes/Fixes/Resolves trailer
+        signing-flag-conflict.ts  # deny: --no-gpg-sign while commit.gpgsign=true
+      __test__/                   # Co-located hook helper tests
 
     bin/
       cli.ts                      # CLI bin entry point
@@ -301,10 +333,23 @@ package/
 
 plugin/
   .claude-plugin/
-    plugin.json                   # Plugin manifest
+    plugin.json                   # Plugin manifest (version auto-synced via versionFiles)
   hooks/
-    hooks.json                    # Hook registration (SessionStart)
-    session-start.sh              # SessionStart hook for commit conventions
+    hooks.json                    # Hook registration (SessionStart, PreToolUse x3, PostToolUse, UserPromptSubmit)
+    session-start.sh              # CLI shim → savvy-commit hook session-start
+    pre-tool-use-bash.sh          # Hot path: safe-bash auto-allow; cold path: pre-commit-message
+    pre-tool-use-mcp.sh           # Auto-allow curated GitHub / GitKraken MCP ops
+    pre-tool-use-fs.sh            # Auto-allow Read/Write/Edit under .claude/cache/
+    post-tool-use-bash.sh         # Cold path: post-commit-verify
+    user-prompt-submit.sh         # Trigger-regex shim → savvy-commit hook user-prompt-submit
+    lib/
+      run-cli.sh                  # Detect package manager, emit `pnpm exec` / `npx --no --` / etc.
+      is-commit-related.sh        # Heuristic: is this `git commit` or `gh pr create|edit`?
+      match-safe-bash.sh          # Match command against safe-bash-patterns.txt (with hard exclusions)
+      safe-bash-patterns.txt      # POSIX-ERE regex allow-list (Tier A read + Tier B workflow-essential)
+      safe-mcp-github-ops.txt     # Allow-list of MCP github(-*) operation suffixes
+      safe-mcp-gk-ops.txt         # Allow-list of MCP gk operation suffixes
+    __test__/                     # bats test harness
 ```
 
 ### Package Exports
@@ -670,24 +715,30 @@ via the CLI layer composition (see CLI Entry Point below).
 ### CLI Entry Point
 
 The CLI uses `@effect/cli` with Effect for functional error handling. The
-`runCli()` function is exported for the bin entry point. Only `init` and
-`check` subcommands are currently implemented (no `migrate` command yet).
+`runCli()` function is exported for the bin entry point. The `init`, `check`,
+and `hook` subcommands are implemented (no `migrate` command yet); `hook` is
+an internal subcommand tree consumed by the companion plugin's bash hooks.
 
 The CLI composes a layer stack providing all silk-effects and workspaces-effect
-services needed by the commands:
+services needed by the commands. It also installs a custom logger that routes
+all Effect log output to stderr at `Warning` level or higher — the `hook`
+subcommands reserve stdout exclusively for the JSON envelope they emit back to
+Claude Code, and stray Info-level messages (e.g., `workspaces-effect` emitting
+"Workspace root found") would otherwise corrupt that contract:
 
 ```typescript
 // package/src/cli/index.ts
 import { Command } from "@effect/cli";
 import { NodeContext, NodeRuntime } from "@effect/platform-node";
 import { ChangesetConfigReaderLive, ManagedSectionLive, VersioningStrategyLive } from "@savvy-web/silk-effects";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, LogLevel, Logger } from "effect";
 import { WorkspaceDiscoveryLive, WorkspaceRootLive } from "workspaces-effect";
 import { checkCommand } from "./commands/check.js";
+import { hookCommand } from "./commands/hook.js";
 import { initCommand } from "./commands/init.js";
 
 const rootCommand = Command.make("savvy-commit").pipe(
-  Command.withSubcommands([initCommand, checkCommand]),
+  Command.withSubcommands([initCommand, checkCommand, hookCommand]),
 );
 
 const cli = Command.run(rootCommand, {
@@ -699,11 +750,21 @@ const WorkspaceLive = WorkspaceDiscoveryLive.pipe(
   Layer.provideMerge(WorkspaceRootLive),
 );
 
+// Route logs to stderr at Warning+ so hook subcommands can keep stdout pristine.
+const StderrLogger = Logger.replace(
+  Logger.defaultLogger,
+  Logger.make(({ message }) => {
+    const line = typeof message === "string" ? message : JSON.stringify(message);
+    process.stderr.write(`${line}\n`);
+  }),
+);
+const MinLogLevel = Logger.minimumLogLevel(LogLevel.Warning);
+
 const CliLive = Layer.mergeAll(
   ManagedSectionLive,
   VersioningStrategyLive.pipe(Layer.provide(ChangesetConfigReaderLive)),
   WorkspaceLive,
-).pipe(Layer.provideMerge(NodeContext.layer));
+).pipe(Layer.provide(MinLogLevel), Layer.provide(StderrLogger), Layer.provideMerge(NodeContext.layer));
 
 export function runCli(): void {
   const main = Effect.suspend(() => cli(process.argv)).pipe(
@@ -712,7 +773,7 @@ export function runCli(): void {
   NodeRuntime.runMain(main);
 }
 
-export { checkCommand, initCommand, rootCommand };
+export { checkCommand, hookCommand, initCommand, rootCommand };
 ```
 
 **Layer composition:**
@@ -823,6 +884,158 @@ The check command reports one of three states for the managed section:
 - Husky hook presence
 - DCO file presence
 - Detected settings (DCO, release format, scopes)
+
+### Hook Subcommand Tree (Internal)
+
+The `savvy-commit hook` subcommand tree is consumed exclusively by the
+companion `commitlint` Claude Code plugin's bash hooks (see "Plugin Hook
+Architecture" below). The CLI surface and JSON envelope shape are not stable
+for third-party consumers; expect breaking changes between minor versions
+until 1.0.
+
+| Subcommand | Hook event | Reads stdin? | Emits on stdout |
+| :--------- | :--------- | :----------- | :-------------- |
+| `session-start` | `SessionStart` | No (drains then ignores) | `SessionStart` `additionalContext` envelope wrapped in `<EXTREMELY_IMPORTANT>` blocks |
+| `pre-commit-message` | `PreToolUse(Bash)` | Yes (PreToolUse envelope) | `permissionDecision: deny` / `additionalContext` advise / silent |
+| `post-commit-verify` | `PostToolUse(Bash)` | Yes (PostToolUse envelope, mostly ignored) | `additionalContext` advise (or silent) |
+| `user-prompt-submit` | `UserPromptSubmit` | Yes (UserPromptSubmit envelope) | `additionalContext` reminder (or silent) |
+
+Each subcommand provides the `HookSilencer` Layer (`package/src/hook/silence-logger.ts`)
+on top of the root `StderrLogger` so its handler can never print to stdout
+through Effect's default logger.
+
+The `pre-commit-message` and `post-commit-verify` handlers compose a small
+rule pipeline. Each rule is a typed `Rule<Input, Ctx>` that returns
+`Effect.Effect<RuleHit | null>`. Rules are partitioned by severity (`deny` /
+`advise`); `deny` hits collapse into a single PreToolUse `deny` envelope,
+`advise` hits collapse into a single `additionalContext` envelope.
+
+| Rule (`package/src/hook/rules/`) | Severity | Purpose |
+| :-------------------------------- | :------- | :------ |
+| `forbidden-content` | deny | Markdown headers (`#`) or code fences (` ``` `) in the body. |
+| `signing-flag-conflict` | deny | `--no-gpg-sign` while `commit.gpgsign=true` is configured. |
+| `plan-leakage` | advise | `.claude/plans/` / `.claude/design/` paths or planning narrative in the body. |
+| `soft-wrap` | advise | A short bullet (`- ...`, < 80 chars) followed by an indented continuation line. |
+| `verbosity` | advise | Body exceeds 25 non-empty lines or 400 words. |
+| `closes-trailer` | advise | Branch encodes a ticket id but the body has no `Closes/Fixes/Resolves #N`. |
+
+The bash command parser (`package/src/hook/parse-bash-command.ts`) uses
+`shell-quote` to tokenize commands and recognises `git commit`,
+`git commit --amend`, `gh pr create`, and `gh pr edit`. It extracts the
+combined message (multiple `-m` / `--message[=...]` flags joined with double
+newlines, or `--body` for `gh pr`) plus signing/no-verify/amend flags.
+Compound shapes like `cmd && git commit -m "x"` are intentionally classified
+as `unknown` — silently dropping them is safer than misattributing extracted
+state.
+
+Diagnostics shared across subcommands (`package/src/hook/diagnostics/`):
+
+- `branch.ts` — current branch via `git rev-parse --abbrev-ref HEAD` plus an
+  inferred ticket id parsed from `^[a-z]+/(\d+)[-/_]` style branch names.
+- `signing.ts` — reads `gpg.format`, `commit.gpgsign`, `user.signingkey`, and
+  `gpg.ssh.allowedSignersFile` from git config; verifies key resolution
+  (`stat` for SSH keys, `gpg --list-secret-keys` for GPG); pings
+  `gpg-connect-agent` for agent responsiveness; aggregates warnings.
+- `cache.ts` — generic JSON file cache with TTL, atomic-ish writes
+  (`mkdir -p`, write to `.tmp`, rename).
+- `open-issues.ts` — fetches up to 20 open issues via
+  `gh issue list ... --json number,title`, caches at
+  `.claude/cache/issues.json` for 600 s. SessionStart fetches; PreToolUse
+  reads the cache only (never network).
+
+---
+
+## Plugin Hook Architecture
+
+The companion `commitlint` Claude Code plugin (`plugin/`) is registered as a
+sidecar that informs the agent about commit conventions and validates
+commit-related Bash invocations. Phase 8 of this work added `PreToolUse`,
+`PostToolUse`, and `UserPromptSubmit` hooks on top of the original
+`SessionStart` hook, and refactored every hook into a thin bash shim that
+delegates to the `savvy-commit hook` CLI subcommand tree.
+
+### Hook Registration
+
+`plugin/hooks/hooks.json` registers the following matchers:
+
+| Event | Matcher | Shim | Purpose |
+| :---- | :------ | :--- | :------ |
+| `SessionStart` | `startup` | `session-start.sh` | Inject commit conventions, quality charter, branch context, signing diagnostic |
+| `PreToolUse` | `Bash` | `pre-tool-use-bash.sh` | Auto-allow safe Bash; validate commit messages |
+| `PreToolUse` | `mcp__gk__.*\|mcp__github(-[^_]+)?__.*` | `pre-tool-use-mcp.sh` | Auto-allow curated GitHub / GitKraken MCP ops |
+| `PreToolUse` | `Read\|Write\|Edit` | `pre-tool-use-fs.sh` | Auto-allow Read/Write/Edit under `.claude/cache/` |
+| `PostToolUse` | `Bash` | `post-tool-use-bash.sh` | Replay commitlint, verify signature, check Closes trailer |
+| `UserPromptSubmit` | (any) | `user-prompt-submit.sh` | Inject commit-quality reminder when prompt mentions commits |
+
+### Two-Tier Bash Hook (Hot Path / Cold Path)
+
+`pre-tool-use-bash.sh` uses a two-tier strategy to keep latency low while
+still gating commit-related commands:
+
+1. **Hot path (auto-allow)** — `lib/match-safe-bash.sh` runs the command
+   against `lib/safe-bash-patterns.txt` (POSIX-ERE regex allow-list, Tier A
+   read-only + Tier B workflow-essential). Hard exclusions (`rm`, `curl`,
+   `git push --force`, package installers, `npx` / `bunx` / `yarn dlx`,
+   `gh repo delete`, `gh secret`) are evaluated first. If matched, the hook
+   emits `permissionDecision: allow` and exits without invoking the CLI.
+   `git commit`, `gh pr create`, and `gh pr edit` are intentionally excluded
+   from the allow-list so they fall through to the cold path.
+
+2. **Cold path (validate)** — `lib/is-commit-related.sh` checks whether the
+   command begins with `git commit` or `gh pr create|edit`. If yes, the
+   envelope is piped to `savvy-commit hook pre-commit-message`; otherwise
+   the hook silently exits with code 0 and Claude's normal permission flow
+   applies.
+
+`lib/run-cli.sh` detects the package manager from `package.json#packageManager`
+or lockfile presence (`pnpm-lock.yaml` / `yarn.lock` / `bun.lock`) and emits
+the correct runner prefix (`pnpm exec` / `yarn exec` / `bunx` / `npx --no --`).
+All shims that need the CLI consume this script's stdout to construct their
+invocation.
+
+### MCP and Filesystem Auto-Allow
+
+`pre-tool-use-mcp.sh` handles three MCP server name shapes:
+`mcp__gk__<op>` (GitKraken), `mcp__github__<op>` (default GitHub MCP), and
+`mcp__github-<scope>__<op>` (scoped GitHub MCP, e.g.,
+`mcp__github-savvy-web__`). It strips the prefix to recover the operation
+name and matches it against the appropriate `safe-mcp-{github,gk}-ops.txt`
+file. Comments and blank lines are skipped; matching is exact-line.
+
+`pre-tool-use-fs.sh` resolves `tool_input.file_path` against
+`CLAUDE_PROJECT_DIR` (when relative) and auto-allows any path under
+`<project>/.claude/cache/`. The cache directory is also where the open-issues
+cache and any future plugin caches live.
+
+### PostToolUse and UserPromptSubmit
+
+`post-tool-use-bash.sh` short-circuits unless the just-executed command is
+commit-related and the response was not interrupted. It then forwards the
+envelope to `savvy-commit hook post-commit-verify`, which:
+
+1. Replays `pnpm exec commitlint --last` (errors → "commitlint failed").
+2. Reads `git log -1 --format=%G?` (signature status) and combines with the
+   signing diagnostic to advise on unsigned commits when
+   `commit.gpgsign=true`, or on bad/expired/revoked/missing-key statuses.
+3. If the branch implies a ticket id and the commit body has no
+   `Closes/Fixes/Resolves #N` trailer, advises an `--amend --trailer` fix.
+
+`user-prompt-submit.sh` runs a regex pre-filter
+(`commit | committing | ship it | wrap up | create/open a pr | finalize | squash | amend`)
+to skip the CLI for prompts that don't mention commits at all. When the
+trigger matches, it forwards to `savvy-commit hook user-prompt-submit`,
+which re-applies the same regex (canonical owner of the trigger pattern)
+and emits a compact reminder block.
+
+### Test Harness
+
+The bash hooks are exercised via a `bats` harness in
+`plugin/hooks/__test__/`. `lib/` helpers have dedicated specs
+(`is-commit-related.bats`, `match-safe-bash.bats`, `run-cli.bats`) and the
+`pre-tool-use-{bash,mcp,fs}` shims have integration specs that fixture
+envelope JSON and assert the emitted `permissionDecision` envelope.
+Hooks are run without an executable bit so they remain `bash <script>` from
+`hooks.json`; the harness invokes them the same way.
 
 ---
 
@@ -971,6 +1184,7 @@ Users who prefer `@commitlint/cz-commitlint` can install it separately.
   "dependencies": {
     "@savvy-web/silk-effects": "^0.2.2",
     "workspaces-effect": "^0.3.0",
+    "shell-quote": "^1.8.3",
     "zod": "^4.3.6"
   }
 }
@@ -979,6 +1193,8 @@ Users who prefer `@commitlint/cz-commitlint` can install it separately.
 Note: `workspace-tools` has been fully removed. Its functionality is replaced
 by `workspaces-effect` (for workspace/scope discovery) and
 `@savvy-web/silk-effects` (for managed sections and versioning strategy).
+`shell-quote` was added in 0.7.0 to tokenize Bash command strings inside the
+`hook` subcommand tree's commit-message parser.
 
 ### CLI Dependencies (bundled via Effect catalog)
 
@@ -1304,8 +1520,12 @@ describe("commitlint integration", () => {
 
 - [ ] AI mode for generating commit messages from staged changes
 - [ ] AI validation suggestions for failed commits
-- [ ] Integration with Claude Code hooks
-- [ ] LLM-friendly error messages
+- [x] Integration with Claude Code hooks (SessionStart, PreToolUse Bash/MCP/FS, PostToolUse Bash, UserPromptSubmit)
+- [x] LLM-friendly error messages (deny/advise rule pipeline with actionable remediation)
+- [x] `savvy-commit hook` internal subcommand tree consumed by the companion plugin's bash shims
+- [x] Branch + ticket-id inference and Closes-trailer advisory
+- [x] GPG / SSH signing diagnostic emitted in SessionStart context
+- [x] Cached open-issues lookup at `.claude/cache/issues.json`
 
 ### Phase 4: Advanced Features
 
@@ -1326,6 +1546,11 @@ describe("commitlint integration", () => {
 
 - `.claude/plans/wondrous-purring-bee.md` - Add managed section to
   savvy-commit init hook (completed)
+- `.claude/plans/2026-04-28-commit-hooks-upgrade.md` - Add `savvy-commit hook`
+  subcommand tree, six commit-quality rules, the bash shim hook architecture,
+  and richer SessionStart context (completed; see
+  `docs/superpowers/specs/2026-04-28-commit-hooks-upgrade-design.md` for the
+  full spec)
 
 **Package Documentation:**
 
@@ -1348,7 +1573,7 @@ describe("commitlint integration", () => {
 ---
 
 **Document Status:** Current - Core implementation complete, CLI implemented,
-migrated to silk-effects
+migrated to silk-effects, plugin hook architecture extended (Phase 8).
 
 **Completed:**
 
@@ -1367,6 +1592,19 @@ migrated to silk-effects
 13. ~~Make scope detection effectful (WorkspaceDiscovery)~~
 14. ~~Inline findProjectRoot for DCO detection~~
 15. ~~Compose CLI layer stack with all silk-effects services~~
+16. ~~Add `savvy-commit hook` internal subcommand tree (session-start,
+    pre-commit-message, post-commit-verify, user-prompt-submit)~~
+17. ~~Add `package/src/hook/` helpers (envelope schemas, output builders,
+    bash command parser, rule pipeline, diagnostics, file cache)~~
+18. ~~Implement six commit-quality rules (forbidden-content, plan-leakage,
+    soft-wrap, verbosity, closes-trailer, signing-flag-conflict)~~
+19. ~~Refactor `plugin/hooks/session-start.sh` as CLI shim; add four new bash
+    hooks (pre-tool-use-{bash,mcp,fs}, post-tool-use-bash, user-prompt-submit)
+    with a bats harness~~
+20. ~~Add `lib/run-cli.sh` package-manager detection helper and shared
+    safe-bash / safe-mcp allow-lists~~
+21. ~~Route Effect logger output to stderr at Warning+ so hook subcommands
+    keep stdout pristine~~
 
 **Next Steps:**
 
@@ -1375,3 +1613,4 @@ migrated to silk-effects
 3. Update monorepo template to use the package
 4. Add shell completions for CLI
 5. Implement `migrate` command for converting from other configs
+6. Stabilise the `savvy-commit hook` JSON envelope contract before 1.0

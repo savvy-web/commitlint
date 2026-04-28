@@ -45,11 +45,6 @@
 		"prepare": "rslib build --config-loader native --env-mode dev",
 		"types:check": "tsgo --noEmit"
 	},
-	"config": {
-		"commitizen": {
-			"path": "./dist/dev/prompt.js"
-		}
-	},
 	"dependencies": {
 		"@effect/cli": "catalog:silk",
 		"@effect/cluster": "catalog:silk",
@@ -59,18 +54,20 @@
 		"@effect/printer-ansi": "catalog:silk",
 		"@effect/rpc": "catalog:silk",
 		"@effect/sql": "catalog:silk",
-		"@savvy-web/silk-effects": "^0.2.2",
+		"@savvy-web/silk-effects": "^0.3.0",
 		"effect": "catalog:silk",
-		"workspaces-effect": "^0.3.0",
+		"shell-quote": "^1.8.3",
+		"workspaces-effect": "^0.5.0",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^20.5.2",
 		"@commitlint/config-conventional": "^20.5.0",
-		"@commitlint/lint": "^20.4.3",
-		"@commitlint/types": "^20.4.3",
-		"@savvy-web/rslib-builder": "^0.20.2",
+		"@commitlint/lint": "^20.5.0",
+		"@commitlint/types": "^20.5.0",
+		"@savvy-web/rslib-builder": "^0.20.3",
 		"@types/node": "catalog:silk",
+		"@types/shell-quote": "^1.7.5",
 		"@typescript/native-preview": "catalog:silk",
 		"commitizen": "^4.3.1",
 		"husky": "^9.1.7",
@@ -95,20 +92,6 @@
 		"husky": {
 			"optional": false
 		}
-	},
-	"devEngines": {
-		"packageManager": {
-			"name": "pnpm",
-			"version": "10.33.0",
-			"onFail": "ignore"
-		},
-		"runtime": [
-			{
-				"name": "node",
-				"version": "24.11.0",
-				"onFail": "ignore"
-			}
-		]
 	},
 	"publishConfig": {
 		"access": "public",
