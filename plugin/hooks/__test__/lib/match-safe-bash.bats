@@ -17,6 +17,8 @@ setup() {
 @test "does NOT match env curl" { run bash "$HOOK" 'env curl http://example.com'; [ "$status" -eq 1 ]; }
 @test "does NOT match env chmod" { run bash "$HOOK" 'env chmod 777 /'; [ "$status" -eq 1 ]; }
 @test "matches env VAR=value pnpm run build" { run bash "$HOOK" 'env DEBUG=1 pnpm run build'; [ "$status" -eq 0 ]; }
+@test "does NOT match env VAR=value git commit" { run bash "$HOOK" 'env GIT_AUTHOR_DATE=2026-01-01 git commit -m subj'; [ "$status" -eq 1 ]; }
+@test "does NOT match env VAR=value gh pr create" { run bash "$HOOK" 'env GH_TOKEN=xxx gh pr create --title T'; [ "$status" -eq 1 ]; }
 @test "does NOT match git rm -rf ." { run bash "$HOOK" 'git rm -rf .'; [ "$status" -eq 1 ]; }
 @test "does NOT match git rm --force foo" { run bash "$HOOK" 'git rm --force foo'; [ "$status" -eq 1 ]; }
 @test "matches git rm --cached foo" { run bash "$HOOK" 'git rm --cached foo'; [ "$status" -eq 0 ]; }

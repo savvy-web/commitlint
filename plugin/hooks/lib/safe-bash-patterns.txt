@@ -29,8 +29,11 @@
 ^[[:space:]]*date(\b|$)
 # `env` bare is intentionally NOT auto-allowed because it bypasses the hard-exclusion
 # checks in match-safe-bash.sh (`env rm -rf .`, `env curl ...`). Only allow `env` when
-# used as an env-var setter prefixing a known-safe runner.
-^[[:space:]]*env([[:space:]]+[A-Z_][A-Z0-9_]*=[^[:space:]]+)*[[:space:]]+(pnpm|node|git|gh)(\b|$)
+# used as an env-var setter prefixing a non-git/gh runner. `env VAR=val git/gh ...` is
+# intentionally NOT auto-allowed so commit-related commands still route through the
+# validation cold path; the cold path's is-commit-related.sh matches the env-prefixed
+# form too.
+^[[:space:]]*env([[:space:]]+[A-Z_][A-Z0-9_]*=[^[:space:]]+)*[[:space:]]+(pnpm|node)(\b|$)
 ^[[:space:]]*jq(\b|$)
 ^[[:space:]]*git[[:space:]]+(status|diff|log|show|rev-parse|ls-files|ls-tree|remote|branch|config|stash[[:space:]]+list|stash[[:space:]]+show)(\b|$)
 ^[[:space:]]*gh[[:space:]]+(api|pr[[:space:]]+(view|list|diff|checks)|issue[[:space:]]+(view|list)|repo[[:space:]]+view|run[[:space:]]+(list|view|watch))(\b|$)
