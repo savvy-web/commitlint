@@ -1,5 +1,42 @@
 import { describe, expect, it } from "vitest";
-import { buildPostCommitAdvice } from "../post-commit-verify.js";
+import { buildCommitlintInvocation, buildPostCommitAdvice } from "../post-commit-verify.js";
+
+describe("buildCommitlintInvocation", () => {
+	it("uses pnpm exec for pnpm projects", () => {
+		expect(buildCommitlintInvocation("pnpm", "/r/cl.ts")).toEqual({
+			command: "pnpm",
+			args: ["exec", "commitlint", "--config", "/r/cl.ts", "--last"],
+		});
+	});
+
+	it("uses yarn exec for yarn projects", () => {
+		expect(buildCommitlintInvocation("yarn", "/r/cl.ts")).toEqual({
+			command: "yarn",
+			args: ["exec", "commitlint", "--config", "/r/cl.ts", "--last"],
+		});
+	});
+
+	it("uses bunx for bun projects", () => {
+		expect(buildCommitlintInvocation("bun", "/r/cl.ts")).toEqual({
+			command: "bunx",
+			args: ["commitlint", "--config", "/r/cl.ts", "--last"],
+		});
+	});
+
+	it("uses npx --no -- for npm projects", () => {
+		expect(buildCommitlintInvocation("npm", "/r/cl.ts")).toEqual({
+			command: "npx",
+			args: ["--no", "--", "commitlint", "--config", "/r/cl.ts", "--last"],
+		});
+	});
+
+	it("omits --config when configPath is null", () => {
+		expect(buildCommitlintInvocation("pnpm", null)).toEqual({
+			command: "pnpm",
+			args: ["exec", "commitlint", "--last"],
+		});
+	});
+});
 
 describe("buildPostCommitAdvice", () => {
 	it("emits commitlint-fail line when commitlint output indicates failure", () => {
