@@ -1,6 +1,6 @@
 {
 	"name": "commitlint",
-	"version": "0.7.0",
+	"version": "0.7.1",
 	"description": "Companion plugin for @savvy-web/commitlint that informs agents about commit standards",
 	"author": {
 		"name": "C. Spencer Beggs",
