@@ -3,8 +3,8 @@ status: current
 module: commitlint
 category: architecture
 created: 2026-02-02
-updated: 2026-04-28
-last-synced: 2026-04-28
+updated: 2026-04-29
+last-synced: 2026-04-29
 completeness: 92
 related: []
 dependencies:
@@ -313,6 +313,8 @@ package/
         signing.ts                # GPG/SSH signing diagnostic (format, autoSign, key resolution, agent)
         cache.ts                  # JSON file cache with TTL (atomic-ish writes)
         open-issues.ts            # gh-CLI-backed open issues, cached at .claude/cache/issues.json
+        package-manager.ts        # Detect pm from package.json#packageManager or lockfile (pnpm > yarn > bun > npm)
+        commitlint-config.ts      # Extract --config path from .husky/commit-msg managed section
       rules/
         types.ts                  # Rule<Input,Ctx>, RuleHit, partitionHits
         forbidden-content.ts      # deny: markdown headers / code fences in body
@@ -942,6 +944,16 @@ Diagnostics shared across subcommands (`package/src/hook/diagnostics/`):
   `gh issue list ... --json number,title`, caches at
   `.claude/cache/issues.json` for 600 s. SessionStart fetches; PreToolUse
   reads the cache only (never network).
+- `package-manager.ts` — detects the package manager for the current repo,
+  preferring `package.json#packageManager` and falling back to lockfile
+  presence in priority order (`pnpm-lock.yaml` > `yarn.lock` > `bun.lock` >
+  `npm`). Used by `post-commit-verify` to build a portable commitlint
+  invocation that matches what the husky hook would run.
+- `commitlint-config.ts` — parses the `--config` argument out of
+  `.husky/commit-msg` (handles `$ROOT/`, `${ROOT}/`, single/double-quoted,
+  unquoted, and absolute forms). Returns `null` if the file is absent or
+  does not pin a config path. `post-commit-verify` uses this so its replay
+  uses the same config the commit-time hook used.
 
 ---
 
@@ -1013,12 +1025,24 @@ cache and any future plugin caches live.
 commit-related and the response was not interrupted. It then forwards the
 envelope to `savvy-commit hook post-commit-verify`, which:
 
-1. Replays `pnpm exec commitlint --last` (errors → "commitlint failed").
+1. Resolves the repo root (`git rev-parse --show-toplevel`, falling back to
+   `process.cwd()`), detects the package manager via
+   `diagnostics/package-manager.ts`, and reads the husky-managed config path
+   via `diagnostics/commitlint-config.ts`. The pure helper
+   `buildCommitlintInvocation(pm, configPath)` then assembles the runner
+   prefix (`pnpm exec` / `yarn exec` / `bunx` / `npx --no --`) followed by
+   `commitlint --config <path> --last` (omitting `--config` when the husky
+   hook has no pinned path). The command is spawned with `cwd: root`. Any
+   non-zero exit becomes "commitlint failed".
 2. Reads `git log -1 --format=%G?` (signature status) and combines with the
    signing diagnostic to advise on unsigned commits when
    `commit.gpgsign=true`, or on bad/expired/revoked/missing-key statuses.
 3. If the branch implies a ticket id and the commit body has no
    `Closes/Fixes/Resolves #N` trailer, advises an `--amend --trailer` fix.
+
+This keeps the verifier's replay consistent with whatever the husky
+`commit-msg` hook would actually run, and portable across consumer projects
+that use a non-pnpm package manager.
 
 `user-prompt-submit.sh` runs a regex pre-filter
 (`commit | committing | ship it | wrap up | create/open a pr | finalize | squash | amend`)

@@ -9,6 +9,9 @@ import { promisify } from "node:util";
 import { Command } from "@effect/cli";
 import { Effect } from "effect";
 import { readBranchInfo } from "../../../hook/diagnostics/branch.js";
+import { readCommitlintConfigPath } from "../../../hook/diagnostics/commitlint-config.js";
+import type { PackageManager } from "../../../hook/diagnostics/package-manager.js";
+import { detectPackageManager } from "../../../hook/diagnostics/package-manager.js";
 import { readSigningDiagnostic } from "../../../hook/diagnostics/signing.js";
 import { postToolUseAdvise } from "../../../hook/output.js";
 import { hasClosingTrailer } from "../../../hook/rules/closes-trailer.js";
@@ -54,9 +57,41 @@ export function buildPostCommitAdvice(i: PostCommitInputs): string | null {
 	return lines.length === 0 ? null : lines.join("\n\n");
 }
 
-async function runCommitlintLast(): Promise<boolean> {
+export interface CommitlintInvocation {
+	command: string;
+	args: string[];
+}
+
+export function buildCommitlintInvocation(pm: PackageManager, configPath: string | null): CommitlintInvocation {
+	const tail = configPath ? ["commitlint", "--config", configPath, "--last"] : ["commitlint", "--last"];
+	switch (pm) {
+		case "pnpm":
+			return { command: "pnpm", args: ["exec", ...tail] };
+		case "yarn":
+			return { command: "yarn", args: ["exec", ...tail] };
+		case "bun":
+			return { command: "bunx", args: tail };
+		case "npm":
+			return { command: "npx", args: ["--no", "--", ...tail] };
+	}
+}
+
+async function getRepoRoot(): Promise<string> {
 	try {
-		await execFileP("pnpm", ["exec", "commitlint", "--last"]);
+		const { stdout } = await execFileP("git", ["rev-parse", "--show-toplevel"]);
+		return stdout.trim();
+	} catch {
+		return process.cwd();
+	}
+}
+
+async function runCommitlintLast(): Promise<boolean> {
+	const root = await getRepoRoot();
+	const pm = await detectPackageManager(root);
+	const configPath = await readCommitlintConfigPath(root);
+	const { command, args } = buildCommitlintInvocation(pm, configPath);
+	try {
+		await execFileP(command, args, { cwd: root });
 		return false;
 	} catch {
 		return true;

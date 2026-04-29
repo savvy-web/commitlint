@@ -85,7 +85,8 @@ bats plugin/hooks/__test__/match-safe-bash.bats
   hook envelopes (`envelope.ts`), JSON output builders (`output.ts`), the
   shell-quote-based `parse-bash-command.ts`, the `HookSilencer` Layer
   (`silence-logger.ts`), `diagnostics/` (branch, signing, cache,
-  open-issues), and a `rules/` pipeline of typed `Rule<Input, Ctx>` units
+  open-issues, package-manager, commitlint-config), and a `rules/` pipeline
+  of typed `Rule<Input, Ctx>` units
   partitioned into `deny` / `advise` hits.
 
 ### Plugin Layout
