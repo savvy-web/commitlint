@@ -57,13 +57,13 @@
 		"@savvy-web/silk-effects": "^0.3.0",
 		"effect": "catalog:silk",
 		"shell-quote": "^1.8.3",
-		"workspaces-effect": "^0.5.0",
-		"zod": "^4.3.6"
+		"workspaces-effect": "^0.6.0",
+		"zod": "^4.4.2"
 	},
 	"devDependencies": {
-		"@commitlint/cli": "^20.5.2",
-		"@commitlint/config-conventional": "^20.5.0",
-		"@commitlint/lint": "^20.5.0",
+		"@commitlint/cli": "^20.5.3",
+		"@commitlint/config-conventional": "^20.5.3",
+		"@commitlint/lint": "^20.5.3",
 		"@commitlint/types": "^20.5.0",
 		"@savvy-web/rslib-builder": "^0.20.3",
 		"@types/node": "catalog:silk",
@@ -75,7 +75,7 @@
 	},
 	"peerDependencies": {
 		"@commitlint/cli": "^20.5.0",
-		"@commitlint/config-conventional": "^20.5.0",
+		"@commitlint/config-conventional": "^20.5.3",
 		"commitizen": "^4.3.0",
 		"husky": "^9.1.0"
 	},
