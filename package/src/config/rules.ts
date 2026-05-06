@@ -30,6 +30,7 @@ export const COMMIT_TYPES = [
 	"release",
 	"revert",
 	"style",
+	"tdd",
 	"test",
 ] as const;
 
@@ -39,6 +40,33 @@ export const COMMIT_TYPES = [
  * @public
  */
 export type CommitType = (typeof COMMIT_TYPES)[number];
+
+/**
+ * Pattern for valid TDD commit scope.
+ *
+ * @remarks
+ * TDD commits require a scope in the format: `<goalId>:<state>`
+ * where goalId is a numeric ID and state is one of: spike, red, green, refactor.
+ *
+ * Example: `tdd(42:red)` or `tdd(1:green)`
+ *
+ * @public
+ */
+export const TDD_SCOPE_PATTERN = /^\d+:(spike|red|green|refactor)$/;
+
+/**
+ * Valid TDD states for commit scope.
+ *
+ * @remarks
+ * These states correspond to the phases of test-driven development:
+ * - spike: Research/exploration phase
+ * - red: Write failing test
+ * - green: Make test pass
+ * - refactor: Clean up code
+ *
+ * @public
+ */
+export const TDD_STATES = ["spike", "red", "green", "refactor"] as const;
 
 /**
  * Commit type definitions with metadata for prompts and changelogs.
@@ -90,6 +118,11 @@ export const COMMIT_TYPE_DEFINITIONS: readonly CommitTypeDefinition[] = [
 		type: "test",
 		description: "Adding missing tests or correcting existing tests",
 		title: "Tests",
+	},
+	{
+		type: "tdd",
+		description: "TDD agent commit (goalId:state scope required)",
+		title: "TDD",
 	},
 	{
 		type: "build",

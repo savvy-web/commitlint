@@ -23,6 +23,7 @@ export const TYPE_EMOJIS: Record<CommitType, string> = {
 	refactor: ":recycle:",
 	perf: ":zap:",
 	test: ":white_check_mark:",
+	tdd: ":test_tube:",
 	build: ":package:",
 	ci: ":construction_worker:",
 	chore: ":wrench:",
@@ -48,6 +49,7 @@ export const TYPE_EMOJIS_UNICODE: Record<CommitType, string> = {
 	refactor: "\u267B\uFE0F", // recycle
 	perf: "\u26A1", // zap
 	test: "\u2705", // white_check_mark
+	tdd: "\uD83E\uDEEA", // test_tube
 	build: "\uD83D\uDCE6", // package
 	ci: "\uD83D\uDC77", // construction_worker
 	chore: "\uD83D\uDD27", // wrench

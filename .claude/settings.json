@@ -6,7 +6,17 @@
 			"Write(.claude/design/**)",
 			"Write(.claude/plans/**)",
 			"Edit(.claude/design/**)",
-			"Edit(.claude/plans/**)"
+			"Edit(.claude/plans/**)",
+			"Bash(pnpm vitest run *)",
+			"Bash(pnpm run typecheck *)",
+			"Bash(pnpm run lint *)",
+			"mcp__plugin_vitest-agent_mcp__tdd_session_get",
+			"mcp__plugin_vitest-agent_mcp__test_errors",
+			"mcp__plugin_vitest-agent_mcp__get_current_session_id",
+			"mcp__plugin_vitest-agent_mcp__session_list",
+			"mcp__plugin_vitest-agent_mcp__hypothesis_validate",
+			"mcp__plugin_vitest-agent_mcp__turn_search",
+			"mcp__plugin_vitest-agent_mcp__acceptance_metrics"
 		]
 	},
 	"enableAllProjectMcpServers": true,

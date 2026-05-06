@@ -1,24 +1,19 @@
-# Auto-Detection
+# Auto-detection
 
-`@savvy-web/commitlint` automatically detects repository characteristics to
-generate appropriate commit rules. This document explains what gets detected
-and how.
+`@savvy-web/commitlint` detects repository characteristics to generate appropriate commit rules. This document explains what gets detected and how.
 
-## Detection Overview
+## Detection overview
 
 When you call `CommitlintConfig.silk()` without options, the package detects:
 
 1. **DCO Requirement** - Whether commits need `Signed-off-by:` trailers
 2. **Release Format** - How release commits should be formatted
 
-Scopes are not auto-detected. By default, any scope is allowed. Use the
-`scopes` or `additionalScopes` options to enforce an allowlist.
+Scopes are not auto-detected. By default, any scope is allowed. Use the `scopes` or `additionalScopes` options to enforce an allowlist.
 
-## DCO Detection
+## DCO detection
 
-Checks for the presence of a `DCO` file at the repository root.
-
-**Detection Logic:**
+The package looks for a `DCO` file at the repository root. If it is present, the config requires a `Signed-off-by:` trailer on every commit.
 
 ```text
 If file exists: /path/to/repo/DCO
@@ -36,10 +31,9 @@ CommitlintConfig.silk({ dco: true });
 CommitlintConfig.silk({ dco: false });
 ```
 
-## Scope Configuration
+## Scope configuration
 
-By default, scopes are unrestricted -- any scope is allowed in commit
-messages. To enforce an allowlist, provide explicit scopes:
+By default, scopes are unrestricted — any scope is allowed in commit messages. To enforce an allowlist, provide explicit scopes:
 
 ```typescript
 // Restrict to specific scopes
@@ -52,8 +46,7 @@ CommitlintConfig.silk({
 });
 ```
 
-The `detectScopes()` utility is still exported for programmatic use. It
-finds all packages in a monorepo and extracts their names as scope values:
+The `detectScopes()` utility is still exported for programmatic use. It finds all packages in a monorepo and extracts their names as scope values:
 
 | Package Name | Detected Scope |
 | ------------ | -------------- |
@@ -69,18 +62,11 @@ const scopes = detectScopes("/path/to/repo");
 CommitlintConfig.silk({ scopes });
 ```
 
-## Versioning Strategy Detection
+## Versioning strategy detection
 
-Analyzes the repository's versioning approach to determine the appropriate
-release commit format.
+The package reads the repository's versioning setup to pick the right release commit format. It looks at whether a `.changeset/` directory is present, whether changesets declare `fixed` or `linked` package groups, and how many publishable packages exist.
 
-**Detection Factors:**
-
-1. Presence of changesets (`.changeset/` directory)
-2. Changeset configuration (`fixed` groups, `linked` packages)
-3. Number of publishable packages
-
-**Strategy Types:**
+**Strategy types:**
 
 | Strategy | Description | Release Format |
 | -------- | ----------- | -------------- |
@@ -96,9 +82,9 @@ CommitlintConfig.silk({ releaseFormat: "packages" });
 CommitlintConfig.silk({ releaseFormat: "scoped" });
 ```
 
-## Using Detection Utilities Directly
+## Using detection utilities directly
 
-The detection functions are exported for direct use:
+All four detection functions are exported:
 
 ```typescript
 import {
@@ -123,10 +109,9 @@ console.log(strategy.type); // "single" | "fixed-group" | "independent"
 console.log(strategy.packages); // Array of workspace package info
 ```
 
-## Detection Performance
+## Detection performance
 
-Detection runs once when the configuration is loaded. For CI environments
-where detection overhead is unwanted, use the static configuration:
+Detection runs once on the first call to `CommitlintConfig.silk()`. In CI environments where you want to skip detection entirely, use the static configuration:
 
 ```typescript
 // No detection overhead
@@ -137,12 +122,9 @@ export { default } from "@savvy-web/commitlint/static";
 
 ### Scopes not enforced
 
-Scopes are unrestricted by default. To enforce an allowlist, explicitly
-provide `scopes` or `additionalScopes` in the configuration options.
+Scopes are unrestricted by default. To enforce an allowlist, explicitly provide `scopes` or `additionalScopes` in the configuration options.
 
-If using `detectScopes()` directly, ensure you have a valid
-`pnpm-workspace.yaml` or `workspaces` field in `package.json`, and
-run from the repository root or specify `cwd`.
+If using `detectScopes()` directly, ensure you have a valid `pnpm-workspace.yaml` or `workspaces` field in `package.json`, and run from the repository root or specify `cwd`.
 
 ### DCO not detected
 

@@ -53,6 +53,7 @@ const staticConfig: CommitlintUserConfig = {
 		"type-enum": [2, "always", [...COMMIT_TYPES]],
 		// Use custom case-insensitive rule instead of built-in signed-off-by
 		"silk/signed-off-by": [2, "always"],
+		"silk/tdd-scope": [2, "always"],
 		// Allow any case in subject (AI tools often capitalize, which is acceptable)
 		"subject-case": [0],
 	},
@@ -73,6 +74,8 @@ export {
 	COMMIT_TYPE_DEFINITIONS,
 	DCO_SIGNOFF_TEXT,
 	DEFAULT_BODY_MAX_LINE_LENGTH,
+	TDD_SCOPE_PATTERN,
+	TDD_STATES,
 } from "./config/rules.js";
 // Re-export types for public API
 export type {

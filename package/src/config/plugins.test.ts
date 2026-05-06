@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { silkPlugin } from "./plugins.js";
+import { createScopeEnumRule, silkPlugin } from "./plugins.js";
 
 /**
  * Minimal commit structure for testing rules.
@@ -379,5 +379,112 @@ describe("silk/signed-off-by", () => {
 		});
 		const [valid] = await runRule(rule, commit);
 		expect(valid).toBe(true);
+	});
+});
+
+describe("silk/tdd-scope", () => {
+	const rule = silkPlugin.rules["silk/tdd-scope"];
+
+	it("passes for non-tdd commits", async () => {
+		const [valid] = await runRule(rule, createCommit({ type: "feat", scope: null }));
+		expect(valid).toBe(true);
+	});
+
+	it("passes for tdd with valid scope (numeric goalId + valid state)", async () => {
+		const [valid] = await runRule(rule, createCommit({ type: "tdd", scope: "7:green" }));
+		expect(valid).toBe(true);
+	});
+
+	it("passes for tdd with multi-digit goalId", async () => {
+		const [valid] = await runRule(rule, createCommit({ type: "tdd", scope: "12:spike" }));
+		expect(valid).toBe(true);
+	});
+
+	it("passes for all four valid states", async () => {
+		for (const state of ["spike", "red", "green", "refactor"]) {
+			const [valid] = await runRule(rule, createCommit({ type: "tdd", scope: `1:${state}` }));
+			expect(valid).toBe(true);
+		}
+	});
+
+	it("fails when tdd scope is absent", async () => {
+		const [valid, msg] = await runRule(rule, createCommit({ type: "tdd", scope: null }));
+		expect(valid).toBe(false);
+		expect(msg).toContain("tdd commits require a scope");
+	});
+
+	it("fails when tdd scope is missing state (no colon)", async () => {
+		const [valid, msg] = await runRule(rule, createCommit({ type: "tdd", scope: "7" }));
+		expect(valid).toBe(false);
+		expect(msg).toContain("tdd scope must match");
+	});
+
+	it("fails for non-numeric goalId", async () => {
+		const [valid, msg] = await runRule(rule, createCommit({ type: "tdd", scope: "not-a-number:green" }));
+		expect(valid).toBe(false);
+		expect(msg).toContain("not-a-number:green");
+	});
+
+	it("fails for invalid state", async () => {
+		const [valid, msg] = await runRule(rule, createCommit({ type: "tdd", scope: "7:invalid-state" }));
+		expect(valid).toBe(false);
+		expect(msg).toContain("7:invalid-state");
+	});
+
+	it("fails for arrow notation state", async () => {
+		const [valid, msg] = await runRule(rule, createCommit({ type: "tdd", scope: "7:r->g" }));
+		expect(valid).toBe(false);
+		expect(msg).toContain("7:r->g");
+	});
+});
+
+describe("createScopeEnumRule", () => {
+	const rule = createScopeEnumRule(["api", "cli"]);
+
+	it("passes for valid project scope on non-tdd type", () => {
+		// biome-ignore lint/suspicious/noExplicitAny: Test helper, type coercion needed
+		const [valid] = rule(createCommit({ type: "feat", scope: "api" }) as any);
+		expect(valid).toBe(true);
+	});
+
+	it("fails for unknown project scope on non-tdd type", () => {
+		// biome-ignore lint/suspicious/noExplicitAny: Test helper, type coercion needed
+		const [valid, msg] = rule(createCommit({ type: "feat", scope: "unknown" }) as any);
+		expect(valid).toBe(false);
+		expect(msg).toContain("scope must be one of: api, cli");
+	});
+
+	it("fails when non-tdd commit has no scope", () => {
+		// biome-ignore lint/suspicious/noExplicitAny: Test helper, type coercion needed
+		const [valid] = rule(createCommit({ type: "feat", scope: null }) as any);
+		expect(valid).toBe(false);
+	});
+
+	it("passes for valid tdd scope", () => {
+		// biome-ignore lint/suspicious/noExplicitAny: Test helper, type coercion needed
+		const [valid] = rule(createCommit({ type: "tdd", scope: "7:green" }) as any);
+		expect(valid).toBe(true);
+	});
+
+	it("passes for all four tdd states", () => {
+		for (const state of ["spike", "red", "green", "refactor"]) {
+			// biome-ignore lint/suspicious/noExplicitAny: Test helper, type coercion needed
+			const [valid] = rule(createCommit({ type: "tdd", scope: `3:${state}` }) as any);
+			expect(valid).toBe(true);
+		}
+	});
+
+	it("fails for invalid tdd scope (non-numeric goalId)", () => {
+		// biome-ignore lint/suspicious/noExplicitAny: Test helper, type coercion needed
+		const [valid, msg] = rule(createCommit({ type: "tdd", scope: "not-a-number:green" }) as any);
+		expect(valid).toBe(false);
+		expect(msg).toContain("not-a-number:green");
+	});
+
+	it("fails for absent tdd scope", () => {
+		// biome-ignore lint/suspicious/noExplicitAny: Test helper, type coercion needed
+		const [valid, msg] = rule(createCommit({ type: "tdd", scope: null }) as any);
+		expect(valid).toBe(false);
+		expect(msg).toContain("tdd commits require a scope");
 	});
 });

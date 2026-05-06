@@ -8,12 +8,16 @@
  * @internal
  */
 
+import { TDD_SCOPE_PATTERN } from "./rules.js";
+
 /**
  * Parsed commit message structure.
  *
  * @internal
  */
 interface ParsedCommit {
+	type: string | null;
+	scope: string | null;
 	body: string | null;
 	subject: string | null;
 	raw: string;
@@ -175,6 +179,47 @@ const signedOffBy: Rule = (parsed) => {
 };
 
 /**
+ * Rule: tdd-scope
+ *
+ * @remarks
+ * Enforces scope format for TDD commits. Non-TDD commits pass unconditionally.
+ * TDD commits require a scope in the format `<goalId>:<state>` where:
+ * - goalId is a numeric ID (one or more digits)
+ * - state is one of: spike, red, green, refactor
+ *
+ * @example
+ * ```
+ * // Valid - numeric goalId with valid state
+ * tdd(7:green): implement feature
+ * tdd(12:spike): research approach
+ *
+ * // Invalid - no scope
+ * tdd: implement feature
+ *
+ * // Invalid - missing state
+ * tdd(7): implement feature
+ *
+ * // Invalid - non-numeric goalId
+ * tdd(feature:green): implement feature
+ *
+ * // Invalid - invalid state
+ * tdd(7:done): implement feature
+ * ```
+ */
+function checkTddScope(scope: string | null): readonly [boolean, string] {
+	if (!scope) return [false, "tdd commits require a scope in the format <goalId>:<state>"];
+	if (!TDD_SCOPE_PATTERN.test(scope)) {
+		return [false, `tdd scope must match <digits>:(spike|red|green|refactor), got: ${scope}`];
+	}
+	return [true, ""];
+}
+
+const tddScope: Rule = (parsed) => {
+	if (parsed.type !== "tdd") return [true, ""];
+	return checkTddScope(parsed.scope);
+};
+
+/**
  * Custom commitlint plugin with markdown prevention rules.
  *
  * @remarks
@@ -185,6 +230,8 @@ const signedOffBy: Rule = (parsed) => {
  * - `silk/body-no-markdown`: Reject markdown in commit body
  * - `silk/subject-no-markdown`: Reject markdown in commit subject
  * - `silk/body-prose-only`: Require prose paragraphs (no lists)
+ * - `silk/signed-off-by`: Require DCO signoff
+ * - `silk/tdd-scope`: Enforce TDD scope format
  *
  * @internal
  */
@@ -194,8 +241,43 @@ export const silkPlugin = {
 		"silk/subject-no-markdown": subjectNoMarkdown,
 		"silk/body-prose-only": bodyProseOnly,
 		"silk/signed-off-by": signedOffBy,
+		"silk/tdd-scope": tddScope,
 	},
 };
+
+/**
+ * Factory function to create a scope enum rule.
+ *
+ * @remarks
+ * Creates a rule that validates commit scopes, with special handling for TDD commits.
+ * - For TDD commits: enforces scope format `<goalId>:<state>` where state is one of spike, red, green, refactor
+ * - For non-TDD commits: enforces scope is one of the provided project scopes
+ *
+ * This replaces the built-in commitlint `scope-enum` rule, avoiding duplicate error
+ * messages when a TDD commit has an invalid scope.
+ *
+ * @param scopes - Array of valid project scope strings (e.g. ["api", "cli"])
+ * @returns A Rule function that validates scopes
+ *
+ * @example
+ * ```ts
+ * const rule = createScopeEnumRule(["api", "cli"]);
+ * const [valid, msg] = rule(parsedCommit);
+ * ```
+ *
+ * @internal
+ */
+export function createScopeEnumRule(scopes: string[]): Rule {
+	return (parsed) => {
+		if (parsed.type === "tdd") {
+			return checkTddScope(parsed.scope);
+		}
+		if (!parsed.scope || !scopes.includes(parsed.scope)) {
+			return [false, `scope must be one of: ${scopes.join(", ")}`];
+		}
+		return [true, ""];
+	};
+}
 
 /**
  * Rule names exported for type safety.
