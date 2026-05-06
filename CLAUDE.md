@@ -25,6 +25,36 @@ Load when changing the config factory, detection modules, CLI commands, hook
 rules, plugin shims, or the JSON envelope contract. Do **not** load for
 routine tests, lint fixes, or doc edits.
 
+## Live Package Development
+
+The `@savvy-web/commitlint` package is workspace-linked into `node_modules/@savvy-web/commitlint`
+pointing at `package/dist/dev`. Changes to `package/src/` are not live until you rebuild:
+
+```bash
+pnpm ci:build              # CI-mode full rebuild — updates the live workspace link
+```
+
+The commitlint CLI is available immediately after rebuild:
+
+```bash
+pnpm exec savvy-commit check   # show detected config (not a message linter)
+pnpm exec commitlint --config lib/configs/commitlint.config.ts --edit <file>  # lint a message
+```
+
+The git commit-msg hook also runs the live build — `git commit --allow-empty -m "..."` exercises
+the full hook pipeline.
+
+## Skills
+
+### `/smoketest`
+
+Runs valid and invalid commit messages through all active commitlint rules, covering both the
+git commit-msg hook path and the CLI path. Supports optional args to target specific rule
+categories (`types`, `dco`, `markdown`, `tdd`, `hook`, `cli`).
+
+Use after modifying `package/src/config/` or rebuilding the package to verify rule enforcement
+is correct.
+
 ## Commands
 
 ### Development
@@ -158,8 +188,12 @@ Turbo: `typecheck` depends on `build` completing first.
 
 All commits require:
 
-1. Conventional commit format (feat, fix, chore, etc.).
+1. Conventional commit format (feat, fix, chore, tdd, etc.).
 2. DCO signoff: `Signed-off-by: Name <email>`.
+
+`tdd` commits require a mandatory scope in `<goalId>:<state>` format where
+state is one of `spike`, `red`, `green`, or `refactor`
+(e.g. `tdd(42:green): implement parser`).
 
 ### Publishing
 

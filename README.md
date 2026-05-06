@@ -15,8 +15,7 @@ configuring commit rules for every project.
   strategies automatically
 - **Zero config** - Works out of the box with sensible defaults
 - **Type-safe** - Full TypeScript support with Zod schema validation
-- **Extended types** - Includes `ai` and `release` commit types beyond
-  conventional commits
+- **Extended types** - Includes `ai`, `release` and `tdd` commit types beyond conventional commits
 - **Interactive prompts** - Built-in commitizen adapter with emoji support
 - **CLI tooling** - Bootstrap and validate configurations with `savvy-commit`
 - **Claude Code plugin** - Companion plugin keeps AI agents inside your commit

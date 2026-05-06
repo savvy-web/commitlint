@@ -3,8 +3,8 @@ status: current
 module: commitlint
 category: architecture
 created: 2026-02-02
-updated: 2026-04-29
-last-synced: 2026-04-29
+updated: 2026-05-06
+last-synced: 2026-05-06
 completeness: 92
 related: []
 dependencies:
@@ -236,6 +236,9 @@ export default CommitlintConfig.silk({
 2. **Performance**: No runtime detection overhead
 3. **Compatibility**: Works in environments where detection fails
 
+The static config includes `silk/tdd-scope: [2, "always"]` so that the `tdd`
+scope format is enforced even without a factory call.
+
 ---
 
 ## Package Architecture
@@ -421,7 +424,9 @@ export default CommitlintConfig;
 ```
 
 The module also re-exports all public types, constants, detection utilities,
-and schema definitions for consumers who need fine-grained access.
+and schema definitions for consumers who need fine-grained access, including
+`TDD_SCOPE_PATTERN` and `TDD_STATES` from `package/src/config/rules.ts` (also
+re-exported from `static.ts`).
 
 ### Configuration Schema
 
@@ -494,6 +499,7 @@ export const silkPlugin = {
     "silk/subject-no-markdown": subjectNoMarkdown,
     "silk/body-prose-only": bodyProseOnly,
     "silk/signed-off-by": signedOffBy,
+    "silk/tdd-scope": tddScope,
   },
 };
 ```
@@ -506,10 +512,40 @@ export const silkPlugin = {
 | `silk/subject-no-markdown` | Rejects markdown formatting in commit subject line. | `noMarkdown: true` (default) |
 | `silk/body-prose-only` | Stricter rule requiring prose paragraphs only (rejects all list-like structures including `-` and `*`). | Not enabled by default; available for opt-in. |
 | `silk/signed-off-by` | Case-insensitive DCO signoff check. Replaces the built-in `signed-off-by` rule which is case-sensitive. Matches `Signed-off-by:`, `signed-off-by:`, etc. | `dco: true` (or auto-detected) |
+| `silk/tdd-scope` | Passes for all non-`tdd` commits. For `tdd` commits, enforces scope format `{goalId}:{state}` matching `TDD_SCOPE_PATTERN` (`/^\d+:(spike\|red\|green\|refactor)$/`). | Always active when scopes are not configured; merged into `silk/scope-enum` when scopes are configured (see factory logic below). |
 
 The `silk/signed-off-by` rule replaces the built-in commitlint `signed-off-by`
 rule because the built-in version is case-sensitive, which causes false failures
 when tools produce different casing of the trailer.
+
+**`createScopeEnumRule` factory and the single-merged-plugin pattern:**
+
+Commitlint processes the `plugins` array as a list of plugin objects, each with
+a `rules` map. When two plugin objects define keys in the same namespace, the
+second object's `rules` map entirely overwrites the first — the two maps are not
+merged. This means that registering both `silkPlugin` (for `silk/tdd-scope`) and
+a second inline plugin object (for `silk/scope-enum`) would cause the second to
+clobber the first, silently dropping `silk/tdd-scope`.
+
+To work around this, `plugins.ts` exports `createScopeEnumRule(scopes: string[])`,
+a factory that returns a single commitlint rule function handling both tdd-scope
+validation and project-scope enum enforcement in one pass. When the factory is
+configured with scopes, it produces a single merged plugin object:
+
+```typescript
+{
+  plugins: [{
+    rules: {
+      ...silkPlugin.rules,
+      "silk/scope-enum": createScopeEnumRule(allScopes),
+    },
+  }],
+}
+```
+
+This keeps both `silk/tdd-scope` logic (from `silkPlugin.rules`) and the new
+`silk/scope-enum` rule live in a single plugin registration, avoiding the
+overwrite bug.
 
 **Markdown Detection:**
 
@@ -540,12 +576,37 @@ Key implementation details that differ from the earlier design:
 4. `subject-case` is explicitly disabled (`[0]`) to tolerate AI-generated
    capitalized subjects
 5. Scopes are sorted after deduplication
+6. **Scope branching**: when scopes are configured, the factory disables the
+   built-in `scope-enum` and the standalone `silk/tdd-scope`, and instead
+   enables `silk/scope-enum` via a single merged plugin that combines
+   `silkPlugin.rules` with `createScopeEnumRule(allScopes)`. When no scopes
+   are configured, it enables `silk/tdd-scope` directly via `silkPlugin`.
+   This avoids the `plugins.local` overwrite bug (see "Custom Plugin System"
+   above).
+
+```typescript
+// package/src/config/factory.ts (scope-branching excerpt)
+
+if (allScopes.length > 0) {
+  // Disable built-in scope-enum; tdd-scope logic is folded into silk/scope-enum
+  rules["scope-enum"] = [0];
+  rules["silk/tdd-scope"] = [0];
+  rules["silk/scope-enum"] = [2, "always"];
+  // Single merged plugin — avoids the plugins.local overwrite bug
+  plugins = [{ rules: { ...silkPlugin.rules, "silk/scope-enum": createScopeEnumRule(allScopes) } }];
+} else {
+  // No project scopes: enable silk/tdd-scope directly via silkPlugin
+  plugins = [silkPlugin];
+}
+```
+
+The full factory assembles:
 
 ```typescript
 // package/src/config/factory.ts
 import { detectDCO } from "../detection/dco.js";
 import { createPromptConfig } from "../prompt/config.js";
-import { silkPlugin } from "./plugins.js";
+import { createScopeEnumRule, silkPlugin } from "./plugins.js";
 import { COMMIT_TYPES } from "./rules.js";
 import type { ResolvedConfigOptions } from "./schema.js";
 import type { CommitlintUserConfig, RulesConfig } from "./types.js";
@@ -569,8 +630,14 @@ export function createConfig(options: ResolvedConfigOptions): CommitlintUserConf
     "subject-case": [0],  // Allow any case (AI tools often capitalize)
   };
 
+  let plugins;
   if (allScopes.length > 0) {
-    rules["scope-enum"] = [2, "always", allScopes];
+    rules["scope-enum"] = [0];
+    rules["silk/tdd-scope"] = [0];
+    rules["silk/scope-enum"] = [2, "always"];
+    plugins = [{ rules: { ...silkPlugin.rules, "silk/scope-enum": createScopeEnumRule(allScopes) } }];
+  } else {
+    plugins = [silkPlugin];
   }
 
   if (dco) {
@@ -584,7 +651,7 @@ export function createConfig(options: ResolvedConfigOptions): CommitlintUserConf
 
   return {
     extends: ["@commitlint/config-conventional"],
-    plugins: [silkPlugin],
+    plugins,
     rules,
     prompt: createPromptConfig({ emojis: options.emojis, ...(allScopes.length > 0 ? { scopes: allScopes } : {}) }),
   };
@@ -897,7 +964,7 @@ until 1.0.
 
 | Subcommand | Hook event | Reads stdin? | Emits on stdout |
 | :--------- | :--------- | :----------- | :-------------- |
-| `session-start` | `SessionStart` | No (drains then ignores) | `SessionStart` `additionalContext` envelope wrapped in `<EXTREMELY_IMPORTANT>` blocks |
+| `session-start` | `SessionStart` | No (drains then ignores) | `SessionStart` `additionalContext` envelope wrapped in `<EXTREMELY_IMPORTANT>` blocks. Commit conventions block includes the `tdd` type and its `{goalId}:{state}` scope format. Quality block enforces: no artificial line breaks, 2-5 line body max, skip routine doc/config noise, and a `<skip_in_body>` list of content categories to omit. |
 | `pre-commit-message` | `PreToolUse(Bash)` | Yes (PreToolUse envelope) | `permissionDecision: deny` / `additionalContext` advise / silent |
 | `post-commit-verify` | `PostToolUse(Bash)` | Yes (PostToolUse envelope, mostly ignored) | `additionalContext` advise (or silent) |
 | `user-prompt-submit` | `UserPromptSubmit` | Yes (UserPromptSubmit envelope) | `additionalContext` reminder (or silent) |
@@ -986,12 +1053,17 @@ still gating commit-related commands:
 
 1. **Hot path (auto-allow)** — `lib/match-safe-bash.sh` runs the command
    against `lib/safe-bash-patterns.txt` (POSIX-ERE regex allow-list, Tier A
-   read-only + Tier B workflow-essential). Hard exclusions (`rm`, `curl`,
-   `git push --force`, package installers, `npx` / `bunx` / `yarn dlx`,
-   `gh repo delete`, `gh secret`) are evaluated first. If matched, the hook
-   emits `permissionDecision: allow` and exits without invoking the CLI.
-   `git commit`, `gh pr create`, and `gh pr edit` are intentionally excluded
-   from the allow-list so they fall through to the cold path.
+   read-only + Tier B workflow-essential). Hard exclusions are evaluated first
+   before the allowlist check. In addition to the original exclusions (`rm`,
+   `curl`, `git push --force`, package installers, `npx` / `bunx` / `yarn dlx`,
+   `gh repo delete`, `gh secret`), two further hard exclusions were added
+   (closes #111): (1) `tee` with an absolute path, home-dir expansion (`~`),
+   or path traversal (`../`) is denied; (2) shell redirects (`>` or `>>`) to
+   absolute paths, home-dir, or traversal are denied. Relative-path usage of
+   `tee` and redirects remains unaffected. If matched, the hook emits
+   `permissionDecision: allow` and exits without invoking the CLI. `git commit`,
+   `gh pr create`, and `gh pr edit` are intentionally excluded from the
+   allow-list so they fall through to the cold path.
 
 2. **Cold path (validate)** — `lib/is-commit-related.sh` checks whether the
    command begins with `git commit` or `gh pr create|edit`. If yes, the
@@ -1076,12 +1148,19 @@ Hooks are run without an executable bit so they remain `bash <script>` from
 | `style` | 💄 | Formatting | `style: fix indentation in utils` |
 | `refactor` | ♻️ | Code restructure | `refactor: extract validation logic` |
 | `perf` | ⚡ | Performance | `perf: optimize database queries` |
+| `tdd` | 🧪 | TDD cycle step | `tdd(42:red): failing test for parser` |
 | `test` | ✅ | Tests | `test: add unit tests for parser` |
 | `build` | 📦 | Build system | `build: update webpack configuration` |
 | `ci` | 👷 | CI/CD | `ci: add GitHub Actions workflow` |
 | `chore` | 🔧 | Maintenance | `chore: update dependencies` |
 | `revert` | ⏪ | Revert | `revert: undo last commit` |
 | `release` | 🔖 | Release | `release: v1.2.0` |
+
+The `tdd` type requires a scope matching the pattern `{goalId}:{state}` where
+`goalId` is a numeric goal identifier and `state` is one of `spike`, `red`,
+`green`, or `refactor` (exported as `TDD_STATES`). The full pattern is
+`TDD_SCOPE_PATTERN = /^\d+:(spike|red|green|refactor)$/`. Examples:
+`tdd(42:red): failing assertion`, `tdd(7:green): make the test pass`.
 
 ### Emoji Definitions
 
@@ -1100,6 +1179,7 @@ export const TYPE_EMOJIS = {
   style: ":lipstick:",
   refactor: ":recycle:",
   perf: ":zap:",
+  tdd: ":test_tube:",
   test: ":white_check_mark:",
   build: ":package:",
   ci: ":construction_worker:",
@@ -1117,6 +1197,7 @@ export const TYPE_EMOJIS_UNICODE = {
   style: "💄",
   refactor: "♻️",
   perf: "⚡",
+  tdd: "🧪",
   test: "✅",
   build: "📦",
   ci: "👷",
@@ -1597,7 +1678,8 @@ describe("commitlint integration", () => {
 ---
 
 **Document Status:** Current - Core implementation complete, CLI implemented,
-migrated to silk-effects, plugin hook architecture extended (Phase 8).
+migrated to silk-effects, plugin hook architecture extended (Phase 8), `tdd`
+commit type and `silk/tdd-scope` rule added (feat/tdd branch).
 
 **Completed:**
 
@@ -1629,6 +1711,13 @@ migrated to silk-effects, plugin hook architecture extended (Phase 8).
     safe-bash / safe-mcp allow-lists~~
 21. ~~Route Effect logger output to stderr at Warning+ so hook subcommands
     keep stdout pristine~~
+22. ~~Add `tdd` commit type with `TDD_SCOPE_PATTERN` / `TDD_STATES` constants
+    and `silk/tdd-scope` custom rule; add `createScopeEnumRule` factory and
+    single-merged-plugin pattern to avoid `plugins.local` overwrite bug~~
+23. ~~Tighten `match-safe-bash.sh` hard exclusions: deny `tee` and shell
+    redirects to absolute / home-dir / traversal paths~~
+24. ~~Update `session-start` quality block: no artificial line breaks,
+    2-5 line body max, `<skip_in_body>` noise-exclusion list~~
 
 **Next Steps:**
 

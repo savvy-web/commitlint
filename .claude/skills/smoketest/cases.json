@@ -1,0 +1,201 @@
+{
+	"types": [
+		{
+			"name": "feat: valid type",
+			"message": "feat: add feature\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "fix: valid type",
+			"message": "fix: resolve bug\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "chore: valid type",
+			"message": "chore: update deps\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "ci: valid type",
+			"message": "ci: update pipeline\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "docs: valid type",
+			"message": "docs: update readme\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "build: valid type",
+			"message": "build: upgrade dep\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "perf: valid type",
+			"message": "perf: speed up query\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "refactor: valid type",
+			"message": "refactor: extract helper\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "style: valid type",
+			"message": "style: fix formatting\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "revert: valid type",
+			"message": "revert: undo last change\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "test: valid type",
+			"message": "test: add unit tests\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "ai: valid type",
+			"message": "ai: update CLAUDE.md\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "release: valid type",
+			"message": "release: 1.0.0\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "unknown: invalid type",
+			"message": "unknown: bad type\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "fail"
+		},
+		{
+			"name": "FEAT: uppercase type",
+			"message": "FEAT: wrong case\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "fail"
+		}
+	],
+	"dco": [
+		{
+			"name": "Signed-off-by: standard case",
+			"message": "feat: add feature\n\nSigned-off-by: Jane Doe <jane@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "signed-off-by: lowercase (case-insensitive)",
+			"message": "feat: add feature\n\nsigned-off-by: Jane Doe <jane@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "missing DCO entirely",
+			"message": "feat: add feature",
+			"expect": "fail"
+		},
+		{
+			"name": "Sign-off: wrong prefix",
+			"message": "feat: add feature\n\nSign-off: Jane Doe <jane@example.com>",
+			"expect": "fail"
+		},
+		{
+			"name": "Signed-off: missing -by",
+			"message": "feat: add feature\n\nSigned-off: Jane Doe <jane@example.com>",
+			"expect": "fail"
+		}
+	],
+	"markdown": [
+		{
+			"name": "plain text body",
+			"message": "feat: add feature\n\nPlain text body.\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "dash list in body (allowed)",
+			"message": "feat: add feature\n\nChanges:\n- item one\n- item two\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "bold in subject",
+			"message": "feat: add **bold** feature\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "fail"
+		},
+		{
+			"name": "markdown header in body",
+			"message": "feat: add feature\n\n## Summary\nDoes stuff.\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass",
+			"note": "commitlint --edit strips lines starting with # (git comment convention), so ## headers are never seen by the rule"
+		},
+		{
+			"name": "code fence in body",
+			"message": "feat: add feature\n\n```js\nconst x = 1;\n```\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "fail"
+		},
+		{
+			"name": "link in body",
+			"message": "feat: add feature\n\nSee [the docs](https://example.com) for more.\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "fail"
+		},
+		{
+			"name": "bold in body",
+			"message": "feat: add feature\n\n**Important:** read this.\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "fail"
+		}
+	],
+	"tdd": [
+		{
+			"name": "tdd(7:green): valid",
+			"message": "tdd(7:green): implement sum()\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "tdd(12:spike): valid",
+			"message": "tdd(12:spike): explore lifecycle shape\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "tdd(8:red): valid",
+			"message": "tdd(8:red): write failing assertion\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "tdd(1:refactor): valid",
+			"message": "tdd(1:refactor): extract helper function\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "tdd(999:green): large goalId",
+			"message": "tdd(999:green): large goal id works\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "pass"
+		},
+		{
+			"name": "tdd: missing scope",
+			"message": "tdd: no scope at all\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "fail"
+		},
+		{
+			"name": "tdd(7): scope without state",
+			"message": "tdd(7): missing state component\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "fail"
+		},
+		{
+			"name": "tdd(not-a-number:green): non-numeric goalId",
+			"message": "tdd(not-a-number:green): bad id\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "fail"
+		},
+		{
+			"name": "tdd(7:invalid-state): state not in allowed set",
+			"message": "tdd(7:invalid-state): bad state name\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "fail"
+		},
+		{
+			"name": "tdd(7:r->g): arrow syntax rejected",
+			"message": "tdd(7:r->g): arrow syntax not valid\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "fail"
+		},
+		{
+			"name": "tdd(7:done): done is not a valid state",
+			"message": "tdd(7:done): wrong state name\n\nSigned-off-by: Test <test@example.com>",
+			"expect": "fail"
+		}
+	]
+}

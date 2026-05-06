@@ -22,6 +22,12 @@ describe("CommitlintConfig.silk()", () => {
 		expect(typeEnumRule?.[2]).toEqual(expect.arrayContaining([...COMMIT_TYPES]));
 	});
 
+	it("includes tdd in commit type enum", () => {
+		const config = CommitlintConfig.silk({ dco: false });
+		const typeEnumRule = config.rules?.["type-enum"] as [number, string, string[]] | undefined;
+		expect(typeEnumRule?.[2]).toContain("tdd");
+	});
+
 	it("sets body-max-line-length to default of 300", () => {
 		const config = CommitlintConfig.silk({ dco: false });
 
@@ -47,24 +53,59 @@ describe("CommitlintConfig.silk()", () => {
 		expect(config.rules?.["silk/signed-off-by"]).toBeUndefined();
 	});
 
-	it("adds scope-enum rule when scopes are provided", () => {
+	it("disables scope-enum and enables silk/scope-enum when scopes are provided", () => {
 		const config = CommitlintConfig.silk({
 			dco: false,
 			scopes: ["api", "cli", "core"],
 		});
 
-		expect(config.rules?.["scope-enum"]).toEqual([2, "always", ["api", "cli", "core"]]);
+		expect(config.rules?.["scope-enum"]).toEqual([0]);
+		expect(config.rules?.["silk/scope-enum"]).toEqual([2, "always"]);
 	});
 
-	it("merges additionalScopes with provided scopes", () => {
+	it("merges additionalScopes with provided scopes (sorted and deduplicated)", () => {
 		const config = CommitlintConfig.silk({
 			dco: false,
 			scopes: ["api", "cli"],
 			additionalScopes: ["docs", "deps"],
 		});
 
-		// Should be sorted and deduplicated
-		expect(config.rules?.["scope-enum"]).toEqual([2, "always", ["api", "cli", "deps", "docs"]]);
+		// scope-enum is disabled; silk/scope-enum handles validation
+		expect(config.rules?.["scope-enum"]).toEqual([0]);
+		expect(config.rules?.["silk/scope-enum"]).toEqual([2, "always"]);
+		// Single merged plugin object (not two)
+		expect((config.plugins as unknown[]).length).toBe(1);
+	});
+
+	it("enables silk/tdd-scope when no scopes are configured", () => {
+		const config = CommitlintConfig.silk({ dco: false });
+		expect(config.rules?.["silk/tdd-scope"]).toEqual([2, "always"]);
+		expect(config.rules?.["silk/scope-enum"]).toBeUndefined();
+	});
+
+	it("when scopes provided: disables scope-enum and silk/tdd-scope, enables silk/scope-enum", () => {
+		const config = CommitlintConfig.silk({ dco: false, scopes: ["api", "cli"] });
+		expect(config.rules?.["scope-enum"]).toEqual([0]);
+		expect(config.rules?.["silk/tdd-scope"]).toEqual([0]);
+		expect(config.rules?.["silk/scope-enum"]).toEqual([2, "always"]);
+	});
+
+	it("when scopes provided: uses single merged plugin with silk rules and silk/scope-enum", () => {
+		const config = CommitlintConfig.silk({ dco: false, scopes: ["api", "cli"] });
+		const plugins = config.plugins as Array<{ rules?: Record<string, unknown> }>;
+		expect(plugins.length).toBe(1);
+		expect(typeof plugins[0]?.rules?.["silk/scope-enum"]).toBe("function");
+		expect(typeof plugins[0]?.rules?.["silk/tdd-scope"]).toBe("function");
+		expect(typeof plugins[0]?.rules?.["silk/body-no-markdown"]).toBe("function");
+		expect(typeof plugins[0]?.rules?.["silk/signed-off-by"]).toBe("function");
+	});
+
+	it("when no scopes: uses silkPlugin directly (single plugin)", () => {
+		const config = CommitlintConfig.silk({ dco: false });
+		const plugins = config.plugins as Array<{ rules?: Record<string, unknown> }>;
+		expect(plugins.length).toBe(1);
+		expect(typeof plugins[0]?.rules?.["silk/tdd-scope"]).toBe("function");
+		expect(plugins[0]?.rules?.["silk/scope-enum"]).toBeUndefined();
 	});
 
 	it("includes prompt configuration", () => {

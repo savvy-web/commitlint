@@ -27,3 +27,16 @@ setup() {
 @test "does NOT match git stash clear" { run bash "$HOOK" 'git stash clear'; [ "$status" -eq 1 ]; }
 @test "matches git stash push" { run bash "$HOOK" 'git stash push -m "wip"'; [ "$status" -eq 0 ]; }
 @test "matches git stash pop" { run bash "$HOOK" 'git stash pop'; [ "$status" -eq 0 ]; }
+@test "does NOT match tee /etc/passwd" { run bash "$HOOK" 'tee /etc/passwd'; [ "$status" -eq 1 ]; }
+@test "does NOT match tee -a /etc/passwd" { run bash "$HOOK" 'tee -a /etc/passwd'; [ "$status" -eq 1 ]; }
+@test "does NOT match tee ~/sensitive" { run bash "$HOOK" 'tee ~/sensitive'; [ "$status" -eq 1 ]; }
+@test "does NOT match tee path traversal" { run bash "$HOOK" 'tee ../../../etc/passwd'; [ "$status" -eq 1 ]; }
+@test "does NOT match piped tee /etc/passwd" { run bash "$HOOK" 'echo junk | tee /etc/passwd'; [ "$status" -eq 1 ]; }
+@test "matches tee project.log" { run bash "$HOOK" 'tee project.log'; [ "$status" -eq 0 ]; }
+@test "matches tee relative/path/output.log" { run bash "$HOOK" 'tee relative/path/output.log'; [ "$status" -eq 0 ]; }
+@test "does NOT match printf redirect to absolute path" { run bash "$HOOK" "printf '%s' '' > /etc/passwd"; [ "$status" -eq 1 ]; }
+@test "does NOT match printf append redirect to absolute path" { run bash "$HOOK" "printf '%s' '' >> /etc/passwd"; [ "$status" -eq 1 ]; }
+@test "does NOT match printf redirect to home dir" { run bash "$HOOK" "printf 'evil' > ~/bashrc"; [ "$status" -eq 1 ]; }
+@test "does NOT match printf redirect path traversal" { run bash "$HOOK" "printf 'junk' > ../../../etc/shadow"; [ "$status" -eq 1 ]; }
+@test "matches printf no redirect" { run bash "$HOOK" "printf 'hello world\n'"; [ "$status" -eq 0 ]; }
+@test "matches printf redirect to relative path" { run bash "$HOOK" "printf '%s' data > output.txt"; [ "$status" -eq 0 ]; }

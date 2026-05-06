@@ -26,6 +26,10 @@ describe("static config", () => {
 	it("enables multiple scopes", () => {
 		expect(staticConfig.prompt?.settings?.enableMultipleScopes).toBe(true);
 	});
+
+	it("enables silk/tdd-scope rule", () => {
+		expect(staticConfig.rules?.["silk/tdd-scope"]).toEqual([2, "always"]);
+	});
 });
 
 describe("exported constants", () => {

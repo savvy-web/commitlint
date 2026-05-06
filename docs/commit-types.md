@@ -1,7 +1,6 @@
 # Commit Types
 
-`@savvy-web/commitlint` extends the standard conventional commit types with
-additional types for AI workflows and releases.
+`@savvy-web/commitlint` extends the standard conventional commit types with additional types for AI workflows, TDD cycles and releases.
 
 ## Available Types
 
@@ -19,6 +18,7 @@ additional types for AI workflows and releases.
 | `release` | Release commits | `release: v1.2.0` |
 | `revert` | Revert previous commits | `revert: undo feature X` |
 | `style` | Code formatting | `style: fix indentation` |
+| `tdd` | TDD cycle checkpoint | `tdd(7:green): implement sum()` |
 | `test` | Test changes | `test: add unit tests for parser` |
 
 ## Custom Types
@@ -46,6 +46,19 @@ release: v1.2.0
 release: version packages
 release(api): v2.0.0
 ```
+
+### tdd
+
+For TDD cycle checkpoints. The scope is **required** and must follow the format `{goalId}:{state}`, where `goalId` is a numeric issue or goal ID and `state` is one of `spike`, `red`, `green` or `refactor`.
+
+```text
+tdd(7:spike): explore approach for parser redesign
+tdd(7:red): failing test for empty-input edge case
+tdd(7:green): implement sum() to pass tests
+tdd(7:refactor): extract validation into separate module
+```
+
+This type is enforced by the `silk/tdd-scope` rule, which rejects any `tdd` commit whose scope does not match `\d+:(spike|red|green|refactor)`.
 
 ## Commit Message Format
 

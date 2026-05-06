@@ -29,7 +29,7 @@ import type { CommitlintUserConfig } from "./config/types.js";
 
 export type { CommitType } from "./config/rules.js";
 // Commit type constants
-export { COMMIT_TYPES, COMMIT_TYPE_DEFINITIONS } from "./config/rules.js";
+export { COMMIT_TYPES, COMMIT_TYPE_DEFINITIONS, TDD_SCOPE_PATTERN, TDD_STATES } from "./config/rules.js";
 export type { ReleaseFormat } from "./config/schema.js";
 export type {
 	CommitTypeDefinition,
