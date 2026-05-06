@@ -1,5 +1,37 @@
 # @savvy-web/commitlint
 
+## 0.8.0
+
+### Features
+
+* [`ef119f4`](https://github.com/savvy-web/commitlint/commit/ef119f4d501ec08f3ff7dc6c721c8cd397ef7c42) ### `tdd` commit type
+
+Adds a `tdd` conventional commit type for TDD agent commits. The scope is required and must follow `{goalId}:{state}`, where `goalId` is a numeric identifier and `state` is one of `spike`, `red`, `green`, or `refactor`.
+
+```text
+tdd(7:spike): explore parser approach
+tdd(7:red): failing test for empty-input edge case
+tdd(7:green): implement sum() to pass tests
+tdd(7:refactor): extract validation into separate module
+```
+
+Scope format is always enforced on `tdd` commits. When no project scopes are configured, `silk/tdd-scope` handles it directly. When project scopes are configured, the factory merges tdd validation into `silk/scope-enum` so both rules stay active. Two new public constants are exported: `TDD_SCOPE_PATTERN` (`/^\d+:(spike|red|green|refactor)$/`) and `TDD_STATES`.
+
+### Bug Fixes
+
+* [`ef119f4`](https://github.com/savvy-web/commitlint/commit/ef119f4d501ec08f3ff7dc6c721c8cd397ef7c42) Fixes a silent rule-loss bug in the config factory when both a custom plugin and a scope-enum override were registered as separate inline plugin objects. `@commitlint/load` uses `plugins.local = plugin`, meaning the second object clobbered the first. The factory now merges all rules into a single plugin object, ensuring `silk/body-no-markdown`, `silk/signed-off-by`, and the other Silk rules are never silently dropped when project scopes are configured.
+
+### Dependencies
+
+* | [`051693a`](https://github.com/savvy-web/commitlint/commit/051693a6dd146533906a5a9d02186cf3d62a693d) | Dependency     | Type    | Action  | From    | To |
+  | :--------------------------------------------------------------------------------------------------- | :------------- | :------ | :------ | :------ | -- |
+  | zod                                                                                                  | dependency     | updated | ^4.3.6  | ^4.4.3  |    |
+  | @commitlint/cli                                                                                      | peerDependency | updated | ^20.5.0 | ^20.5.3 |    |
+  | @commitlint/config-conventional                                                                      | peerDependency | updated | ^20.5.0 | ^20.5.3 |    |
+  | @commitlint/cli                                                                                      | devDependency  | updated | ^20.5.2 | ^20.5.3 |    |
+  | @commitlint/config-conventional                                                                      | devDependency  | updated | ^20.5.0 | ^20.5.3 |    |
+  | @commitlint/lint                                                                                     | devDependency  | updated | ^20.5.0 | ^20.5.3 |    |
+
 ## 0.7.1
 
 ### Bug Fixes
