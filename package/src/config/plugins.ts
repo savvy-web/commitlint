@@ -206,15 +206,17 @@ const signedOffBy: Rule = (parsed) => {
  * tdd(7:done): implement feature
  * ```
  */
-const tddScope: Rule = (parsed) => {
-	if (parsed.type !== "tdd") return [true, ""];
-	if (!parsed.scope) {
-		return [false, "tdd commits require a scope in the format <goalId>:<state>"];
-	}
-	if (!TDD_SCOPE_PATTERN.test(parsed.scope)) {
-		return [false, `tdd scope must match <digits>:(spike|red|green|refactor), got: ${parsed.scope}`];
+function checkTddScope(scope: string | null): readonly [boolean, string] {
+	if (!scope) return [false, "tdd commits require a scope in the format <goalId>:<state>"];
+	if (!TDD_SCOPE_PATTERN.test(scope)) {
+		return [false, `tdd scope must match <digits>:(spike|red|green|refactor), got: ${scope}`];
 	}
 	return [true, ""];
+}
+
+const tddScope: Rule = (parsed) => {
+	if (parsed.type !== "tdd") return [true, ""];
+	return checkTddScope(parsed.scope);
 };
 
 /**
@@ -268,13 +270,7 @@ export const silkPlugin = {
 export function createScopeEnumRule(scopes: string[]): Rule {
 	return (parsed) => {
 		if (parsed.type === "tdd") {
-			if (!parsed.scope) {
-				return [false, "tdd commits require a scope in the format <goalId>:<state>"];
-			}
-			if (!TDD_SCOPE_PATTERN.test(parsed.scope)) {
-				return [false, `tdd scope must match <digits>:(spike|red|green|refactor), got: ${parsed.scope}`];
-			}
-			return [true, ""];
+			return checkTddScope(parsed.scope);
 		}
 		if (!parsed.scope || !scopes.includes(parsed.scope)) {
 			return [false, `scope must be one of: ${scopes.join(", ")}`];
