@@ -21,9 +21,14 @@ if echo "$CMD" | grep -qE 'git[[:space:]]+stash[[:space:]]+(drop|clear)\b'; then
 # Deny tee writing to absolute paths, home-dir expansion, or path traversal.
 # tee is allowlisted for pipeline logging to relative paths; absolute targets bypass the write guard.
 if echo "$CMD" | grep -qE '\btee\b.*[[:space:]]([/~]|\.\.)'; then exit 1; fi
-# Deny shell redirects (> or >>) to absolute paths, home-dir expansion, or path traversal.
-# Covers printf, echo, and any other auto-allowed binary used with a file-write redirect.
-if echo "$CMD" | grep -qE '(^|[[:space:]])>>?[[:space:]]*(\/|~|\.\.)'; then exit 1; fi
+# Also deny tee paths containing /.. (catches ./../ traversal patterns).
+if echo "$CMD" | grep -qE '\btee\b.*/\.\.'; then exit 1; fi
+# Deny shell redirects (> or >>) to absolute paths, home-dir, or path traversal.
+# Includes fd-prefixed redirects (1>, 2>>). Exempts N>/dev/null (safe stderr/stdout suppression).
+if echo "$CMD" | grep -qE '(^|[[:space:]])[0-9]*>>?[[:space:]]*(\/|~|\.\.)' && \
+   ! echo "$CMD" | grep -qE '[[:space:]][0-9]*>+/dev/null\b'; then exit 1; fi
+# Also deny redirect paths containing /.. (catches > ./../ traversal patterns).
+if echo "$CMD" | grep -qE '(^|[[:space:]])[0-9]*>>?[[:space:]]*[^[:space:]]*/\.\.'; then exit 1; fi
 
 PATTERNS="${BASH_SOURCE%/*}/safe-bash-patterns.txt"
 # grep -E reads patterns from a file; -f tells it to use that file. Skip comments + blanks.

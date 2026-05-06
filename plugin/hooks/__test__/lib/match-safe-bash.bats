@@ -41,4 +41,7 @@ setup() {
 @test "matches printf no redirect" { run bash "$HOOK" "printf 'hello world\n'"; [ "$status" -eq 0 ]; }
 @test "matches printf redirect to relative path" { run bash "$HOOK" "printf '%s' data > output.txt"; [ "$status" -eq 0 ]; }
 @test "matches stderr redirect to /dev/null" { run bash "$HOOK" 'git status 2>/dev/null'; [ "$status" -eq 0 ]; }
-@test "does NOT match stdout redirect to absolute path via stderr-style" { run bash "$HOOK" 'cmd >/etc/passwd'; [ "$status" -eq 1 ]; }
+@test "does NOT match fd stdout redirect to absolute path" { run bash "$HOOK" "printf '%s' x 1>/etc/passwd"; [ "$status" -eq 1 ]; }
+@test "does NOT match fd redirect to home dir" { run bash "$HOOK" "printf '%s' x 2>~/log"; [ "$status" -eq 1 ]; }
+@test "does NOT match tee ./../ traversal" { run bash "$HOOK" 'tee ./../etc/passwd'; [ "$status" -eq 1 ]; }
+@test "does NOT match redirect ./../ traversal" { run bash "$HOOK" "printf '%s' x > ./../etc/shadow"; [ "$status" -eq 1 ]; }

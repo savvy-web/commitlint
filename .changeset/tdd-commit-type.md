@@ -15,7 +15,7 @@ tdd(7:green): implement sum() to pass tests
 tdd(7:refactor): extract validation into separate module
 ```
 
-The `silk/tdd-scope` rule enforces scope format on all `tdd` commits. Two new public constants are exported from the package: `TDD_SCOPE_PATTERN` (`/^\d+:(spike|red|green|refactor)$/`) and `TDD_STATES`.
+Scope format is always enforced on `tdd` commits. When no project scopes are configured, `silk/tdd-scope` handles it directly. When project scopes are configured, the factory merges tdd validation into `silk/scope-enum` so both rules stay active. Two new public constants are exported: `TDD_SCOPE_PATTERN` (`/^\d+:(spike|red|green|refactor)$/`) and `TDD_STATES`.
 
 ## Bug Fixes
 

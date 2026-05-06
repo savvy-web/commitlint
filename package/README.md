@@ -67,12 +67,12 @@ Once installed, the plugin:
 
 ## Documentation
 
-For configuration options, API reference and usage details, see [docs/](./docs/).
+For configuration options, API reference and usage details, see [docs/](../docs/).
 
-- [Configuration guide](./docs/configuration.md) - All configuration options
-- [Auto-detection](./docs/auto-detection.md) - How automatic detection works
-- [CLI reference](./docs/cli.md) - Command-line interface usage
-- [Commit types](./docs/commit-types.md) - Available types and their usage
+- [Configuration guide](../docs/01-configuration.md) - All configuration options
+- [Auto-detection](../docs/02-auto-detection.md) - How automatic detection works
+- [CLI reference](../docs/03-cli.md) - Command-line interface usage
+- [Commit types](../docs/04-commit-types.md) - Available types and their usage
 
 ## License
 
