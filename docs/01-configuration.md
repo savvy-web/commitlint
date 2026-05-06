@@ -1,12 +1,10 @@
-# Configuration Guide
+# Configuration guide
 
-Complete reference for all configuration options available in
-`@savvy-web/commitlint`.
+Complete reference for all configuration options available in `@savvy-web/commitlint`.
 
-## Dynamic Configuration
+## Dynamic configuration
 
-The `CommitlintConfig.silk()` method accepts an options object to customize
-behavior:
+The `CommitlintConfig.silk()` method accepts an options object to customize behavior:
 
 ```typescript
 import { CommitlintConfig } from "@savvy-web/commitlint";
@@ -23,7 +21,7 @@ export default CommitlintConfig.silk({
 });
 ```
 
-## Configuration Options
+## Configuration options
 
 ### dco
 
@@ -51,8 +49,7 @@ CommitlintConfig.silk({ dco: false });
 | ---- | ------- |
 | `string[] \| undefined` | `undefined` (no restriction) |
 
-Enforces a `scope-enum` rule restricting commits to only these scopes.
-When omitted, any scope is allowed.
+Enforces a `scope-enum` rule restricting commits to only these scopes. When omitted, any scope is allowed.
 
 ```typescript
 // Restrict commits to only these scopes
@@ -67,8 +64,7 @@ CommitlintConfig.silk({
 | ---- | ------- |
 | `string[] \| undefined` | `[]` |
 
-Additional scopes merged with `scopes` (deduplicated and sorted). Can be
-used alone or together with `scopes` to form the full allowlist.
+Additional scopes merged with `scopes` (deduplicated and sorted). Can be used alone or together with `scopes` to form the full allowlist.
 
 ```typescript
 // Combine with scopes for a complete allowlist
@@ -101,8 +97,7 @@ CommitlintConfig.silk({ releaseFormat: "semver" });
 | ---- | ------- |
 | `boolean` | `false` |
 
-Enables emoji prefixes in prompt configuration. This affects interactive
-commit tools like commitizen.
+Enables emoji prefixes in prompt configuration. This affects interactive commit tools like commitizen.
 
 ```typescript
 // Enable emojis for prompts
@@ -115,8 +110,7 @@ CommitlintConfig.silk({ emojis: true });
 | ---- | ------- |
 | `number` | `300` |
 
-Maximum allowed line length in the commit body. Set higher than the standard
-100 to accommodate detailed messages, especially from AI tools.
+Maximum allowed line length in the commit body. Set higher than the default to accommodate detailed messages, especially from AI tools.
 
 ```typescript
 // Allow longer lines in body
@@ -129,10 +123,7 @@ CommitlintConfig.silk({ bodyMaxLineLength: 500 });
 | ---- | ------- |
 | `boolean` | `true` |
 
-Rejects markdown formatting in commit messages. When enabled, messages
-containing headers, numbered lists, code fences, links, or bold/italic
-formatting will be rejected. Simple unordered lists (`-` or `*`) are
-allowed for readability.
+Rejects markdown formatting in commit messages. When enabled, messages containing headers, numbered lists, code fences, links, or bold/italic formatting will be rejected. Simple unordered lists (`-` or `*`) are allowed for readability.
 
 ```typescript
 // Allow markdown in commit messages
@@ -145,26 +136,24 @@ CommitlintConfig.silk({ noMarkdown: false });
 | ---- | ------- |
 | `string \| undefined` | `process.cwd()` |
 
-Working directory for detection. Useful when running commitlint from a
-different directory than the repository root.
+Working directory for detection. Useful when running commitlint from a different directory than the repository root.
 
 ```typescript
 CommitlintConfig.silk({ cwd: "/path/to/repo" });
 ```
 
-## Environment Variables
+## Environment variables
 
 ### COMMITLINT_SKIP_DCO
 
-Set to `"1"` or `"true"` to disable the DCO signoff check at runtime.
-Useful for CI environments that validate PR titles rather than individual
-commit messages.
+Set to `"1"` or `"true"` to disable the DCO signoff check at runtime. Useful for CI environments that validate PR titles rather than individual commit messages.
 
 ```bash
 COMMITLINT_SKIP_DCO=1 commitlint --edit
+# example output (varies by environment)
 ```
 
-## Static Configuration
+## Static configuration
 
 For projects that don't need auto-detection, use the static export:
 
@@ -172,7 +161,7 @@ For projects that don't need auto-detection, use the static export:
 export { default } from "@savvy-web/commitlint/static";
 ```
 
-### Extending Static Config
+### Extending static config
 
 ```typescript
 import config from "@savvy-web/commitlint/static";
@@ -186,7 +175,7 @@ export default {
 };
 ```
 
-## Generated Rules
+## Generated rules
 
 The configuration generates these commitlint rules:
 
@@ -202,5 +191,4 @@ The configuration generates these commitlint rules:
 
 ## Validation
 
-All options are validated using Zod schemas. Invalid options will throw
-descriptive errors at configuration time.
+All options are validated using Zod schemas. Invalid options will throw descriptive errors at configuration time.

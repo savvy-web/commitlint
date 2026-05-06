@@ -1,9 +1,8 @@
-# CLI Reference
+# CLI reference
 
-`@savvy-web/commitlint` includes a CLI tool called `savvy-commit` for
-bootstrapping and validating configurations.
+`@savvy-web/commitlint` includes a CLI tool called `savvy-commit` for bootstrapping and validating configurations.
 
-## Installation
+## Install
 
 The CLI is available after installing the package:
 
@@ -19,6 +18,7 @@ Bootstrap commitlint configuration and husky hooks.
 
 ```bash
 npx savvy-commit init
+# example output (varies by environment)
 ```
 
 **Options:**
@@ -35,25 +35,24 @@ npx savvy-commit init
 
 **Managed Section:**
 
-The hook uses `BEGIN`/`END` markers to define a managed section. You can add
-custom hooks above or below the managed block. Re-running `init` updates only
-the managed section, preserving your customizations. Use `--force` to replace
-the entire file.
+The hook uses `BEGIN`/`END` markers to define a managed section. You can add custom hooks above or below the managed block. Re-running `init` updates only the managed section, preserving your customizations. Use `--force` to replace the entire file.
 
-In CI environments (`CI` or `GITHUB_ACTIONS` set), the managed section is
-skipped so that custom hooks outside the markers still execute.
+In CI environments (`CI` or `GITHUB_ACTIONS` set), the managed section is skipped so that custom hooks outside the markers still execute.
 
 **Example:**
 
 ```bash
 # Initialize with defaults
 npx savvy-commit init
+# example output (varies by environment)
 
 # Use a custom config path
 npx savvy-commit init --config commitlint.config.ts
+# example output (varies by environment)
 
 # Force overwrite entire hook file
 npx savvy-commit init --force
+# example output (varies by environment)
 ```
 
 ### savvy-commit check
@@ -80,8 +79,7 @@ Detected settings:
   Detected scopes: api, cli, core, docs
 ```
 
-The check command also reports managed section status: up-to-date, outdated
-(run `savvy-commit init` to update), or not found.
+The check command also reports managed section status: up-to-date, outdated (run `savvy-commit init` to update), or not found.
 
 ## Using with npm scripts
 
@@ -96,33 +94,18 @@ Add to your `package.json`:
 }
 ```
 
-## Husky Integration
+## Husky integration
 
 The `init` command creates a husky hook at `.husky/commit-msg` with:
 
 - Managed section markers for safe re-running
 - CI environment detection (skips managed section in GitHub Actions)
-- Automatic package manager detection (pnpm, yarn, bun, npm)
+- Automatic package manager detection (npm, pnpm, yarn, bun)
 - Absolute path resolution for reliable config location
 
-Custom hooks can be placed above or below the managed section markers.
-Re-running `savvy-commit init` updates only the managed block, preserving
-your customizations.
+Custom hooks can be placed above or below the managed section markers. Re-running `savvy-commit init` updates only the managed block, preserving your customizations.
 
-## Internal: `savvy-commit hook`
-
-The CLI also exposes a `hook` parent command with four subcommands
-(`session-start`, `pre-commit-message`, `post-commit-verify`,
-`user-prompt-submit`). These are **internal** and consumed exclusively by the
-companion [Claude Code plugin's](../plugin/) bash hook shims. They read a
-Claude Code hook envelope on stdin and emit a JSON envelope on stdout.
-
-The CLI surface and JSON envelope shape are not stable for third-party
-consumers; expect breaking changes between minor versions until 1.0. There is
-no need to invoke `savvy-commit hook ...` directly from your own scripts —
-install the plugin instead.
-
-## Manual Setup
+## Manual setup
 
 If you prefer manual setup over the CLI:
 
@@ -138,6 +121,7 @@ If you prefer manual setup over the CLI:
 
    ```bash
    npx savvy-commit init --config commitlint.config.ts
+   # example output (varies by environment)
    ```
 
 3. Alternatively, create `.husky/commit-msg` manually and make it executable:

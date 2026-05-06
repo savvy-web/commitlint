@@ -1,20 +1,19 @@
 # Documentation
 
-Welcome to the `@savvy-web/commitlint` documentation. This package provides
-dynamic, intelligent commitlint configuration with auto-detection capabilities.
+Welcome to the `@savvy-web/commitlint` documentation. This package provides dynamic, intelligent commitlint configuration with auto-detection capabilities.
 
-## Quick Links
+## Quick links
 
-- [Configuration Guide](./configuration.md) - All configuration options
-- [Auto-Detection](./auto-detection.md) - How automatic detection works
-- [CLI Reference](./cli.md) - Command-line interface usage
-- [Commit Types](./commit-types.md) - Available commit types and their usage
+- [Configuration guide](./01-configuration.md) - All configuration options
+- [Auto-detection](./02-auto-detection.md) - How automatic detection works
+- [CLI reference](./03-cli.md) - Command-line interface usage
+- [Commit types](./04-commit-types.md) - Available commit types and their usage
 
 ## Overview
 
 `@savvy-web/commitlint` offers two approaches to configuration:
 
-### Dynamic Configuration (Recommended)
+### Dynamic configuration (recommended)
 
 Auto-detects repository characteristics and generates appropriate rules:
 
@@ -22,9 +21,10 @@ Auto-detects repository characteristics and generates appropriate rules:
 import { CommitlintConfig } from "@savvy-web/commitlint";
 
 export default CommitlintConfig.silk();
+// returns a commitlint configuration object
 ```
 
-### Static Configuration
+### Static configuration
 
 Pre-defined configuration without runtime detection:
 
@@ -32,7 +32,7 @@ Pre-defined configuration without runtime detection:
 export { default } from "@savvy-web/commitlint/static";
 ```
 
-## Package Exports
+## Package exports
 
 | Export | Description |
 | ------ | ----------- |
@@ -41,7 +41,7 @@ export { default } from "@savvy-web/commitlint/static";
 | `@savvy-web/commitlint/prompt` | Prompt configuration for interactive commits |
 | `@savvy-web/commitlint/formatter` | Custom formatter for better error messages |
 
-## Peer Dependencies
+## Peer dependencies
 
 This package requires:
 

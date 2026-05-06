@@ -1,8 +1,8 @@
-# Commit Types
+# Commit types
 
 `@savvy-web/commitlint` extends the standard conventional commit types with additional types for AI workflows, TDD cycles and releases.
 
-## Available Types
+## Available types
 
 | Type | Description | Example |
 | ---- | ----------- | ------- |
@@ -21,7 +21,7 @@
 | `tdd` | TDD cycle checkpoint | `tdd(7:green): implement sum()` |
 | `test` | Test changes | `test: add unit tests for parser` |
 
-## Custom Types
+## Custom types
 
 ### ai
 
@@ -60,7 +60,7 @@ tdd(7:refactor): extract validation into separate module
 
 This type is enforced by the `silk/tdd-scope` rule, which rejects any `tdd` commit whose scope does not match `\d+:(spike|red|green|refactor)`.
 
-## Commit Message Format
+## Commit message format
 
 ```text
 <type>(<scope>): <subject>
@@ -124,10 +124,9 @@ API keys. See migration guide for details.
 Signed-off-by: Developer Name <dev@example.com>
 ```
 
-## DCO Signoff
+## DCO signoff
 
-When DCO is enabled (default when a `DCO` file exists), all commits must
-include a signoff:
+When DCO is enabled (default when a `DCO` file exists), all commits must include a signoff:
 
 ```text
 Signed-off-by: Your Name <your.email@example.com>
@@ -135,7 +134,7 @@ Signed-off-by: Your Name <your.email@example.com>
 
 Add with `git commit -s` or configure your Git client to add automatically.
 
-## Programmatic Access
+## Programmatic access
 
 Export commit types for use in your own tools:
 
