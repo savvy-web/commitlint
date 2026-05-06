@@ -1,6 +1,6 @@
 # Documentation
 
-Welcome to the `@savvy-web/commitlint` documentation. This package provides dynamic, intelligent commitlint configuration with auto-detection capabilities.
+`@savvy-web/commitlint` generates a commitlint configuration by reading your repository at load time. It checks for DCO files, workspace manifests and changeset config, then produces typed rules for signoff requirements, scope restrictions and release-format validation.
 
 ## Quick links
 

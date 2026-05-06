@@ -5,7 +5,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-24%2B-5fa04e?logo=node.js)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9%2B-3178c6?logo=typescript)](https://www.typescriptlang.org/)
 
-Dynamic, intelligent commitlint configuration that auto-detects DCO requirements, workspace scopes, and versioning strategies. Stop manually configuring commit rules for every project.
+Commitlint configuration that reads your repository at load time — checking for a `DCO` file, workspace manifests and changeset config — then generates the appropriate rules. One call to `CommitlintConfig.silk()` replaces the manual wiring of scope enums, signoff requirements and release-format rules across every project.
 
 ## Features
 
