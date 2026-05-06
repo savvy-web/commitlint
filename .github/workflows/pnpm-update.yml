@@ -53,15 +53,16 @@ jobs:
           config-dependencies: |
             @savvy-web/pnpm-plugin-silk
           dependencies: |
-            @savvy-web/*
-            workspace-effect
-            @savvy-web/silk-effects
-            zod
             @commitlint/cli
             @commitlint/config-conventional
-            husky
+            @commitlint/lint
+            @savvy-web/*
+            @savvy-web/silk-effects
             commitizen
-          peer-minor: |
+            husky
+            workspace-effect
+            zod
+          peer-lock: |
             @commitlint/cli
             @commitlint/config-conventional
             husky
