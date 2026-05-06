@@ -40,3 +40,5 @@ setup() {
 @test "does NOT match printf redirect path traversal" { run bash "$HOOK" "printf 'junk' > ../../../etc/shadow"; [ "$status" -eq 1 ]; }
 @test "matches printf no redirect" { run bash "$HOOK" "printf 'hello world\n'"; [ "$status" -eq 0 ]; }
 @test "matches printf redirect to relative path" { run bash "$HOOK" "printf '%s' data > output.txt"; [ "$status" -eq 0 ]; }
+@test "matches stderr redirect to /dev/null" { run bash "$HOOK" 'git status 2>/dev/null'; [ "$status" -eq 0 ]; }
+@test "does NOT match stdout redirect to absolute path via stderr-style" { run bash "$HOOK" 'cmd >/etc/passwd'; [ "$status" -eq 1 ]; }

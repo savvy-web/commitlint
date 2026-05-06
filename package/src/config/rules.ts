@@ -48,7 +48,7 @@ export type CommitType = (typeof COMMIT_TYPES)[number];
  * TDD commits require a scope in the format: `<goalId>:<state>`
  * where goalId is a numeric ID and state is one of: spike, red, green, refactor.
  *
- * Example: `feat(42:red)` or `feat(1:green)`
+ * Example: `tdd(42:red)` or `tdd(1:green)`
  *
  * @public
  */
