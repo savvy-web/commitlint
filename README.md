@@ -9,13 +9,13 @@ Commitlint configuration that reads your repository at load time — checking fo
 
 ## Features
 
-- **Auto-detection** - Detects DCO files, workspace packages, and versioning strategies automatically
-- **Zero config** - Works out of the box with sensible defaults
-- **Type-safe** - Full TypeScript support with Zod schema validation
-- **Extended types** - Includes `ai`, `release` and `tdd` commit types beyond conventional commits
-- **Interactive prompts** - Built-in commitizen adapter with emoji support
-- **CLI tooling** - Bootstrap and validate configurations with `savvy-commit`
-- **Claude Code plugin** - Companion plugin keeps AI agents inside your commit conventions: injects branch and signing context at session start, auto-allows safe Bash and curated MCP operations, validates commit messages before `git commit` runs, and replays commitlint plus signing checks afterwards
+- **Auto-detection** — scans for a `DCO` file, workspace packages and changeset config; no manual flags required
+- **Zero config** — `CommitlintConfig.silk()` picks the right rules; no flags needed
+- **Type-safe** — ships full TypeScript types; Zod validates every detected value at load time
+- **Extended types** — adds `ai`, `release` and `tdd` commit types on top of the conventional-commits baseline
+- **Interactive prompts** — includes a commitizen adapter with emoji support
+- **`savvy-commit` CLI** — initializes config and reports detected settings with a single command
+- **Claude Code plugin** — registers session-start, pre-tool-use and post-tool-use hooks that give AI agents branch context, allow safe Bash commands automatically, and block commits that fail commitlint or DCO signing
 
 ## Repository structure
 
@@ -23,8 +23,8 @@ This is a monorepo containing two packages:
 
 | Directory | Description |
 | --- | --- |
-| [`package/`](./package/) | The `@savvy-web/commitlint` npm package. Dynamic commitlint configuration with auto-detection, interactive prompts, and the `savvy-commit` CLI. |
-| [`plugin/`](./plugin/) | A Claude Code sidecar plugin that registers `SessionStart`, `PreToolUse`, `PostToolUse`, and `UserPromptSubmit` hooks to inform AI agents about Silk commit conventions, auto-allow safe Bash and curated MCP operations, validate commit messages before they run, and replay commitlint plus signing checks afterwards. |
+| [`package/`](./package/) | The `@savvy-web/commitlint` npm package: config factory, interactive prompt, Zod detection and the `savvy-commit` CLI. |
+| [`plugin/`](./plugin/) | A Claude Code sidecar that registers `SessionStart`, `PreToolUse`, `PostToolUse` and `UserPromptSubmit` hooks — injects branch and signing context, auto-allows safe Bash and curated MCP operations, and replays commitlint plus signing checks after each commit. |
 
 ## Quick start
 
@@ -39,21 +39,21 @@ import { CommitlintConfig } from "@savvy-web/commitlint";
 export default CommitlintConfig.silk();
 ```
 
-Or bootstrap everything automatically:
+To let `savvy-commit` wire up the config file and hooks for you:
 
 ```bash
 npx savvy-commit init
 # example output (varies by environment)
 ```
 
-For configuration options, API reference, and advanced usage, see the [package README](./package/README.md) and [docs](./docs/).
+For configuration options, API reference and advanced usage, see the [package README](./package/README.md) and [docs](./docs/).
 
 ## Documentation
 
-- [Configuration guide](./docs/01-configuration.md) - All configuration options
-- [Auto-detection](./docs/02-auto-detection.md) - How automatic detection works
-- [CLI reference](./docs/03-cli.md) - Command-line interface usage
-- [Commit types](./docs/04-commit-types.md) - Available types and their usage
+- [Configuration guide](./docs/01-configuration.md) — all configuration options
+- [Auto-detection](./docs/02-auto-detection.md) — how detection works and what it reads
+- [CLI reference](./docs/03-cli.md) — `savvy-commit` commands and flags
+- [Commit types](./docs/04-commit-types.md) — available types and when to use each
 
 ## License
 

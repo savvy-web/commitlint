@@ -11,11 +11,11 @@
 
 ## Overview
 
-`@savvy-web/commitlint` offers two approaches to configuration:
+`@savvy-web/commitlint` has two configuration modes.
 
 ### Dynamic configuration (recommended)
 
-Auto-detects repository characteristics and generates appropriate rules:
+Reads the repository at load time and generates rules to match:
 
 ```typescript
 import { CommitlintConfig } from "@savvy-web/commitlint";
@@ -26,7 +26,7 @@ export default CommitlintConfig.silk();
 
 ### Static configuration
 
-Pre-defined configuration without runtime detection:
+A fixed configuration with no runtime detection:
 
 ```typescript
 export { default } from "@savvy-web/commitlint/static";
@@ -43,17 +43,17 @@ export { default } from "@savvy-web/commitlint/static";
 
 ## Peer dependencies
 
-This package requires:
+Required:
 
-- `@commitlint/cli` (required)
-- `@commitlint/config-conventional` (required)
-- `husky` (required)
+- `@commitlint/cli`
+- `@commitlint/config-conventional`
+- `husky`
 
-Optional peer for interactive commits:
+Optional (needed for interactive commits):
 
-- `commitizen` (optional)
+- `commitizen`
 
-Install all required peers:
+Install the required peers:
 
 ```bash
 npm install -D @commitlint/cli @commitlint/config-conventional husky

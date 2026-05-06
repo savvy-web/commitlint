@@ -1,6 +1,6 @@
 # Auto-detection
 
-`@savvy-web/commitlint` automatically detects repository characteristics to generate appropriate commit rules. This document explains what gets detected and how.
+`@savvy-web/commitlint` detects repository characteristics to generate appropriate commit rules. This document explains what gets detected and how.
 
 ## Detection overview
 
@@ -13,9 +13,7 @@ Scopes are not auto-detected. By default, any scope is allowed. Use the `scopes`
 
 ## DCO detection
 
-Checks for the presence of a `DCO` file at the repository root.
-
-**Detection Logic:**
+The package looks for a `DCO` file at the repository root. If it is present, the config requires a `Signed-off-by:` trailer on every commit.
 
 ```text
 If file exists: /path/to/repo/DCO
@@ -66,15 +64,9 @@ CommitlintConfig.silk({ scopes });
 
 ## Versioning strategy detection
 
-Analyzes the repository's versioning approach to determine the appropriate release commit format.
+The package reads the repository's versioning setup to pick the right release commit format. It looks at whether a `.changeset/` directory is present, whether changesets declare `fixed` or `linked` package groups, and how many publishable packages exist.
 
-**Detection Factors:**
-
-1. Presence of changesets (`.changeset/` directory)
-2. Changeset configuration (`fixed` groups, `linked` packages)
-3. Number of publishable packages
-
-**Strategy Types:**
+**Strategy types:**
 
 | Strategy | Description | Release Format |
 | -------- | ----------- | -------------- |
@@ -92,7 +84,7 @@ CommitlintConfig.silk({ releaseFormat: "scoped" });
 
 ## Using detection utilities directly
 
-The detection functions are exported for direct use:
+All four detection functions are exported:
 
 ```typescript
 import {
@@ -119,7 +111,7 @@ console.log(strategy.packages); // Array of workspace package info
 
 ## Detection performance
 
-Detection runs once when the configuration is loaded. For CI environments where detection overhead is unwanted, use the static configuration:
+Detection runs once on the first call to `CommitlintConfig.silk()`. In CI environments where you want to skip detection entirely, use the static configuration:
 
 ```typescript
 // No detection overhead

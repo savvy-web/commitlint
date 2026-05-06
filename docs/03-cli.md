@@ -1,6 +1,6 @@
 # CLI reference
 
-`@savvy-web/commitlint` includes a CLI tool called `savvy-commit` for bootstrapping and validating configurations.
+`@savvy-web/commitlint` ships a CLI called `savvy-commit` for writing the commitlint config and the husky hook.
 
 ## Install
 
@@ -14,7 +14,7 @@ npm install -D @savvy-web/commitlint @commitlint/cli @commitlint/config-conventi
 
 ### savvy-commit init
 
-Bootstrap commitlint configuration and husky hooks.
+Write the commitlint config and the `.husky/commit-msg` hook.
 
 ```bash
 npx savvy-commit init
@@ -28,16 +28,16 @@ npx savvy-commit init
 | `--force` | `-f` | Overwrite entire hook file (not just managed section) |
 | `--config` | `-c` | Relative path for the commitlint config file (default: `lib/configs/commitlint.config.ts`) |
 
-**Generated Files:**
+**Generated files:**
 
 - Commitlint config at the specified path (default `lib/configs/commitlint.config.ts`)
-- `.husky/commit-msg` - Git hook with managed section
+- `.husky/commit-msg` — git hook with a managed section
 
-**Managed Section:**
+**Managed section:**
 
-The hook uses `BEGIN`/`END` markers to define a managed section. You can add custom hooks above or below the managed block. Re-running `init` updates only the managed section, preserving your customizations. Use `--force` to replace the entire file.
+The hook uses `BEGIN`/`END` markers to define a managed section. You can add custom hooks above or below the managed block. Re-running `init` updates only the managed section and leaves the rest of the file alone. Use `--force` to replace the entire file.
 
-In CI environments (`CI` or `GITHUB_ACTIONS` set), the managed section is skipped so that custom hooks outside the markers still execute.
+In CI environments (`CI` or `GITHUB_ACTIONS` set), the managed section is skipped so custom hooks outside the markers still execute.
 
 **Example:**
 
@@ -57,7 +57,7 @@ npx savvy-commit init --force
 
 ### savvy-commit check
 
-Validate the current commitlint setup and show detected settings.
+Show the current commitlint config and whether the managed section in the hook is up to date.
 
 ```bash
 npx savvy-commit check
@@ -79,7 +79,7 @@ Detected settings:
   Detected scopes: api, cli, core, docs
 ```
 
-The check command also reports managed section status: up-to-date, outdated (run `savvy-commit init` to update), or not found.
+The managed section status is one of: `up-to-date`, `outdated` (run `savvy-commit init` to update), or `not found`.
 
 ## Using with npm scripts
 
@@ -96,18 +96,11 @@ Add to your `package.json`:
 
 ## Husky integration
 
-The `init` command creates a husky hook at `.husky/commit-msg` with:
-
-- Managed section markers for safe re-running
-- CI environment detection (skips managed section in GitHub Actions)
-- Automatic package manager detection (npm, pnpm, yarn, bun)
-- Absolute path resolution for reliable config location
-
-Custom hooks can be placed above or below the managed section markers. Re-running `savvy-commit init` updates only the managed block, preserving your customizations.
+`savvy-commit init` writes `.husky/commit-msg` with `BEGIN`/`END` markers around the managed section. Custom hooks placed above or below those markers survive re-runs. The managed section detects your package manager (npm, pnpm, yarn or bun), uses an absolute path for the config so the hook works from any working directory, and is skipped entirely in CI.
 
 ## Manual setup
 
-If you prefer manual setup over the CLI:
+To set up without the CLI:
 
 1. Create `commitlint.config.ts` (or `lib/configs/commitlint.config.ts`):
 
@@ -117,14 +110,14 @@ If you prefer manual setup over the CLI:
    export default CommitlintConfig.silk();
    ```
 
-2. Run the init command to generate the hook:
+2. Run `init` to generate the hook:
 
    ```bash
    npx savvy-commit init --config commitlint.config.ts
    # example output (varies by environment)
    ```
 
-3. Alternatively, create `.husky/commit-msg` manually and make it executable:
+3. Or create `.husky/commit-msg` by hand and make it executable:
 
    ```bash
    chmod +x .husky/commit-msg
