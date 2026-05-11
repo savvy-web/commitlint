@@ -3,10 +3,13 @@
 # invoke `savvy-commit`. Used by all bash hooks that need to call the CLI.
 set -euo pipefail
 
-ROOT="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+# Three-tier project root resolution: prefer CLAUDE_PROJECT_DIR (set by Claude
+# Code in every hook subprocess), fall back to the git toplevel (reliable for
+# standalone invocation), and finally pwd as a last resort.
+ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 PM="npm"
 
-if [ -f "$ROOT/package.json" ]; then
+if [ -f "$ROOT/package.json" ] && command -v jq >/dev/null 2>&1; then
   pm_field=$(jq -r '.packageManager // empty' "$ROOT/package.json" 2>/dev/null | cut -d'@' -f1 || true)
   if [ -n "$pm_field" ]; then PM="$pm_field"; fi
 fi

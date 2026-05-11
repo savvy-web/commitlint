@@ -6,7 +6,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh",
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start/main.sh\"",
 						"timeout": 10
 					}
 				]
@@ -18,16 +18,16 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use-bash.sh"
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use/bash.sh\""
 					}
 				]
 			},
 			{
-				"matcher": "mcp__gk__.*|mcp__github(-[^_]+)?__.*",
+				"matcher": "mcp__gk__.*|mcp__github(-[^_].*)?__.*",
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use-mcp.sh"
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use/mcp.sh\""
 					}
 				]
 			},
@@ -36,7 +36,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use-fs.sh"
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use/fs.sh\""
 					}
 				]
 			}
@@ -47,7 +47,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-use-bash.sh"
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-use/bash.sh\""
 					}
 				]
 			}
@@ -57,7 +57,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/user-prompt-submit.sh"
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/user-prompt-submit/main.sh\""
 					}
 				]
 			}

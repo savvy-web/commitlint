@@ -1,8 +1,8 @@
 #!/usr/bin/env bats
 
 setup() {
-  HOOK="$(cd "${BATS_TEST_DIRNAME}/.." && pwd)/pre-tool-use-mcp.sh"
-  CLAUDE_PLUGIN_ROOT="$(cd "${BATS_TEST_DIRNAME}/../.." && pwd)"
+  HOOK="$(cd "${BATS_TEST_DIRNAME}/../.." && pwd)/pre-tool-use/mcp.sh"
+  CLAUDE_PLUGIN_ROOT="$(cd "${BATS_TEST_DIRNAME}/../../.." && pwd)"
   export CLAUDE_PLUGIN_ROOT
 }
 
@@ -13,6 +13,11 @@ setup() {
 
 @test "allows mcp__github-acme__list_issues (scoped)" {
   out=$(echo '{"tool_name":"mcp__github-acme__list_issues"}' | bash "$HOOK")
+  echo "$out" | jq -e '.hookSpecificOutput.permissionDecision == "allow"'
+}
+
+@test "allows mcp__github-my_org__list_issues (scope with underscore)" {
+  out=$(echo '{"tool_name":"mcp__github-my_org__list_issues"}' | bash "$HOOK")
   echo "$out" | jq -e '.hookSpecificOutput.permissionDecision == "allow"'
 }
 

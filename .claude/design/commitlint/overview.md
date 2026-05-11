@@ -3,8 +3,8 @@ status: current
 module: commitlint
 category: architecture
 created: 2026-02-02
-updated: 2026-05-06
-last-synced: 2026-05-06
+updated: 2026-05-11
+last-synced: 2026-05-11
 completeness: 92
 related: []
 dependencies:
@@ -341,20 +341,27 @@ plugin/
     plugin.json                   # Plugin manifest (version auto-synced via versionFiles)
   hooks/
     hooks.json                    # Hook registration (SessionStart, PreToolUse x3, PostToolUse, UserPromptSubmit)
-    session-start.sh              # CLI shim → savvy-commit hook session-start
-    pre-tool-use-bash.sh          # Hot path: safe-bash auto-allow; cold path: pre-commit-message
-    pre-tool-use-mcp.sh           # Auto-allow curated GitHub / GitKraken MCP ops
-    pre-tool-use-fs.sh            # Auto-allow Read/Write/Edit under .claude/cache/
-    post-tool-use-bash.sh         # Cold path: post-commit-verify
-    user-prompt-submit.sh         # Trigger-regex shim → savvy-commit hook user-prompt-submit
+    session-start/
+      main.sh                     # CLI shim → savvy-commit hook session-start
+    pre-tool-use/
+      bash.sh                     # Hot path: safe-bash auto-allow; cold path: pre-commit-message
+      mcp.sh                      # Auto-allow curated GitHub / GitKraken MCP ops
+      fs.sh                       # Auto-allow Read/Write/Edit under .claude/cache/
+    post-tool-use/
+      bash.sh                     # Cold path: post-commit-verify
+    user-prompt-submit/
+      main.sh                     # Trigger-regex shim → savvy-commit hook user-prompt-submit
     lib/
+      hook-output.sh              # emit_noop / emit_allow / emit_deny / emit_context
+      hook-debug.sh               # hook_error / hook_debug (configurable log path)
       run-cli.sh                  # Detect package manager, emit `pnpm exec` / `npx --no --` / etc.
       is-commit-related.sh        # Heuristic: is this `git commit` or `gh pr create|edit`?
       match-safe-bash.sh          # Match command against safe-bash-patterns.txt (with hard exclusions)
       safe-bash-patterns.txt      # POSIX-ERE regex allow-list (Tier A read + Tier B workflow-essential)
       safe-mcp-github-ops.txt     # Allow-list of MCP github(-*) operation suffixes
       safe-mcp-gk-ops.txt         # Allow-list of MCP gk operation suffixes
-    __test__/                     # bats test harness
+    fixtures/                     # Shared bats envelope fixtures
+    __test__/                     # bats test harness (mirrors event subdirs)
 ```
 
 ### Package Exports
@@ -964,10 +971,10 @@ until 1.0.
 
 | Subcommand | Hook event | Reads stdin? | Emits on stdout |
 | :--------- | :--------- | :----------- | :-------------- |
-| `session-start` | `SessionStart` | No (drains then ignores) | `SessionStart` `additionalContext` envelope wrapped in `<EXTREMELY_IMPORTANT>` blocks. Commit conventions block includes the `tdd` type and its `{goalId}:{state}` scope format. Quality block enforces: no artificial line breaks, 2-5 line body max, skip routine doc/config noise, and a `<skip_in_body>` list of content categories to omit. |
+| `session-start` | `SessionStart` | No (drains then ignores) | Lightweight `SessionStart` `additionalContext` envelope: a TIER-1 `<EXTREMELY_IMPORTANT>` directive pointing to the `commitlint:commit-create` skill, plus branch context and signing diagnostic. The full commit-message charter now lives in `plugin/skills/commit-create/SKILL.md` (see "Skill-Based Charter" below). |
 | `pre-commit-message` | `PreToolUse(Bash)` | Yes (PreToolUse envelope) | `permissionDecision: deny` / `additionalContext` advise / silent |
 | `post-commit-verify` | `PostToolUse(Bash)` | Yes (PostToolUse envelope, mostly ignored) | `additionalContext` advise (or silent) |
-| `user-prompt-submit` | `UserPromptSubmit` | Yes (UserPromptSubmit envelope) | `additionalContext` reminder (or silent) |
+| `user-prompt-submit` | `UserPromptSubmit` | Yes (UserPromptSubmit envelope) | `additionalContext` reminder redirecting to the `commitlint:commit-create` skill (or silent) |
 
 Each subcommand provides the `HookSilencer` Layer (`package/src/hook/silence-logger.ts`)
 on top of the root `StderrLogger` so its handler can never print to stdout
@@ -1039,16 +1046,47 @@ delegates to the `savvy-commit hook` CLI subcommand tree.
 
 | Event | Matcher | Shim | Purpose |
 | :---- | :------ | :--- | :------ |
-| `SessionStart` | `startup` | `session-start.sh` | Inject commit conventions, quality charter, branch context, signing diagnostic |
-| `PreToolUse` | `Bash` | `pre-tool-use-bash.sh` | Auto-allow safe Bash; validate commit messages |
-| `PreToolUse` | `mcp__gk__.*\|mcp__github(-[^_]+)?__.*` | `pre-tool-use-mcp.sh` | Auto-allow curated GitHub / GitKraken MCP ops |
-| `PreToolUse` | `Read\|Write\|Edit` | `pre-tool-use-fs.sh` | Auto-allow Read/Write/Edit under `.claude/cache/` |
-| `PostToolUse` | `Bash` | `post-tool-use-bash.sh` | Replay commitlint, verify signature, check Closes trailer |
-| `UserPromptSubmit` | (any) | `user-prompt-submit.sh` | Inject commit-quality reminder when prompt mentions commits |
+| `SessionStart` | `startup` | `session-start/main.sh` | Inject TIER-1 skill directive + branch context + signing diagnostic (full charter deferred to `commitlint:commit-create` skill) |
+| `PreToolUse` | `Bash` | `pre-tool-use/bash.sh` | Auto-allow safe Bash; validate commit messages |
+| `PreToolUse` | `mcp__gk__.*\|mcp__github(-[^_].*)?__.*` | `pre-tool-use/mcp.sh` | Auto-allow curated GitHub / GitKraken MCP ops |
+| `PreToolUse` | `Read\|Write\|Edit` | `pre-tool-use/fs.sh` | Auto-allow Read/Write/Edit under `.claude/cache/` |
+| `PostToolUse` | `Bash` | `post-tool-use/bash.sh` | Replay commitlint, verify signature, check Closes trailer |
+| `UserPromptSubmit` | (any) | `user-prompt-submit/main.sh` | Inject commit-quality reminder when prompt mentions commits |
+
+### Skill-Based Charter
+
+The full commit-message charter (type enum, tdd scope grammar, subject rules,
+body rules, DCO signoff, Closes trailers, signing posture, examples, and
+pre-commit checklist) lives in `plugin/skills/commit-create/SKILL.md` under
+the `commitlint:commit-create` skill name.
+
+**Why deferred to a skill.** Injecting the full charter at `SessionStart`
+consumed significant context budget early — most of which was forgotten by
+the time the agent composed a commit hours later. Moving it to a skill
+means Claude loads the charter at the moment of need (description-triggered
+auto-load on commit intent), not once at session open.
+
+**SessionStart now emits a slim TIER-1 directive.** The new `session-start`
+output is approximately 12–15 lines: an `<EXTREMELY_IMPORTANT>` block
+directing the agent to invoke `commitlint:commit-create` before any commit,
+followed by the branch context block and signing diagnostic block unchanged.
+The commit conventions and quality charter blocks are removed from the
+`session-start.ts` subcommand.
+
+**UserPromptSubmit reminder.** When the trigger regex fires, the
+`user-prompt-submit` subcommand now emits a one-line redirect to the
+`commitlint:commit-create` skill rather than the inline reminder block.
+
+**Discoverability.** Claude Code auto-discovers `plugin/skills/<name>/SKILL.md`
+files; no manifest update is required. The `description` and `when_to_use`
+fields in the skill frontmatter carry enough trigger phrases to fire on commit
+intent reliably. The skill is `user-invocable: false` (background-only; it is
+not a command for users to invoke directly) so its description stays in
+context for Claude's auto-load matching.
 
 ### Two-Tier Bash Hook (Hot Path / Cold Path)
 
-`pre-tool-use-bash.sh` uses a two-tier strategy to keep latency low while
+`pre-tool-use/bash.sh` uses a two-tier strategy to keep latency low while
 still gating commit-related commands:
 
 1. **Hot path (auto-allow)** — `lib/match-safe-bash.sh` runs the command
@@ -1079,21 +1117,21 @@ invocation.
 
 ### MCP and Filesystem Auto-Allow
 
-`pre-tool-use-mcp.sh` handles three MCP server name shapes:
+`pre-tool-use/mcp.sh` handles three MCP server name shapes:
 `mcp__gk__<op>` (GitKraken), `mcp__github__<op>` (default GitHub MCP), and
 `mcp__github-<scope>__<op>` (scoped GitHub MCP, e.g.,
 `mcp__github-savvy-web__`). It strips the prefix to recover the operation
 name and matches it against the appropriate `safe-mcp-{github,gk}-ops.txt`
 file. Comments and blank lines are skipped; matching is exact-line.
 
-`pre-tool-use-fs.sh` resolves `tool_input.file_path` against
+`pre-tool-use/fs.sh` resolves `tool_input.file_path` against
 `CLAUDE_PROJECT_DIR` (when relative) and auto-allows any path under
 `<project>/.claude/cache/`. The cache directory is also where the open-issues
 cache and any future plugin caches live.
 
 ### PostToolUse and UserPromptSubmit
 
-`post-tool-use-bash.sh` short-circuits unless the just-executed command is
+`post-tool-use/bash.sh` short-circuits unless the just-executed command is
 commit-related and the response was not interrupted. It then forwards the
 envelope to `savvy-commit hook post-commit-verify`, which:
 
@@ -1116,7 +1154,7 @@ This keeps the verifier's replay consistent with whatever the husky
 `commit-msg` hook would actually run, and portable across consumer projects
 that use a non-pnpm package manager.
 
-`user-prompt-submit.sh` runs a regex pre-filter
+`user-prompt-submit/main.sh` runs a regex pre-filter
 (`commit | committing | ship it | wrap up | create/open a pr | finalize | squash | amend`)
 to skip the CLI for prompts that don't mention commits at all. When the
 trigger matches, it forwards to `savvy-commit hook user-prompt-submit`,

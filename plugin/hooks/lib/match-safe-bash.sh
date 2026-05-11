@@ -1,14 +1,26 @@
 #!/usr/bin/env bash
 # Exit 0 if the command matches a pattern in safe-bash-patterns.txt; 1 otherwise.
-# Excludes always-dangerous commands first (rm, curl, force push, install, npx).
+# Hard exclusions deny always-dangerous commands AND any compound script that
+# contains a commit operation — the cold path validates those.
 set -euo pipefail
 
 CMD="${1:-}"
 [ -z "$CMD" ] && exit 1
 
+# Hard exclusion: any command that contains a commit operation, even buried
+# inside a compound script (`git status && git commit -m '...'`, multi-line
+# scripts, `cmd1 ; git commit`, etc.). These must always route to the cold
+# path in pre-tool-use/bash.sh for commit-message validation.
+if echo "$CMD" | grep -qE '(^|[[:space:];|&]|env([[:space:]]+[A-Z_][A-Z0-9_]*=[^[:space:]]+)*[[:space:]]+)(git[[:space:]]+commit|gh[[:space:]]+pr[[:space:]]+(create|edit))(\b|$)'; then
+	exit 1
+fi
+
 # Hard exclusions — always require user approval.
 if echo "$CMD" | grep -qE '^[[:space:]]*(rm|mv|cp|chmod|chown|curl|wget)(\b|$)'; then exit 1; fi
 if echo "$CMD" | grep -qE 'git[[:space:]]+push[[:space:]]+(.*)(--force|-f)'; then exit 1; fi
+# Deny `git push --delete <ref>` (silently removes a remote branch/tag) and
+# `git push --tags` (publishes every local tag, including force-tag overrides).
+if echo "$CMD" | grep -qE 'git[[:space:]]+push\b.*[[:space:]](--delete|-d|--tags|--mirror)\b'; then exit 1; fi
 if echo "$CMD" | grep -qE 'git[[:space:]]+reset[[:space:]]+--hard\b'; then exit 1; fi
 if echo "$CMD" | grep -qE '^[[:space:]]*pnpm[[:space:]]+(install|add|remove|update|dlx)(\b|$)'; then exit 1; fi
 if echo "$CMD" | grep -qE '^[[:space:]]*(npm|yarn|bun)[[:space:]]+(install|add|remove|update)(\b|$)'; then exit 1; fi
@@ -32,7 +44,8 @@ if echo "$CMD" | grep -qE '(^|[[:space:]])[0-9]*>>?[[:space:]]*[^[:space:]]*/\.\
 
 PATTERNS="${BASH_SOURCE%/*}/safe-bash-patterns.txt"
 # grep -E reads patterns from a file; -f tells it to use that file. Skip comments + blanks.
-grep -vE '^[[:space:]]*(#|$)' "$PATTERNS" > /tmp/savvy-bash-patterns.$$ 2>/dev/null
-trap 'rm -f /tmp/savvy-bash-patterns.$$' EXIT
-if echo "$CMD" | grep -qE -f /tmp/savvy-bash-patterns.$$; then exit 0; fi
+_tmp=$(mktemp -t savvy-bash-patterns.XXXXXX)
+trap 'rm -f "$_tmp"' EXIT
+grep -vE '^[[:space:]]*(#|$)' "$PATTERNS" > "$_tmp" 2>/dev/null
+if echo "$CMD" | grep -qE -f "$_tmp"; then exit 0; fi
 exit 1
