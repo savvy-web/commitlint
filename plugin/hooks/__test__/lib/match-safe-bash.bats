@@ -45,3 +45,22 @@ setup() {
 @test "does NOT match fd redirect to home dir" { run bash "$HOOK" "printf '%s' x 2>~/log"; [ "$status" -eq 1 ]; }
 @test "does NOT match tee ./../ traversal" { run bash "$HOOK" 'tee ./../etc/passwd'; [ "$status" -eq 1 ]; }
 @test "does NOT match redirect ./../ traversal" { run bash "$HOOK" "printf '%s' x > ./../etc/shadow"; [ "$status" -eq 1 ]; }
+
+# Compound-command bypass guards (C1)
+@test "does NOT match compound: git status && git commit" { run bash "$HOOK" "git status && git commit -m 'feat: bypass'"; [ "$status" -eq 1 ]; }
+@test "does NOT match compound: ls && git commit" { run bash "$HOOK" "ls && git commit -m bypass"; [ "$status" -eq 1 ]; }
+@test "does NOT match compound: cmd ; git commit" { run bash "$HOOK" "git log --oneline ; git commit -m bypass"; [ "$status" -eq 1 ]; }
+@test "does NOT match compound: cmd | git commit" { run bash "$HOOK" "cat junk | git commit -m bypass"; [ "$status" -eq 1 ]; }
+@test "does NOT match newline-separated git commit" {
+	run bash "$HOOK" "$(printf 'git status\ngit commit -m bypass')"
+	[ "$status" -eq 1 ]
+}
+@test "does NOT match compound: cmd && gh pr create" { run bash "$HOOK" "git status && gh pr create --title T"; [ "$status" -eq 1 ]; }
+@test "does NOT match compound: cmd && gh pr edit" { run bash "$HOOK" "git status && gh pr edit 5 --body B"; [ "$status" -eq 1 ]; }
+
+# Restricted push variants (M3)
+@test "does NOT match git push --delete" { run bash "$HOOK" 'git push origin --delete feature-branch'; [ "$status" -eq 1 ]; }
+@test "does NOT match git push -d (short)" { run bash "$HOOK" 'git push -d origin feature-branch'; [ "$status" -eq 1 ]; }
+@test "does NOT match git push --tags" { run bash "$HOOK" 'git push --tags'; [ "$status" -eq 1 ]; }
+@test "does NOT match git push --mirror" { run bash "$HOOK" 'git push --mirror'; [ "$status" -eq 1 ]; }
+@test "matches plain git push origin main" { run bash "$HOOK" 'git push origin main'; [ "$status" -eq 0 ]; }

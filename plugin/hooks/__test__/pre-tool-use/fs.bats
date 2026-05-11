@@ -1,8 +1,8 @@
 #!/usr/bin/env bats
 
 setup() {
-  HOOK="$(cd "${BATS_TEST_DIRNAME}/.." && pwd)/pre-tool-use-fs.sh"
-  CLAUDE_PLUGIN_ROOT="$(cd "${BATS_TEST_DIRNAME}/../.." && pwd)"
+  HOOK="$(cd "${BATS_TEST_DIRNAME}/../.." && pwd)/pre-tool-use/fs.sh"
+  CLAUDE_PLUGIN_ROOT="$(cd "${BATS_TEST_DIRNAME}/../../.." && pwd)"
   export CLAUDE_PLUGIN_ROOT
   CLAUDE_PROJECT_DIR="${BATS_TMPDIR}/proj"
   mkdir -p "$CLAUDE_PROJECT_DIR/.claude/cache"

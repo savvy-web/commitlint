@@ -121,14 +121,28 @@ bats plugin/hooks/__test__/match-safe-bash.bats
 
 ### Plugin Layout
 
-`plugin/hooks/` contains thin bash shims registered in `hooks.json`:
-`session-start.sh`, `pre-tool-use-{bash,mcp,fs}.sh`,
-`post-tool-use-bash.sh`, `user-prompt-submit.sh`. Helpers under
-`plugin/hooks/lib/` (`run-cli.sh`, `is-commit-related.sh`,
-`match-safe-bash.sh`, plus `safe-bash-patterns.txt` / `safe-mcp-*.txt`
-allow-lists) keep the hot path (auto-allow safe commands) cheap and
-delegate the cold path to `savvy-commit hook` over JSON on stdio. Hooks are
-invoked as `bash <script>` from `hooks.json`; **do not chmod +x them**.
+`plugin/hooks/` follows the canonical subdirectory-per-event layout. Each
+event has its own folder with one shim per matcher: `session-start/main.sh`,
+`pre-tool-use/{bash,mcp,fs}.sh`, `post-tool-use/bash.sh`,
+`user-prompt-submit/main.sh`. Tests mirror this layout under
+`plugin/hooks/__test__/<event>/`.
+
+Helpers under `plugin/hooks/lib/`:
+
+- `hook-output.sh` — `emit_noop` / `emit_allow` / `emit_deny` / `emit_context`.
+- `hook-debug.sh` — `hook_error` / `hook_debug`, configurable via
+  `COMMITLINT_HOOK_ERROR_LOG` / `COMMITLINT_HOOK_DEBUG_LOG` /
+  `COMMITLINT_HOOK_DEBUG`. Default log dir is `$XDG_STATE_HOME/commitlint/`.
+- `match-safe-bash.sh` — hard exclusions (including any compound script that
+  contains `git commit` or `gh pr create|edit`) plus the auto-allow
+  patterns in `safe-bash-patterns.txt`.
+- `is-commit-related.sh` — cold-path classifier for commit-adjacent commands.
+- `run-cli.sh` — emits the package-manager runner prefix.
+- `safe-mcp-*.txt` — allow-lists for MCP operation suffixes.
+
+The hot path (allow-list match) is cheap pure bash; the cold path delegates
+to `savvy-commit hook` over JSON on stdio. Hooks are invoked as
+`bash <script>` from `hooks.json`; **do not chmod +x them**.
 
 ### Stdout Contract
 
@@ -169,12 +183,13 @@ Turbo: `typecheck` depends on `build` completing first.
 - **TS framework**: Vitest with v8 coverage; pool uses **forks** (not
   threads) for Effect-TS compatibility. `vitest.config.ts` supports
   project-based filtering via `--project`.
-- **Shell framework**: **bats-core** harness at `plugin/hooks/__test__/`.
-  `lib/` helpers have dedicated specs (`is-commit-related.bats`,
-  `match-safe-bash.bats`, `run-cli.bats`); the `pre-tool-use-{bash,mcp,fs}`
-  shims have integration specs that fixture envelope JSON and assert the
-  emitted `permissionDecision` envelope. Specs invoke hooks the same way
-  `hooks.json` does (`bash <script>`).
+- **Shell framework**: **bats-core** harness at `plugin/hooks/__test__/`,
+  mirroring the subdirectory-per-event layout
+  (`__test__/<event>/<scope>.bats`). `lib/` helpers have dedicated specs
+  under `__test__/lib/` (`is-commit-related.bats`, `match-safe-bash.bats`,
+  `run-cli.bats`). Specs invoke hooks the same way `hooks.json` does
+  (`bash <script>`), feeding fixture envelope JSON on stdin and asserting
+  the emitted `permissionDecision` envelope.
 
 ## Conventions
 

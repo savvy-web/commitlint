@@ -17,14 +17,9 @@ export function reminderForPrompt(prompt: string): string | null {
 	if (!TRIGGER.test(prompt)) return null;
 	return [
 		"<commit_reminder>",
-		"When you write the commit message:",
-		"- Subject: type(scope): imperative summary, no period.",
-		"- Body (only if needed): WHAT and WHY using ONLY facts from the diff. No vague qualifiers.",
-		"- One bullet = one line (the 300-char limit makes soft-wraps unnecessary).",
-		"- Do NOT reference .claude/plans, .claude/design, or any plan-file path.",
-		"- Do NOT include planning narrative ('as decided in the plan', 'previously documented').",
-		"- If a tracked issue is closed, add `Closes #N` above Signed-off-by.",
-		"- DCO sign-off is required.",
+		"Before composing this commit message, invoke the commitlint:commit-create skill.",
+		"It defines the complete type enum, scope rules, DCO signoff format, and body",
+		"constraints enforced by @savvy-web/commitlint.",
 		"</commit_reminder>",
 	].join("\n");
 }
