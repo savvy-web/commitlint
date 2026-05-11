@@ -19,14 +19,14 @@ get_tag
 list_tags
 get_repository_tree
 # === Write ===
+add_issue_comment
+add_reply_to_pull_request_comment
+update_pull_request
+update_pull_request_branch
 # NOTE: `create_pull_request` is auto-allowed without commit-message validation.
 # The plugin validates `git commit` messages (and `gh pr create|edit` titles via
 # the Bash cold path); MCP-driven PR creation is treated as a coarse-grained
 # operation rather than a commit event. If you need PR-title validation via MCP,
 # remove this entry and add a cold-path handler.
-add_issue_comment
-add_reply_to_pull_request_comment
-update_pull_request
-update_pull_request_branch
 create_pull_request
 create_branch

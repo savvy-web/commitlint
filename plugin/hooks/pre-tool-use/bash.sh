@@ -25,8 +25,9 @@ if bash "${CLAUDE_PLUGIN_ROOT}/hooks/lib/match-safe-bash.sh" "$COMMAND"; then
 fi
 
 # Cold path — pre-commit-message check via CLI. stdout of the CLI flows
-# directly through to the host (the JSON envelope is the decision signal);
-# the `|| true` keeps the hook exit 0 (fail-open) if the CLI crashes.
+# directly through to the host (the JSON envelope is the decision signal).
+# CLI failures are logged via hook_error and the script falls through to
+# exit 0, so a broken CLI never blocks the agent (fail-open).
 if bash "${CLAUDE_PLUGIN_ROOT}/hooks/lib/is-commit-related.sh" "$COMMAND"; then
   RUN=$(bash "${CLAUDE_PLUGIN_ROOT}/hooks/lib/run-cli.sh")
   err=$(mktemp -t commitlint-pre-bash.XXXXXX)
