@@ -61,9 +61,9 @@
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
-		"@commitlint/cli": "^20.5.3",
-		"@commitlint/config-conventional": "^20.5.3",
-		"@commitlint/lint": "^20.5.3",
+		"@commitlint/cli": "^21.0.1",
+		"@commitlint/config-conventional": "^21.0.1",
+		"@commitlint/lint": "^21.0.1",
 		"@commitlint/types": "^20.5.0",
 		"@savvy-web/rslib-builder": "^0.20.3",
 		"@types/node": "catalog:silk",
@@ -74,8 +74,8 @@
 		"typescript": "catalog:silk"
 	},
 	"peerDependencies": {
-		"@commitlint/cli": "^20.5.3",
-		"@commitlint/config-conventional": "^20.5.3",
+		"@commitlint/cli": "^21.0.1",
+		"@commitlint/config-conventional": "^21.0.1",
 		"commitizen": "^4.3.0",
 		"husky": "^9.1.0"
 	},
