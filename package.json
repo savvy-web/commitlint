@@ -38,9 +38,9 @@
 		"types:check": "tsgo --noEmit"
 	},
 	"devDependencies": {
-		"@savvy-web/changesets": "^0.9.0",
+		"@savvy-web/changesets": "^0.10.0",
 		"@savvy-web/commitlint": "workspace:*",
-		"@savvy-web/lint-staged": "^1.0.0",
+		"@savvy-web/lint-staged": "^1.0.1",
 		"@savvy-web/vitest": "^1.3.2",
 		"bats": "^1.13.0"
 	},
