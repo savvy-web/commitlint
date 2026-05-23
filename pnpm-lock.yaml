@@ -34,8 +34,8 @@ catalogs:
       specifier: ^25.9.1
       version: 25.9.1
     '@typescript/native-preview':
-      specifier: ^7.0.0-dev.20260519.1
-      version: 7.0.0-dev.20260519.1
+      specifier: ^7.0.0-dev.20260523.1
+      version: 7.0.0-dev.20260523.1
     effect:
       specifier: ^3.21.2
       version: 3.21.2
@@ -51,7 +51,7 @@ overrides:
   smol-toml: '>=1.6.1'
   tmp: ^0.2.4
 
-pnpmfileChecksum: sha256-qvdCCa72IufQV7GlA20Wd6Leo7yHiU/ZQZciNTWkhM4=
+pnpmfileChecksum: sha256-j7znAYbhzZYspyktgYO/HLTxIJEXL9UtQHx5IyS1XF0=
 
 importers:
 
@@ -64,11 +64,11 @@ importers:
         specifier: workspace:*
         version: link:package/dist/dev
       '@savvy-web/lint-staged':
-        specifier: ^1.0.1
-        version: 1.0.1(5a45a9e7f1a4876767d519e9479fc5c1)
+        specifier: ^1.1.0
+        version: 1.1.0(d90a950003159c8b7d8634d9c710b136)
       '@savvy-web/vitest':
         specifier: ^1.3.2
-        version: 1.3.2(fc48a4d1c0ba91c773d33f8a6c43709e)
+        version: 1.3.2(81a4e565d07777a602dcb6cd96bf9c5c)
       bats:
         specifier: ^1.13.0
         version: 1.13.0
@@ -100,8 +100,8 @@ importers:
         specifier: catalog:silk
         version: 0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2)
       '@savvy-web/silk-effects':
-        specifier: ^0.3.0
-        version: 0.3.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2)
+        specifier: ^0.4.1
+        version: 0.4.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2)
       effect:
         specifier: catalog:silk
         version: 3.21.2
@@ -128,8 +128,8 @@ importers:
         specifier: ^20.5.0
         version: 20.5.0
       '@savvy-web/rslib-builder':
-        specifier: ^0.20.4
-        version: 0.20.4(@pnpm/logger@1001.0.1)(@rslib/core@0.21.3(@microsoft/api-extractor@7.58.7(@types/node@25.9.1))(@typescript/native-preview@7.0.0-dev.20260519.1)(typescript@6.0.3))(@types/node@25.9.1)(@typescript/native-preview@7.0.0-dev.20260519.1)(jiti@2.6.1)(typescript@6.0.3)
+        specifier: ^0.20.6
+        version: 0.20.6(@pnpm/logger@1001.0.1)(@rslib/core@0.21.3(@microsoft/api-extractor@7.58.7(@types/node@25.9.1))(@typescript/native-preview@7.0.0-dev.20260523.1)(typescript@6.0.3))(@types/node@25.9.1)(@typescript/native-preview@7.0.0-dev.20260523.1)(jiti@2.6.1)(typescript@6.0.3)
       '@types/node':
         specifier: catalog:silk
         version: 25.9.1
@@ -138,7 +138,7 @@ importers:
         version: 1.7.5
       '@typescript/native-preview':
         specifier: catalog:silk
-        version: 7.0.0-dev.20260519.1
+        version: 7.0.0-dev.20260523.1
       commitizen:
         specifier: ^4.3.1
         version: 4.3.1(@types/node@25.9.1)(typescript@6.0.3)
@@ -1010,16 +1010,6 @@ packages:
   '@rolldown/pluginutils@1.0.0-rc.17':
     resolution: {integrity: sha512-n8iosDOt6Ig1UhJ2AYqoIhHWh/isz0xpicHTzpKBeotdVsTEcxsSA/i3EVM7gQAj0rU27OLAxCjzlj15IWY7bg==}
 
-  '@rsbuild/core@2.0.3':
-    resolution: {integrity: sha512-2myp7jUgGen50saxW8OJD/eMVKp7HnuBN5MUzwRb6mDbRZZVpoorfI4LQqiGSBNjGLB6jltvx/R2yHmcmnchwg==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-    hasBin: true
-    peerDependencies:
-      core-js: '>= 3.0.0'
-    peerDependenciesMeta:
-      core-js:
-        optional: true
-
   '@rsbuild/core@2.0.7':
     resolution: {integrity: sha512-LsBONEzsjzOAqO72ot39eI7g53zSfF9QuDXTu4ks8IUX+EZsxRSniQfc+1zVA6a6y3b9KUUtG96avoMLKbWklQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -1043,19 +1033,9 @@ packages:
       typescript:
         optional: true
 
-  '@rspack/binding-darwin-arm64@2.0.1':
-    resolution: {integrity: sha512-CGFO5zmajD1Itch1lxAI7+gvKiagzyqXopHv/jHG9Su2WWQ2/Nhn2/rkSpdp6ptE9ri6+6tCOOahf099/v/Xog==}
-    cpu: [arm64]
-    os: [darwin]
-
   '@rspack/binding-darwin-arm64@2.0.4':
     resolution: {integrity: sha512-0Q1QXFEsZfDc4opiDnb8q50KlBbC2VovViDaYlMJZBzvjAo325mh3itXPfz7YZ31M+TxRE7TUiJXH3ltiV1Hdg==}
     cpu: [arm64]
-    os: [darwin]
-
-  '@rspack/binding-darwin-x64@2.0.1':
-    resolution: {integrity: sha512-2vvBNBoS09/PurupBwSrlTZd8283o00B8v20ncsNUdEff41uCR/hzIrYoTIVWnVST+Gt5O1+cfcfORp397lajg==}
-    cpu: [x64]
     os: [darwin]
 
   '@rspack/binding-darwin-x64@2.0.4':
@@ -1063,23 +1043,11 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@rspack/binding-linux-arm64-gnu@2.0.1':
-    resolution: {integrity: sha512-uvNXk6ahE3AH3h2avnd1Mgno68YQpS4cfX1OkOGWIC/roL+NrOP2XVXV4yfVAoydPALDO7AfbIfN0QdmBK3rsA==}
-    cpu: [arm64]
-    os: [linux]
-    libc: [glibc]
-
   '@rspack/binding-linux-arm64-gnu@2.0.4':
     resolution: {integrity: sha512-BEk6mIYBK4BihW9qXXITJORrVXecTlkRjrqhgefili4xjXtLdcUnxAm9sN/2oJ8m378n2h33qDh4gr2orPBFWQ==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
-
-  '@rspack/binding-linux-arm64-musl@2.0.1':
-    resolution: {integrity: sha512-S/a6uN9PiZ5O/PjSqyIXhuRC1lVzeJkJV69NeLk5sIEUiDQ/aQGZG97uN+tluwpbo1tPbLJkdHYETfjspOX4Pg==}
-    cpu: [arm64]
-    os: [linux]
-    libc: [musl]
 
   '@rspack/binding-linux-arm64-musl@2.0.4':
     resolution: {integrity: sha512-Hyt3z1RwNcSMIoaoWLN4Hb/696/O5JPukf8rXQASvf2UkC+X3ij7tr+8lMSYi3Zysi1QL375CnT4fNoABEW0JA==}
@@ -1087,23 +1055,11 @@ packages:
     os: [linux]
     libc: [musl]
 
-  '@rspack/binding-linux-x64-gnu@2.0.1':
-    resolution: {integrity: sha512-C13Kk0OkZiocZVj187Sf753UH6pDXnuEu6vzUvi3qv9ltibG1ki0H2Y8isXBYL2cHQOV+hk0g1S6/4z3TTB97A==}
-    cpu: [x64]
-    os: [linux]
-    libc: [glibc]
-
   '@rspack/binding-linux-x64-gnu@2.0.4':
     resolution: {integrity: sha512-xHorBPBZAg0Pn9Q0k9dWZ9euowieDxcSOzQ9JhTCmhDY6wZH5M/kCBFlCs/OQeW5/NUArW3x3MwEdO/0QJHMxg==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
-
-  '@rspack/binding-linux-x64-musl@2.0.1':
-    resolution: {integrity: sha512-TQsiBFpEDGkuvK9tNdGj/Uc+AIytzqhxXH/1jKU6M24cWB1DTw/Cx7DdrkCBDyq3129K3POLdujvbWCGqBzQUw==}
-    cpu: [x64]
-    os: [linux]
-    libc: [musl]
 
   '@rspack/binding-linux-x64-musl@2.0.4':
     resolution: {integrity: sha512-QLxEGUXofF0kVNU12Y2NT3Qi9lGs+WbnYpapVeb+2IXtrAXJfU7Rhy7lAp5GLMzYMQNrKKL9SVnTWKbODbNW9Q==}
@@ -1111,27 +1067,13 @@ packages:
     os: [linux]
     libc: [musl]
 
-  '@rspack/binding-wasm32-wasi@2.0.1':
-    resolution: {integrity: sha512-wk3gyUgBW/ayP49bI54bkY8+EQnfBHxdoe9dz3oobSTZQc8AOWwmUUDEPltW8rUvPOM6dfHECTOUMnfaf2f5yA==}
-    cpu: [wasm32]
-
   '@rspack/binding-wasm32-wasi@2.0.4':
     resolution: {integrity: sha512-YhN8HkiH46ONU9tm5dyoXDImDWGpU7E4SPqGI4OyAVF0445uIChurIUmTIOYcD6cg81GGeIjozWJOcb635Dcqw==}
     cpu: [wasm32]
 
-  '@rspack/binding-win32-arm64-msvc@2.0.1':
-    resolution: {integrity: sha512-rHjLcy3VcAC3+x+PxH+gwhwv6tPe0JdXTNT5eAOs9wgZIM6T9p4wre49+K4Qy98+Fb7TTbLX0ObUitlOkGwTSA==}
-    cpu: [arm64]
-    os: [win32]
-
   '@rspack/binding-win32-arm64-msvc@2.0.4':
     resolution: {integrity: sha512-MUlYIz82xQRN0aoiXXyEBrNVUwiOSSFRi7nuCgUKduaSdlbPWzCY31IdtOygZ06LVp5JIGUEtyqSrjQq4FrMRw==}
     cpu: [arm64]
-    os: [win32]
-
-  '@rspack/binding-win32-ia32-msvc@2.0.1':
-    resolution: {integrity: sha512-Ad1vVqMBBnd4T8rsORngu9sl2kyRTlS4kMlvFudjzl1X2UFArEDBe0YVGNN7ZvahM12CErUx2WiN8Sd8pb+qXQ==}
-    cpu: [ia32]
     os: [win32]
 
   '@rspack/binding-win32-ia32-msvc@2.0.4':
@@ -1139,33 +1081,13 @@ packages:
     cpu: [ia32]
     os: [win32]
 
-  '@rspack/binding-win32-x64-msvc@2.0.1':
-    resolution: {integrity: sha512-oPM2Jtm7HOlmxl/aBfleAVlL6t9VeHx6WvEets7BBJMInemFXAQd4CErRqybf7rXutACzLeUWBOue4Jpd1/ykw==}
-    cpu: [x64]
-    os: [win32]
-
   '@rspack/binding-win32-x64-msvc@2.0.4':
     resolution: {integrity: sha512-MnYKPfdrAEbtpKg/1SZ6cNtzreIRyQJK4APbxLLPXENdTH5QXQkaTjLMKEeJcJ51FRhI/+yNpOUm2oTHdCQ1Og==}
     cpu: [x64]
     os: [win32]
 
-  '@rspack/binding@2.0.1':
-    resolution: {integrity: sha512-ynV1gw4KqFtQ0P+ZZh76SUj49wBb2FuHW3zSmHverHWuxBhzvrZS6/dZ+fCFQG8bTTPtrPz0RQUTN3uEDbPVBQ==}
-
   '@rspack/binding@2.0.4':
     resolution: {integrity: sha512-/QeJDPUw/lWkBJESG264KA9u6/rAjvoJhKncU4rkTi5Ap45kue5HTgOzr0ufxKdd2Xl72fjFBuqlKmtFDD5LiQ==}
-
-  '@rspack/core@2.0.1':
-    resolution: {integrity: sha512-lgfZiExh8kDR/3obgi3RQKwKG5av1Xf5qDN1aVde777W9pbmx0Pqvrww1qtNvJ+gobEjbrrn5HEZWYGe0VLmcA==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-    peerDependencies:
-      '@module-federation/runtime-tools': ^0.24.1 || ^2.0.0
-      '@swc/helpers': '>=0.5.1'
-    peerDependenciesMeta:
-      '@module-federation/runtime-tools':
-        optional: true
-      '@swc/helpers':
-        optional: true
 
   '@rspack/core@2.0.4':
     resolution: {integrity: sha512-OuxdQeeKWQpNvFBRDOcnoSaQvp6E4APM/6JJMM/k0p6oL1TEFQVGdNu3VGY4mRAsebnNBXapMVMhj+v66Bn2pg==}
@@ -1216,26 +1138,26 @@ packages:
     peerDependencies:
       '@changesets/cli': ^2.31.0
 
-  '@savvy-web/lint-staged@1.0.1':
-    resolution: {integrity: sha512-JELWQGKusQcgIMYg7izh6oFr/4tGbFZjHRgMIA4MRJCUTphxsmX/9tlLB1zOxSatxHaQqu4Cir7MEYzuRHkOfQ==}
+  '@savvy-web/lint-staged@1.1.0':
+    resolution: {integrity: sha512-Mgzd1refMWa6i2p7HhJf4ZXLhfDz6pfRQfDzK8hGKenvP8KegMkrEK5l9Pb70/vYc3I/My/Mwm+xlvWCMkTQlg==}
     engines: {node: '>=24.0.0'}
     hasBin: true
     peerDependencies:
       '@biomejs/biome': 2.4.15
       '@types/node': ^25.6.0
       '@typescript/native-preview': ^7.0.0-dev.20260513.1
-      husky: ^9.1.0
-      lint-staged: ^16.4.0
-      markdownlint-cli2: ^0.22.0
+      husky: ^9.1.7
+      lint-staged: ^17.0.5
+      markdownlint-cli2: ^0.22.1
       markdownlint-cli2-formatter-codequality: ^0.0.7
-      turbo: ^2.9.0
+      turbo: ^2.9.14
       typescript: ^6.0.0
     peerDependenciesMeta:
       '@biomejs/biome':
         optional: true
 
-  '@savvy-web/rslib-builder@0.20.4':
-    resolution: {integrity: sha512-6SreJCG2lYyfzfYctbRyJLSvtdEhvlcAvLsb1GVD6whQOfEbfJwZEs9VC1QPLCzBHbvjweYjYqp3xJ18gPUk8A==}
+  '@savvy-web/rslib-builder@0.20.6':
+    resolution: {integrity: sha512-TfsRzraDRp6zk75Vlf7DXPMTOIG3ZszQWULq/cqi31xvzNK4CZtUnzKIIc4QtYMt/f1AM9O1iIW53LZRSetUYg==}
     peerDependencies:
       '@rsbuild/plugin-react': ^2.0.0
       '@rslib/core': ^0.21.0
@@ -1260,6 +1182,12 @@ packages:
 
   '@savvy-web/silk-effects@0.3.0':
     resolution: {integrity: sha512-2F7+MlexUaEN+NbLBGNTGCscJ2nww90y+rq4MwSXN4rGGE/j58oA5Tcbnm1A3koaUBpQ50jVG9aITXxqmoC2nQ==}
+    peerDependencies:
+      '@effect/platform': '>=0.96.0'
+      effect: '>=3.21.0'
+
+  '@savvy-web/silk-effects@0.4.1':
+    resolution: {integrity: sha512-WK6F4AzkH+oby4FRtGK9Kr26Ef+aSSrBK5ZQ3az5DhQYxl2QDrGNV8oWHJYftvufq078asMU9gu08/3HuiqgqQ==}
     peerDependencies:
       '@effect/platform': '>=0.96.0'
       effect: '>=3.21.0'
@@ -1418,12 +1346,6 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4 <6.0.0'
 
-  '@typescript-eslint/tsconfig-utils@8.59.1':
-    resolution: {integrity: sha512-/0nEyPbX7gRsk0Uwfe4ALwwgxuA66d/l2mhRDNlAvaj4U3juhUtJNq0DsY8M2AYwwb9rEq2hrC3IcIcEt++iJA==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-    peerDependencies:
-      typescript: '>=4.8.4 <6.1.0'
-
   '@typescript-eslint/tsconfig-utils@8.59.4':
     resolution: {integrity: sha512-DLCpnKgD4alVxTBSKulK+gU1KCqOgUXfDRDXh2mZgzokQKa/70ax93I2uVO3m/LLvIAtWZIFoiifudmIqAxpMA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -1432,10 +1354,6 @@ packages:
 
   '@typescript-eslint/types@8.56.1':
     resolution: {integrity: sha512-dbMkdIUkIkchgGDIv7KLUpa0Mda4IYjo4IAMJUZ+3xNoUXxMsk9YtKpTHSChRS85o+H9ftm51gsK1dZReY9CVw==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-
-  '@typescript-eslint/types@8.59.1':
-    resolution: {integrity: sha512-ZDCjgccSdYPw5Bxh+my4Z0lJU96ZDN7jbBzvmEn0FZx3RtU1C7VWl6NbDx94bwY3V5YsgwRzJPOgeY2Q/nLG8A==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@typescript-eslint/types@8.59.4':
@@ -1469,50 +1387,50 @@ packages:
     resolution: {integrity: sha512-U3gxVaDVnuZKhSspW/MzMxE1kq7zOdc072FcSNoqA1I9p8HyKbBFfEHoWckBAMgNMph4MamwS5iTVzFmrnt8TQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260519.1':
-    resolution: {integrity: sha512-c9zdG6sGJf25Jpz04JgE23zhYeprqFypDGuqiX94yMTvR8IWXjq3R2oMnim66YLBDon/V1nCEy6cFixeSd/4fg==}
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260523.1':
+    resolution: {integrity: sha512-4WHj9v41per176h00j3moITcHpR+8SNoAFdbDuJwUDCJiQkbrCjwulK8UwALxLPEGqyBdNARWcM6GXVTexBg1w==}
     engines: {node: '>=16.20.0'}
     cpu: [arm64]
     os: [darwin]
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260519.1':
-    resolution: {integrity: sha512-N16V3wiM0tsNmSSA7nZrxqXXt5OCJxBwiCVn35rnA7fr4WzJw6rJmwf9heNNhZ6Gh4ne3+Pexajf5akzuHR75Q==}
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260523.1':
+    resolution: {integrity: sha512-WeVqasFLVwbnwmjLhBTwfNminhaTfCo+ptOW2JT+IgY2WYBGIKXQmhaPPU5bdsHCur7O2RmY5tUAmvqv7V+kog==}
     engines: {node: '>=16.20.0'}
     cpu: [x64]
     os: [darwin]
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260519.1':
-    resolution: {integrity: sha512-ltf91vAwKdbu0SlRQbFgi1h5ZrLLrBn6a4qIeN2VILGbtYrCXnARHRznLBv81yUETQ7aVr/LSQcmsWo1ejCK0w==}
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260523.1':
+    resolution: {integrity: sha512-2Jd0iJOd77LLwsEDFc9O5nfPxvs75d1FafG7BhGGlfD8RtxL4+BzAy8KYI0++TTmHL6aL7+VIr3+TQ58S68Sfw==}
     engines: {node: '>=16.20.0'}
     cpu: [arm64]
     os: [linux]
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260519.1':
-    resolution: {integrity: sha512-8v4BExeeuCTrhaSGfeIJqm3qQkTzlZix/Qd/FkPlWoz9f7d7COvXb3Z4qhbaVolL0MMnUvQ7m005Z4kYsZ645A==}
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260523.1':
+    resolution: {integrity: sha512-C+fOL4DO/JTLkKT22Bw34FGiUpS4scqC+5AaaCVBCiHWXn1NknSrbvcMWEmg8HzCWPmiUwSQUryNZIFDqi8tUw==}
     engines: {node: '>=16.20.0'}
     cpu: [arm]
     os: [linux]
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260519.1':
-    resolution: {integrity: sha512-AVD0tczTtFCHNa4RQRVPvu8Hnw4P3hQ+OlUAjnz/lHowvc6o1pYB46elMqfDuaoWqIpv+EAkAPP4ipFCofJ5IA==}
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260523.1':
+    resolution: {integrity: sha512-DiJLdnzh/TolhvDuGxqD1sxlQNnCFLsLLnGPVN6i+/DUPC/cWy0c+5RHruow9lQbtPkZ3aapztkYP2wEP1Ll6Q==}
     engines: {node: '>=16.20.0'}
     cpu: [x64]
     os: [linux]
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260519.1':
-    resolution: {integrity: sha512-TM+qatljyejqjHevCta3WIH53i0oGC7K8SoJ6t+mf4cGMTpZTyd7NhC1ts7e6/aydZnG53Bsta2iQi1SMIlQEw==}
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260523.1':
+    resolution: {integrity: sha512-axyNrdvX4D6T5ZuZHhufFbPRiKzJyqxusLl5nI3wJqmGN3G5JYCJY9k39LjRYI6oB3ingyKng+3QJ2q7b3IHQA==}
     engines: {node: '>=16.20.0'}
     cpu: [arm64]
     os: [win32]
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260519.1':
-    resolution: {integrity: sha512-r9LEsoY7JC/82gXo8hlOmpQaUXcqmngCVOv+mUx1UeMt9f+1S6oNO0W48o75mlBqqC7jfcMHqw8YS4LfVxPRGw==}
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260523.1':
+    resolution: {integrity: sha512-NRBlDy12DLqCC7smCWlEgsiwCxUUl0TAVLUikm+c+WvFhnsY909jk1X8FNUHhNZmR3APHS57AMOq2rreQwHdiQ==}
     engines: {node: '>=16.20.0'}
     cpu: [x64]
     os: [win32]
 
-  '@typescript/native-preview@7.0.0-dev.20260519.1':
-    resolution: {integrity: sha512-VVER7vFUDdfm5k3jbH5765tVEJa7+0rTUkFeXyGYrXPxpw9BIjA0QDxdtdlRyaU8MCZV9IKZUo6doxeAQRAjPg==}
+  '@typescript/native-preview@7.0.0-dev.20260523.1':
+    resolution: {integrity: sha512-+pkICUeoIbnecsvkEQFmkBC7qQqR5ltQQl+bXuGpKBOURVu2/zDA4i09Ef4KWWD6Kmx7i/EMO2fMZ3IsZEdzPw==}
     engines: {node: '>=16.20.0'}
     hasBin: true
 
@@ -4091,6 +4009,12 @@ packages:
       '@effect/platform': '>=0.96.0'
       effect: '>=3.21.0'
 
+  workspaces-effect@1.1.0:
+    resolution: {integrity: sha512-vo+6mcz+kFDgS+OdZxIXqxKT/6mKhAaUvfcRA9CY2pPa4/3cm7xqrYp/ar/+b/6aikyw4Qum8zS/gSgwk5kUPQ==}
+    peerDependencies:
+      '@effect/platform': '>=0.96.0'
+      effect: '>=3.21.0'
+
   wrap-ansi@7.0.0:
     resolution: {integrity: sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==}
     engines: {node: '>=10'}
@@ -5179,13 +5103,6 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.0-rc.17': {}
 
-  '@rsbuild/core@2.0.3':
-    dependencies:
-      '@rspack/core': 2.0.1(@swc/helpers@0.5.21)
-      '@swc/helpers': 0.5.21
-    transitivePeerDependencies:
-      - '@module-federation/runtime-tools'
-
   '@rsbuild/core@2.0.7':
     dependencies:
       '@rspack/core': 2.0.4(@swc/helpers@0.5.21)
@@ -5193,10 +5110,10 @@ snapshots:
     transitivePeerDependencies:
       - '@module-federation/runtime-tools'
 
-  '@rslib/core@0.21.3(@microsoft/api-extractor@7.58.7(@types/node@25.9.1))(@typescript/native-preview@7.0.0-dev.20260519.1)(typescript@6.0.3)':
+  '@rslib/core@0.21.3(@microsoft/api-extractor@7.58.7(@types/node@25.9.1))(@typescript/native-preview@7.0.0-dev.20260523.1)(typescript@6.0.3)':
     dependencies:
-      '@rsbuild/core': 2.0.3
-      rsbuild-plugin-dts: 0.21.3(@microsoft/api-extractor@7.58.7(@types/node@25.9.1))(@rsbuild/core@2.0.3)(@typescript/native-preview@7.0.0-dev.20260519.1)(typescript@6.0.3)
+      '@rsbuild/core': 2.0.7
+      rsbuild-plugin-dts: 0.21.3(@microsoft/api-extractor@7.58.7(@types/node@25.9.1))(@rsbuild/core@2.0.7)(@typescript/native-preview@7.0.0-dev.20260523.1)(typescript@6.0.3)
     optionalDependencies:
       '@microsoft/api-extractor': 7.58.7(@types/node@25.9.1)
       typescript: 6.0.3
@@ -5205,47 +5122,22 @@ snapshots:
       - '@typescript/native-preview'
       - core-js
 
-  '@rspack/binding-darwin-arm64@2.0.1':
-    optional: true
-
   '@rspack/binding-darwin-arm64@2.0.4':
-    optional: true
-
-  '@rspack/binding-darwin-x64@2.0.1':
     optional: true
 
   '@rspack/binding-darwin-x64@2.0.4':
     optional: true
 
-  '@rspack/binding-linux-arm64-gnu@2.0.1':
-    optional: true
-
   '@rspack/binding-linux-arm64-gnu@2.0.4':
-    optional: true
-
-  '@rspack/binding-linux-arm64-musl@2.0.1':
     optional: true
 
   '@rspack/binding-linux-arm64-musl@2.0.4':
     optional: true
 
-  '@rspack/binding-linux-x64-gnu@2.0.1':
-    optional: true
-
   '@rspack/binding-linux-x64-gnu@2.0.4':
     optional: true
 
-  '@rspack/binding-linux-x64-musl@2.0.1':
-    optional: true
-
   '@rspack/binding-linux-x64-musl@2.0.4':
-    optional: true
-
-  '@rspack/binding-wasm32-wasi@2.0.1':
-    dependencies:
-      '@emnapi/core': 1.10.0
-      '@emnapi/runtime': 1.10.0
-      '@napi-rs/wasm-runtime': 1.1.4(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
     optional: true
 
   '@rspack/binding-wasm32-wasi@2.0.4':
@@ -5255,36 +5147,14 @@ snapshots:
       '@napi-rs/wasm-runtime': 1.1.4(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
     optional: true
 
-  '@rspack/binding-win32-arm64-msvc@2.0.1':
-    optional: true
-
   '@rspack/binding-win32-arm64-msvc@2.0.4':
-    optional: true
-
-  '@rspack/binding-win32-ia32-msvc@2.0.1':
     optional: true
 
   '@rspack/binding-win32-ia32-msvc@2.0.4':
     optional: true
 
-  '@rspack/binding-win32-x64-msvc@2.0.1':
-    optional: true
-
   '@rspack/binding-win32-x64-msvc@2.0.4':
     optional: true
-
-  '@rspack/binding@2.0.1':
-    optionalDependencies:
-      '@rspack/binding-darwin-arm64': 2.0.1
-      '@rspack/binding-darwin-x64': 2.0.1
-      '@rspack/binding-linux-arm64-gnu': 2.0.1
-      '@rspack/binding-linux-arm64-musl': 2.0.1
-      '@rspack/binding-linux-x64-gnu': 2.0.1
-      '@rspack/binding-linux-x64-musl': 2.0.1
-      '@rspack/binding-wasm32-wasi': 2.0.1
-      '@rspack/binding-win32-arm64-msvc': 2.0.1
-      '@rspack/binding-win32-ia32-msvc': 2.0.1
-      '@rspack/binding-win32-x64-msvc': 2.0.1
 
   '@rspack/binding@2.0.4':
     optionalDependencies:
@@ -5298,12 +5168,6 @@ snapshots:
       '@rspack/binding-win32-arm64-msvc': 2.0.4
       '@rspack/binding-win32-ia32-msvc': 2.0.4
       '@rspack/binding-win32-x64-msvc': 2.0.4
-
-  '@rspack/core@2.0.1(@swc/helpers@0.5.21)':
-    dependencies:
-      '@rspack/binding': 2.0.1
-    optionalDependencies:
-      '@swc/helpers': 0.5.21
 
   '@rspack/core@2.0.4(@swc/helpers@0.5.21)':
     dependencies:
@@ -5381,14 +5245,14 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@savvy-web/lint-staged@1.0.1(5a45a9e7f1a4876767d519e9479fc5c1)':
+  '@savvy-web/lint-staged@1.1.0(d90a950003159c8b7d8634d9c710b136)':
     dependencies:
       '@effect/cli': 0.75.1(@effect/platform@0.96.1(effect@3.21.2))(@effect/printer-ansi@0.49.0(@effect/typeclass@0.40.0(effect@3.21.2))(effect@3.21.2))(@effect/printer@0.49.0(@effect/typeclass@0.40.0(effect@3.21.2))(effect@3.21.2))(effect@3.21.2)
       '@effect/platform': 0.96.1(effect@3.21.2)
       '@effect/platform-node': 0.106.0(@effect/cluster@0.58.2(@effect/platform@0.96.1(effect@3.21.2))(@effect/rpc@0.75.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/workflow@0.18.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(@effect/rpc@0.75.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(@effect/rpc@0.75.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(effect@3.21.2)
       '@savvy-web/silk-effects': 0.3.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2)
       '@types/node': 25.9.1
-      '@typescript/native-preview': 7.0.0-dev.20260519.1
+      '@typescript/native-preview': 7.0.0-dev.20260523.1
       effect: 3.21.2
       husky: 9.1.7
       jsonc-effect: 0.2.1(effect@3.21.2)
@@ -5411,7 +5275,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@savvy-web/rslib-builder@0.20.4(@pnpm/logger@1001.0.1)(@rslib/core@0.21.3(@microsoft/api-extractor@7.58.7(@types/node@25.9.1))(@typescript/native-preview@7.0.0-dev.20260519.1)(typescript@6.0.3))(@types/node@25.9.1)(@typescript/native-preview@7.0.0-dev.20260519.1)(jiti@2.6.1)(typescript@6.0.3)':
+  '@savvy-web/rslib-builder@0.20.6(@pnpm/logger@1001.0.1)(@rslib/core@0.21.3(@microsoft/api-extractor@7.58.7(@types/node@25.9.1))(@typescript/native-preview@7.0.0-dev.20260523.1)(typescript@6.0.3))(@types/node@25.9.1)(@typescript/native-preview@7.0.0-dev.20260523.1)(jiti@2.6.1)(typescript@6.0.3)':
     dependencies:
       '@microsoft/api-extractor': 7.58.7(@types/node@25.9.1)
       '@microsoft/tsdoc': 0.16.0
@@ -5422,10 +5286,10 @@ snapshots:
       '@pnpm/lockfile.fs': 1100.1.1(@pnpm/logger@1001.0.1)
       '@pnpm/workspace.read-manifest': 1000.3.1
       '@rsbuild/core': 2.0.7
-      '@rslib/core': 0.21.3(@microsoft/api-extractor@7.58.7(@types/node@25.9.1))(@typescript/native-preview@7.0.0-dev.20260519.1)(typescript@6.0.3)
+      '@rslib/core': 0.21.3(@microsoft/api-extractor@7.58.7(@types/node@25.9.1))(@typescript/native-preview@7.0.0-dev.20260523.1)(typescript@6.0.3)
       '@types/node': 25.9.1
       '@typescript-eslint/parser': 8.59.4(eslint@10.4.0(jiti@2.6.1))(typescript@6.0.3)
-      '@typescript/native-preview': 7.0.0-dev.20260519.1
+      '@typescript/native-preview': 7.0.0-dev.20260523.1
       deep-equal: 2.2.3
       eslint: 10.4.0(jiti@2.6.1)
       eslint-plugin-tsdoc: 0.5.2(eslint@10.4.0(jiti@2.6.1))(typescript@6.0.3)
@@ -5451,10 +5315,19 @@ snapshots:
       workspaces-effect: 0.4.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2)
       yaml-effect: 0.2.3(effect@3.21.2)
 
-  '@savvy-web/vitest@1.3.2(fc48a4d1c0ba91c773d33f8a6c43709e)':
+  '@savvy-web/silk-effects@0.4.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2)':
+    dependencies:
+      '@effect/platform': 0.96.1(effect@3.21.2)
+      effect: 3.21.2
+      jsonc-effect: 0.2.1(effect@3.21.2)
+      semver-effect: 0.2.1(effect@3.21.2)
+      workspaces-effect: 1.1.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2)
+      yaml-effect: 0.6.0(effect@3.21.2)
+
+  '@savvy-web/vitest@1.3.2(81a4e565d07777a602dcb6cd96bf9c5c)':
     dependencies:
       '@types/node': 25.9.1
-      '@typescript/native-preview': 7.0.0-dev.20260519.1
+      '@typescript/native-preview': 7.0.0-dev.20260523.1
       '@vitest/coverage-v8': 4.1.5(vitest@4.1.5)
       typescript: 6.0.3
       vitest: 4.1.5(@types/node@25.9.1)(@vitest/coverage-v8@4.1.5)(vite@8.0.10(@types/node@25.9.1)(jiti@2.6.1)(yaml@2.9.0))
@@ -5565,8 +5438,8 @@ snapshots:
 
   '@typescript-eslint/project-service@8.56.1(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.59.1(typescript@6.0.3)
-      '@typescript-eslint/types': 8.59.1
+      '@typescript-eslint/tsconfig-utils': 8.59.4(typescript@6.0.3)
+      '@typescript-eslint/types': 8.59.4
       debug: 4.4.3
       typescript: 6.0.3
     transitivePeerDependencies:
@@ -5595,17 +5468,11 @@ snapshots:
     dependencies:
       typescript: 6.0.3
 
-  '@typescript-eslint/tsconfig-utils@8.59.1(typescript@6.0.3)':
-    dependencies:
-      typescript: 6.0.3
-
   '@typescript-eslint/tsconfig-utils@8.59.4(typescript@6.0.3)':
     dependencies:
       typescript: 6.0.3
 
   '@typescript-eslint/types@8.56.1': {}
-
-  '@typescript-eslint/types@8.59.1': {}
 
   '@typescript-eslint/types@8.59.4': {}
 
@@ -5660,36 +5527,36 @@ snapshots:
       '@typescript-eslint/types': 8.59.4
       eslint-visitor-keys: 5.0.1
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260519.1':
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260523.1':
     optional: true
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260519.1':
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260523.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260519.1':
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260523.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260519.1':
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260523.1':
     optional: true
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260519.1':
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260523.1':
     optional: true
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260519.1':
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260523.1':
     optional: true
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260519.1':
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260523.1':
     optional: true
 
-  '@typescript/native-preview@7.0.0-dev.20260519.1':
+  '@typescript/native-preview@7.0.0-dev.20260523.1':
     optionalDependencies:
-      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260519.1
-      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260519.1
-      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260519.1
-      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260519.1
-      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260519.1
-      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260519.1
-      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260519.1
+      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260523.1
+      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260523.1
+      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260523.1
+      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260523.1
+      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260523.1
+      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260523.1
+      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260523.1
 
   '@vitest/coverage-v8@4.1.5(vitest@4.1.5)':
     dependencies:
@@ -7061,7 +6928,7 @@ snapshots:
       picomatch: 4.0.4
       string-argv: 0.3.2
       tinyexec: 1.1.1
-      yaml: 2.8.3
+      yaml: 2.9.0
 
   listr2@9.0.5:
     dependencies:
@@ -7948,13 +7815,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  rsbuild-plugin-dts@0.21.3(@microsoft/api-extractor@7.58.7(@types/node@25.9.1))(@rsbuild/core@2.0.3)(@typescript/native-preview@7.0.0-dev.20260519.1)(typescript@6.0.3):
+  rsbuild-plugin-dts@0.21.3(@microsoft/api-extractor@7.58.7(@types/node@25.9.1))(@rsbuild/core@2.0.7)(@typescript/native-preview@7.0.0-dev.20260523.1)(typescript@6.0.3):
     dependencies:
       '@ast-grep/napi': 0.37.0
-      '@rsbuild/core': 2.0.3
+      '@rsbuild/core': 2.0.7
     optionalDependencies:
       '@microsoft/api-extractor': 7.58.7(@types/node@25.9.1)
-      '@typescript/native-preview': 7.0.0-dev.20260519.1
+      '@typescript/native-preview': 7.0.0-dev.20260523.1
       typescript: 6.0.3
 
   run-async@2.4.1: {}
@@ -8515,6 +8382,15 @@ snapshots:
       yaml-effect: 0.4.4(effect@3.21.2)
 
   workspaces-effect@1.0.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2):
+    dependencies:
+      '@effect/platform': 0.96.1(effect@3.21.2)
+      effect: 3.21.2
+      jsonc-effect: 0.2.1(effect@3.21.2)
+      minimatch: 10.2.5
+      semver-effect: 0.2.1(effect@3.21.2)
+      yaml-effect: 0.6.0(effect@3.21.2)
+
+  workspaces-effect@1.1.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2):
     dependencies:
       '@effect/platform': 0.96.1(effect@3.21.2)
       effect: 3.21.2
