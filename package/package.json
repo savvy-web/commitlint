@@ -64,7 +64,7 @@
 		"@commitlint/cli": "^21.0.1",
 		"@commitlint/config-conventional": "^21.0.1",
 		"@commitlint/lint": "^21.0.1",
-		"@commitlint/types": "^20.5.0",
+		"@commitlint/types": "^21.0.1",
 		"@savvy-web/rslib-builder": "^0.20.6",
 		"@types/node": "catalog:silk",
 		"@types/shell-quote": "^1.7.5",
