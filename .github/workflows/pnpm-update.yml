@@ -62,8 +62,8 @@ jobs:
             @savvy-web/silk-effects
             commitizen
             husky
-            workspace-effect
-            zod
+            shell-quote
+            workspaces-effect
           peer-lock: |
             @commitlint/cli
             @commitlint/config-conventional

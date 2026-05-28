@@ -18,6 +18,7 @@ const EmptyLayer = Layer.succeed(
 		listPackages: () => Effect.succeed([]),
 		getPackage: () => Effect.die("not implemented"),
 		importerMap: () => Effect.succeed(new Map()),
+		refresh: () => Effect.void,
 	}),
 );
 

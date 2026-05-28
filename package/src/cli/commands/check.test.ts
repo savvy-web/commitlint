@@ -7,7 +7,7 @@ import { Effect, Layer, LogLevel, Logger } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { WorkspaceDiscovery, WorkspaceRootLive } from "workspaces-effect";
 import { checkCommand } from "./check.js";
-import { generateManagedContent } from "./init.js";
+import { generateManagedContent, initCommand } from "./init.js";
 
 /** Marker format used by silk-effects ManagedSection for "savvy-commit" tool. */
 const BEGIN_MARKER = "# --- BEGIN SAVVY-COMMIT MANAGED SECTION ---";
@@ -20,6 +20,7 @@ const WorkspaceDiscoveryStub = Layer.succeed(
 		listPackages: () => Effect.succeed([]),
 		getPackage: () => Effect.die("not implemented"),
 		importerMap: () => Effect.succeed(new Map()),
+		refresh: () => Effect.void,
 	}),
 );
 
@@ -128,5 +129,21 @@ describe("checkCommand Effect program", () => {
 
 		const handler = checkCommand.handler({});
 		await Effect.runPromise(Effect.provide(handler, TestLayer));
+	});
+
+	it("validates cleanly when fully initialized via init", async () => {
+		const init = initCommand.handler({ force: false, config: "commitlint.config.ts" });
+		await Effect.runPromise(Effect.provide(init, TestLayer));
+
+		const handler = checkCommand.handler({});
+		await Effect.runPromise(Effect.provide(handler, TestLayer));
+
+		// init wrote all three hooks; check should find the base, commit, and hygiene sections present.
+		const fs = await import("node:fs");
+		const commitMsg = fs.readFileSync(join(testDir, ".husky/commit-msg"), "utf8");
+		expect(commitMsg).toContain("# --- BEGIN SAVVY-BASE MANAGED SECTION ---");
+		expect(commitMsg).toContain("# --- BEGIN SAVVY-COMMIT MANAGED SECTION ---");
+		const postCheckout = fs.readFileSync(join(testDir, ".husky/post-checkout"), "utf8");
+		expect(postCheckout).toContain("# --- BEGIN SAVVY-HOOKS MANAGED SECTION ---");
 	});
 });

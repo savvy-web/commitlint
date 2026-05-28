@@ -24,7 +24,7 @@
  */
 import { createConfig } from "./config/factory.js";
 import type { ConfigOptions } from "./config/schema.js";
-import { ConfigOptionsSchema } from "./config/schema.js";
+import { decodeConfigOptions } from "./config/schema.js";
 import type { CommitlintUserConfig } from "./config/types.js";
 
 export type { CommitType } from "./config/rules.js";
@@ -108,7 +108,7 @@ export class CommitlintConfig {
 	 * ```
 	 */
 	static silk(options: ConfigOptions = {}): CommitlintUserConfig {
-		const validated = ConfigOptionsSchema.parse(options);
+		const validated = decodeConfigOptions(options);
 		return createConfig(validated);
 	}
 

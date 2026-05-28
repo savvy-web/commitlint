@@ -11,7 +11,7 @@ A commitlint config factory that reads your repo and builds the right rules — 
 
 - **Auto-detection** - Reads DCO files, workspace packages and versioning strategy from the repo; no manual wiring required
 - **Zero config** - Ships with working defaults
-- **Type-safe** - Full TypeScript support with Zod schema validation
+- **Type-safe** - Full TypeScript support with Effect Schema validation
 - **Extended types** - Includes `ai`, `release` and `tdd` commit types beyond conventional commits
 - **Interactive prompts** - Built-in commitizen adapter with emoji support
 - **CLI tooling** - Set up and validate configurations with `savvy-commit`

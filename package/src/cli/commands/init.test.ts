@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { NodeFileSystem } from "@effect/platform-node";
-import { ManagedSectionLive } from "@savvy-web/silk-effects";
+import { ManagedSectionLive, savvyBasePreamble } from "@savvy-web/silk-effects";
 import { Effect, Layer, LogLevel, Logger } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { generateManagedContent, initCommand } from "./init.js";
@@ -16,32 +16,32 @@ const BEGIN_MARKER = "# --- BEGIN SAVVY-COMMIT MANAGED SECTION ---";
 const END_MARKER = "# --- END SAVVY-COMMIT MANAGED SECTION ---";
 
 describe("generateManagedContent", () => {
-	it("generates shell script with the config path", () => {
+	it("is the one-line savvy-commit tool invocation with the config path", () => {
 		const content = generateManagedContent("lib/configs/commitlint.config.ts");
-		expect(content).toContain('commitlint --config "$ROOT/lib/configs/commitlint.config.ts"');
+		expect(content).toBe('in_ci || pm_exec commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1"');
 	});
 
-	it("includes CI skip logic", () => {
+	it("calls the shared pm_exec helper (PM dispatch lives in savvy-base)", () => {
 		const content = generateManagedContent("commitlint.config.ts");
-		expect(content).toContain("$CI");
-		expect(content).toContain("$GITHUB_ACTIONS");
+		expect(content).toContain("pm_exec commitlint");
+		expect(content).toContain("in_ci ||");
+		expect(content).not.toContain("detect_pm");
+		expect(content).not.toContain("$GITHUB_ACTIONS");
 	});
+});
 
-	it("includes package manager detection", () => {
-		const content = generateManagedContent("commitlint.config.ts");
-		expect(content).toContain("detect_pm");
-		expect(content).toContain("pnpm");
-		expect(content).toContain("yarn");
-		expect(content).toContain("bun");
-		expect(content).toContain("npm");
-	});
-
-	it("includes pnpm exec, yarn dlx, bun x, and npx commands", () => {
-		const content = generateManagedContent("my-config.ts");
-		expect(content).toContain("pnpm exec commitlint");
-		expect(content).toContain("yarn dlx commitlint");
-		expect(content).toContain("bun x commitlint");
-		expect(content).toContain("npx --no -- commitlint");
+describe("savvyBasePreamble (shared, re-exported from silk-effects)", () => {
+	it("defines ROOT, in_ci, detect_pm, PM and pm_exec with bun x and exec semantics", () => {
+		const preamble = savvyBasePreamble();
+		expect(preamble).toContain("ROOT=$(git rev-parse --show-toplevel)");
+		expect(preamble).toContain("in_ci()");
+		expect(preamble).toContain("detect_pm()");
+		expect(preamble).toContain("PM=$(detect_pm)");
+		expect(preamble).toContain("pnpm exec");
+		expect(preamble).toContain("yarn exec");
+		expect(preamble).toContain("bun x");
+		expect(preamble).toContain("npx --no --");
+		expect(preamble).not.toContain("yarn dlx");
 	});
 });
 
@@ -111,6 +111,8 @@ describe("initCommand Effect program", () => {
 		const hookContent = readFileSync(join(testDir, ".husky/commit-msg"), "utf8");
 		expect(hookContent).not.toContain("# custom");
 		expect(hookContent).toContain(BEGIN_MARKER);
+		expect(hookContent).toContain("# --- BEGIN SAVVY-BASE MANAGED SECTION ---");
+		expect(hookContent).toContain("pm_exec commitlint");
 	});
 
 	it("does not overwrite existing config without force", async () => {
@@ -145,5 +147,40 @@ describe("initCommand Effect program", () => {
 		const handler = initCommand.handler({ force: false, config: "/absolute/path/config.ts" });
 		const result = await Effect.runPromiseExit(Effect.provide(handler, TestLayer));
 		expect(result._tag).toBe("Failure");
+	});
+
+	it("writes savvy-base before savvy-commit in commit-msg", async () => {
+		const handler = initCommand.handler({ force: false, config: "commitlint.config.ts" });
+		await Effect.runPromise(Effect.provide(handler, TestLayer));
+
+		const hookContent = readFileSync(join(testDir, ".husky/commit-msg"), "utf8");
+		const baseIdx = hookContent.indexOf("# --- BEGIN SAVVY-BASE MANAGED SECTION ---");
+		const commitIdx = hookContent.indexOf(BEGIN_MARKER);
+		expect(baseIdx).toBeGreaterThanOrEqual(0);
+		expect(commitIdx).toBeGreaterThanOrEqual(0);
+		expect(baseIdx).toBeLessThan(commitIdx);
+		expect(hookContent).toContain("pm_exec commitlint --config");
+	});
+
+	it("creates savvy-hooks hygiene in post-checkout and post-merge", async () => {
+		const handler = initCommand.handler({ force: false, config: "commitlint.config.ts" });
+		await Effect.runPromise(Effect.provide(handler, TestLayer));
+
+		for (const hook of [".husky/post-checkout", ".husky/post-merge"]) {
+			const content = readFileSync(join(testDir, hook), "utf8");
+			expect(content).toContain("# --- BEGIN SAVVY-HOOKS MANAGED SECTION ---");
+			expect(content).toContain("git config core.fileMode false");
+			expect(content).toContain("#!/usr/bin/env sh");
+		}
+	});
+
+	it("is idempotent across repeated runs", async () => {
+		const handler = initCommand.handler({ force: false, config: "commitlint.config.ts" });
+		await Effect.runPromise(Effect.provide(handler, TestLayer));
+		const first = readFileSync(join(testDir, ".husky/commit-msg"), "utf8");
+
+		await Effect.runPromise(Effect.provide(handler, TestLayer));
+		const second = readFileSync(join(testDir, ".husky/commit-msg"), "utf8");
+		expect(second).toBe(first);
 	});
 });

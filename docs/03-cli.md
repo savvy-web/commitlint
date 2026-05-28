@@ -1,6 +1,6 @@
 # CLI reference
 
-`@savvy-web/commitlint` ships a CLI called `savvy-commit` for writing the commitlint config and the husky hook.
+`@savvy-web/commitlint` ships a CLI called `savvy-commit` for writing the commitlint config and the husky hooks it relies on.
 
 ## Install
 
@@ -14,7 +14,7 @@ npm install -D @savvy-web/commitlint @commitlint/cli @commitlint/config-conventi
 
 ### savvy-commit init
 
-Write the commitlint config and the `.husky/commit-msg` hook.
+Write the commitlint config file and three husky hooks: `commit-msg`, `post-checkout` and `post-merge`.
 
 ```bash
 npx savvy-commit init
@@ -25,19 +25,41 @@ npx savvy-commit init
 
 | Option | Alias | Description |
 | ------ | ----- | ----------- |
-| `--force` | `-f` | Overwrite entire hook file (not just managed section) |
+| `--force` | `-f` | Overwrite the commit-msg hook file and config file entirely (hygiene sections in post-checkout/post-merge are never force-reset) |
 | `--config` | `-c` | Relative path for the commitlint config file (default: `lib/configs/commitlint.config.ts`) |
 
 **Generated files:**
 
 - Commitlint config at the specified path (default `lib/configs/commitlint.config.ts`)
-- `.husky/commit-msg` — git hook with a managed section
+- `.husky/commit-msg` — savvy-base preamble followed by a one-line savvy-commit tool section
+- `.husky/post-checkout` and `.husky/post-merge` — savvy-hooks hygiene section (co-owned with `@savvy-web/lint-staged`; both packages write identical content)
 
-**Managed section:**
+**Managed sections:**
 
-The hook uses `BEGIN`/`END` markers to define a managed section. You can add custom hooks above or below the managed block. Re-running `init` updates only the managed section and leaves the rest of the file alone. Use `--force` to replace the entire file.
+Each hook file is split into named sections delimited by `# --- BEGIN SAVVY-<NAME> MANAGED SECTION ---` and `# --- END SAVVY-<NAME> MANAGED SECTION ---` markers. The section identities written by `savvy-commit init` are:
 
-In CI environments (`CI` or `GITHUB_ACTIONS` set), the managed section is skipped so custom hooks outside the markers still execute.
+| Section | File | Purpose |
+| ------- | ---- | ------- |
+| `savvy-base` | `.husky/commit-msg` | Shared preamble: `ROOT`, `in_ci()`, `detect_pm()`, `PM`, `pm_exec()` |
+| `savvy-commit` | `.husky/commit-msg` | One-line tool invocation: `in_ci \|\| pm_exec commitlint --config "$ROOT/<path>" --edit "$1"` |
+| `savvy-hooks` | `.husky/post-checkout`, `.husky/post-merge` | File-mode hygiene: `git config core.fileMode false` and chmod tracked `.sh` files |
+
+You can add custom commands above, below or between the managed sections in any of these files. Re-running `init` updates only the managed sections and leaves the rest alone. Use `--force` to replace the entire commit-msg hook file (the hygiene hooks are never force-reset because they are co-owned with other tools).
+
+The `savvy-base` preamble is side-effect free — it only defines shell functions. The CI guard lives on each tool line (`in_ci || pm_exec ...`), so custom hooks outside the managed sections still run in CI. The hygiene section is self-guarded against CI.
+
+**Package-manager runner:**
+
+The `pm_exec()` helper in the `savvy-base` preamble resolves to the local-exec form for the detected package manager:
+
+| Package manager | Runner |
+| --------------- | ------ |
+| pnpm | `pnpm exec` |
+| yarn | `yarn exec` |
+| bun | `bun x` |
+| npm (fallback) | `npx --no` |
+
+This matches the runner used by sibling packages such as `@savvy-web/lint-staged`, so the same dispatch logic appears in every managed `savvy-base` section.
 
 **Example:**
 
@@ -50,14 +72,14 @@ npx savvy-commit init
 npx savvy-commit init --config commitlint.config.ts
 # example output (varies by environment)
 
-# Force overwrite entire hook file
+# Force overwrite the commit-msg hook file (hygiene hooks unaffected)
 npx savvy-commit init --force
 # example output (varies by environment)
 ```
 
 ### savvy-commit check
 
-Show the current commitlint config and whether the managed section in the hook is up to date.
+Show the current commitlint setup: config file, husky hooks, the health of each managed section and the detected settings the config factory will use.
 
 ```bash
 npx savvy-commit check
@@ -68,18 +90,29 @@ npx savvy-commit check
 ```text
 Checking commitlint configuration...
 
-Config file: commitlint.config.ts
-Husky hook: .husky/commit-msg
-Managed section: up-to-date
-DCO file: DCO
+✓ Config file: commitlint.config.ts
+✓ Husky hook: .husky/commit-msg
+✓ Base section: up-to-date
+✓ Commit section: up-to-date
+✓ Hygiene hook: .husky/post-checkout
+✓ Hygiene hook: .husky/post-merge
+✓ DCO file: DCO
 
 Detected settings:
   DCO required: true
   Release format: semver
   Detected scopes: api, cli, core, docs
+
+✓ Commitlint is configured correctly.
 ```
 
-The managed section status is one of: `up-to-date`, `outdated` (run `savvy-commit init` to update), or `not found`.
+Each section line reports one of three states:
+
+- `up-to-date` — the on-disk content matches what `savvy-commit init` would write
+- `outdated` — the markers are present but the content has drifted; re-run `savvy-commit init` to refresh
+- `not found` — the markers are missing entirely; re-run `savvy-commit init` to add the section
+
+The final verdict is `Commitlint is configured correctly` only when the config file exists, the commit-msg hook exists and every section (`savvy-base`, `savvy-commit`, plus `savvy-hooks` in both hygiene hooks) is up-to-date. Any missing or outdated section flips the verdict to `Commitlint needs configuration. Run: savvy-commit init`.
 
 ## Using with npm scripts
 
@@ -96,7 +129,9 @@ Add to your `package.json`:
 
 ## Husky integration
 
-`savvy-commit init` writes `.husky/commit-msg` with `BEGIN`/`END` markers around the managed section. Custom hooks placed above or below those markers survive re-runs. The managed section detects your package manager (npm, pnpm, yarn or bun), uses an absolute path for the config so the hook works from any working directory, and is skipped entirely in CI.
+`savvy-commit init` writes its managed sections into the husky hook files using `BEGIN`/`END` markers, so custom commands placed outside the markers survive re-runs. The CI guard lives on each tool line rather than around the entire managed section, so custom hooks outside the managed area still run in CI.
+
+The `savvy-hooks` hygiene section in `post-checkout` and `post-merge` is co-owned with `@savvy-web/lint-staged`: both packages emit byte-identical content and treat the section as idempotent. Whichever tool runs `init` last leaves the section unchanged.
 
 ## Manual setup
 
@@ -110,15 +145,15 @@ To set up without the CLI:
    export default CommitlintConfig.silk();
    ```
 
-2. Run `init` to generate the hook:
+2. Run `init` to generate the hooks:
 
    ```bash
    npx savvy-commit init --config commitlint.config.ts
    # example output (varies by environment)
    ```
 
-3. Or create `.husky/commit-msg` by hand and make it executable:
+3. Or create the husky hooks by hand and make them executable:
 
    ```bash
-   chmod +x .husky/commit-msg
+   chmod +x .husky/commit-msg .husky/post-checkout .husky/post-merge
    ```

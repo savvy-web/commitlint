@@ -1,9 +1,9 @@
 /**
- * Zod schemas for commitlint configuration options.
+ * Effect Schemas for commitlint configuration options.
  *
  * @internal
  */
-import { z } from "zod";
+import { Schema } from "effect";
 
 /**
  * Release format schema for the release commit type.
@@ -29,27 +29,38 @@ import { z } from "zod";
  */
 export type ReleaseFormat = "semver" | "packages" | "scoped";
 
-export const ReleaseFormatSchema = z.enum(["semver", "packages", "scoped"]);
+export const ReleaseFormatSchema = Schema.Literal("semver", "packages", "scoped");
 
 /**
- * Zod schema for validating {@link ConfigOptions}.
+ * Effect Schema for validating {@link ConfigOptions}.
  *
  * @remarks
  * This schema validates and applies defaults to user-provided configuration.
- * Used internally by {@link CommitlintConfig.silk}.
+ * Used internally by {@link CommitlintConfig.silk} via {@link decodeConfigOptions}.
  *
  * @internal
  */
-export const ConfigOptionsSchema = z.object({
-	dco: z.boolean().optional(),
-	scopes: z.array(z.string()).optional(),
-	additionalScopes: z.array(z.string()).optional(),
-	releaseFormat: ReleaseFormatSchema.optional(),
-	emojis: z.boolean().default(false),
-	bodyMaxLineLength: z.number().positive().default(300),
-	noMarkdown: z.boolean().default(true),
-	cwd: z.string().optional(),
+export const ConfigOptionsSchema = Schema.Struct({
+	dco: Schema.optional(Schema.Boolean),
+	scopes: Schema.optional(Schema.Array(Schema.String)),
+	additionalScopes: Schema.optional(Schema.Array(Schema.String)),
+	releaseFormat: Schema.optional(ReleaseFormatSchema),
+	emojis: Schema.optionalWith(Schema.Boolean, { default: () => false }),
+	bodyMaxLineLength: Schema.optionalWith(Schema.Number.pipe(Schema.positive()), { default: () => 300 }),
+	noMarkdown: Schema.optionalWith(Schema.Boolean, { default: () => true }),
+	cwd: Schema.optional(Schema.String),
 });
+
+/**
+ * Decode unknown input into {@link ResolvedConfigOptions}, applying defaults.
+ *
+ * @remarks
+ * Synchronous decoder that throws a `ParseError` on invalid input, mirroring
+ * the previous Zod `.parse()` contract used by {@link CommitlintConfig.silk}.
+ *
+ * @internal
+ */
+export const decodeConfigOptions = Schema.decodeUnknownSync(ConfigOptionsSchema);
 
 /**
  * Configuration options for {@link CommitlintConfig.silk}.
@@ -158,7 +169,7 @@ export interface ConfigOptions {
 }
 
 /**
- * Resolved configuration options after Zod parsing applies defaults.
+ * Resolved configuration options after schema decoding applies defaults.
  *
  * @remarks
  * This type represents the options after schema validation, where
@@ -166,4 +177,4 @@ export interface ConfigOptions {
  *
  * @internal
  */
-export type ResolvedConfigOptions = z.output<typeof ConfigOptionsSchema>;
+export type ResolvedConfigOptions = Schema.Schema.Type<typeof ConfigOptionsSchema>;
