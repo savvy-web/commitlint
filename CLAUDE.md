@@ -37,9 +37,11 @@ pnpm ci:build              # CI-mode full rebuild — updates the live workspace
 The commitlint CLI is available immediately after rebuild:
 
 ```bash
-pnpm exec savvy-commit check   # show detected config (not a message linter)
+pnpm exec savvy-commit check   # validate config, husky hooks, and managed-section health (not a message linter)
 pnpm exec commitlint --config lib/configs/commitlint.config.ts --edit <file>  # lint a message
 ```
+
+`savvy-commit init` writes three husky hooks via silk-effects managed sections: `.husky/commit-msg` (ordered `savvy-base` preamble + `savvy-commit` tool section) and the co-owned `savvy-hooks` hygiene section in both `.husky/post-checkout` and `.husky/post-merge`. `savvy-commit check` reports all three section identities and factors section health into its verdict.
 
 The git commit-msg hook also runs the live build — `git commit --allow-empty -m "..."` exercises
 the full hook pipeline.
@@ -105,12 +107,20 @@ bats plugin/hooks/__test__/match-safe-bash.bats
 - `index.ts`, `static.ts` — public entry points (`CommitlintConfig.silk()`
   and the static config).
 - `config/`, `detection/`, `prompt/`, `formatter/` — config factory and the
-  pieces consumers wire up.
-- `cli/` — `@effect/cli` command tree. `commands/init.ts` and
-  `commands/check.ts` are the user-facing commands; `commands/hook.ts`
-  parents the **internal** `savvy-commit hook` subcommand tree under
-  `commands/hooks/` (`session-start`, `pre-commit-message`,
-  `post-commit-verify`, `user-prompt-submit`).
+  pieces consumers wire up. `config/schema.ts` validates `ConfigOptions`
+  with **Effect Schema** (`decodeConfigOptions`); zod is no longer a
+  dependency.
+- `cli/` — `@effect/cli` command tree. User-facing commands live in
+  `commands/init.ts` (writes `.husky/commit-msg` as ordered `savvy-base` +
+  `savvy-commit` managed sections via `ManagedSection.syncMany`, plus the
+  co-owned `savvy-hooks` hygiene section in `.husky/post-checkout` and
+  `.husky/post-merge`) and `commands/check.ts` (validates config presence,
+  husky hook presence, and all three managed-section identities, factoring
+  section health into the verdict). `commands/constants.ts` holds the
+  three husky hook paths. `commands/hook.ts` parents the **internal**
+  `savvy-commit hook` subcommand tree under `commands/hooks/`
+  (`session-start`, `pre-commit-message`, `post-commit-verify`,
+  `user-prompt-submit`).
 - `hook/` — helpers shared by hook subcommands: Effect Schemas for the four
   hook envelopes (`envelope.ts`), JSON output builders (`output.ts`), the
   shell-quote-based `parse-bash-command.ts`, the `HookSilencer` Layer
@@ -166,9 +176,13 @@ Turbo: `typecheck` depends on `build` completing first.
 - **Biome**: Unified linting and formatting (replaces ESLint + Prettier).
 - **Commitlint**: Enforces conventional commits with DCO signoff (this repo
   dogfoods its own package).
-- **Husky Hooks**:
+- **Husky Hooks** (managed via silk-effects `ManagedSection`):
   - `pre-commit`: Runs lint-staged.
-  - `commit-msg`: Validates commit message format.
+  - `commit-msg`: `savvy-base` preamble (`ROOT`, `in_ci`, `pm_exec`) +
+    `savvy-commit` tool section that runs `commitlint --edit "$1"`.
+  - `post-checkout` / `post-merge`: Co-owned `savvy-hooks` hygiene section
+    (`git config core.fileMode false` + chmod of tracked `.sh`). Shared
+    with `@savvy-web/lint-staged`; both packages write it idempotently.
   - `pre-push`: Runs tests for affected packages.
 
 ### TypeScript Configuration

@@ -191,4 +191,4 @@ The configuration generates these commitlint rules:
 
 ## Validation
 
-Options are validated with Zod schemas. Invalid options throw at configuration time, before any commit is linted.
+Options are validated with Effect Schema. Invalid options throw a `ParseError` at configuration time, before any commit is linted.

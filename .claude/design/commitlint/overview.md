@@ -3,8 +3,8 @@ status: current
 module: commitlint
 category: architecture
 created: 2026-02-02
-updated: 2026-05-11
-last-synced: 2026-05-11
+updated: 2026-05-27
+last-synced: 2026-05-27
 completeness: 92
 related: []
 dependencies:
@@ -13,7 +13,6 @@ dependencies:
   - "@effect/cli"
   - "@effect/platform-node"
   - effect
-  - zod
   - shell-quote
 implementation-plans:
   - ../plans/wondrous-purring-bee.md
@@ -44,8 +43,8 @@ auto-detection of DCO requirements, workspace scopes, and versioning strategies.
 14. [Related Documentation](#related-documentation)
 
 Note: The Custom Plugin System and Factory Implementation are subsections of
-the Dynamic Configuration API section. The Hook Subcommand Tree is a
-subsection of CLI Tool.
+the Dynamic Configuration API section. The Shared Managed-Section Model, Init
+Command, Check Command and Hook Subcommand Tree are subsections of CLI Tool.
 
 ---
 
@@ -63,7 +62,7 @@ repositories.
 - **Single Package**: Config, prompt, formatter, and CLI in one package
 - **Peer Dependencies**: Commitlint packages as peers for version flexibility
 - **Convention over Configuration**: Sensible defaults with easy overrides
-- **Zod Validation**: Type-safe configuration with rich error messages
+- **Effect Schema Validation**: Type-safe configuration with rich error messages
 
 **When to reference this document:**
 
@@ -120,8 +119,12 @@ services provided by `@savvy-web/silk-effects` and `workspaces-effect`:
 - **DCO detection**: Remains synchronous. Replaced `findProjectRoot` from
   `workspace-tools` with an inlined implementation that walks up the directory
   tree looking for root markers (`pnpm-workspace.yaml`, `.git`, `package.json`).
-- **Managed sections**: `init.ts` and `check.ts` use `ManagedSection` service
-  from `@savvy-web/silk-effects` instead of manual BEGIN/END marker parsing.
+- **Managed sections**: `init.ts` and `check.ts` use the `ManagedSection` service
+  from `@savvy-web/silk-effects` instead of manual BEGIN/END marker parsing. As of
+  silk-effects `^0.5.0`, `init` writes ordered shared sections (`savvy-base` preamble
+  plus the one-line `savvy-commit` tool section) via `ManagedSection.syncMany`, and a
+  co-owned `savvy-hooks` hygiene section into `.husky/post-checkout` / `.husky/post-merge`
+  via `ManagedSection.sync` (see "Init Command" and "Shared Managed-Section Model").
 - **Deleted files**: `package/src/detection/versioning.ts`, `package/src/detection/versioning.test.ts`,
   `package/src/detection/utils.ts`
 
@@ -186,18 +189,21 @@ export default CommitlintConfig.silk({
    changeset config for release format
 4. **Zero Config**: Works out of the box for most repositories
 
-### Zod for Configuration Validation
+### Effect Schema for Configuration Validation
 
 **Context:** How to validate and type configuration?
 
-**Decision:** Use Zod schemas for all configuration objects
+**Decision:** Use Effect `Schema` for all configuration objects. The package
+migrated off `zod` to `Schema` so it depends on a single validation library
+(Effect is already a direct dependency for the CLI and detection services), and
+`zod` was dropped from dependencies entirely.
 
 **Reasoning:**
 
-1. **Type Safety**: Full TypeScript inference from schemas
-2. **Validation**: Rich error messages for invalid configs
-3. **Schema Export**: Can generate JSON Schema for documentation
-4. **Formatter Integration**: Use schema info for better error explanations
+1. **Single ecosystem**: One validation library across the package, no zod alongside Effect
+2. **Type Safety**: Full TypeScript inference via `Schema.Schema.Type`
+3. **Validation**: `Schema.decodeUnknownSync` throws a `ParseError` with a structured message, mirroring the previous zod `.parse()` contract
+4. **Defaults**: `Schema.optionalWith(..., { default })` applies defaults during decode
 
 ### Custom Formatter
 
@@ -259,7 +265,7 @@ package/
     config/
       factory.ts                  # createConfig() implementation
       factory.test.ts             # Factory unit tests
-      schema.ts                   # Zod schemas + ConfigOptions interface
+      schema.ts                   # Effect Schema + ConfigOptions interface + decodeConfigOptions
       types.ts                    # TypeScript type definitions
       rules.ts                    # Rule definitions and defaults
       plugins.ts                  # Custom commitlint plugin (silk/ rules)
@@ -292,10 +298,10 @@ package/
       index.ts                    # Effect CLI entry (runCli, exports)
       index.test.ts               # CLI integration tests
       commands/
-        constants.ts              # Shared constants (CHECK_MARK, WARNING, paths)
-        init.ts                   # Bootstrap husky hooks (managed section)
+        constants.ts              # Shared constants (CHECK_MARK, WARNING, commit-msg + post-checkout + post-merge paths)
+        init.ts                   # Bootstrap husky hooks (savvy-base + savvy-commit + savvy-hooks sections)
         init.test.ts              # Init command tests
-        check.ts                  # Validate current setup + managed status
+        check.ts                  # Validate current setup + per-section health
         check.test.ts             # Check command tests
         hook.ts                   # `hook` parent command (internal)
         hook.test.ts              # Parent-command tests
@@ -411,14 +417,14 @@ namespace for configuration creation.
 // package/src/index.ts
 import { createConfig } from "./config/factory.js";
 import type { ConfigOptions } from "./config/schema.js";
-import { ConfigOptionsSchema } from "./config/schema.js";
+import { decodeConfigOptions } from "./config/schema.js";
 import type { CommitlintUserConfig } from "./config/types.js";
 
 export type { CommitlintUserConfig, ConfigOptions };
 
 export class CommitlintConfig {
   static silk(options: ConfigOptions = {}): CommitlintUserConfig {
-    const validated = ConfigOptionsSchema.parse(options);
+    const validated = decodeConfigOptions(options);
     return createConfig(validated);
   }
 
@@ -437,59 +443,45 @@ re-exported from `static.ts`).
 
 ### Configuration Schema
 
-The configuration uses a dual-definition pattern: a Zod schema for runtime
+The configuration uses a dual-definition pattern: an Effect `Schema` for runtime
 validation and a manually-written `ConfigOptions` interface for better JSDoc
-documentation. The interface is the public-facing type; the schema is used
-internally by `CommitlintConfig.silk()` to validate and apply defaults.
+documentation. The interface is the public-facing type; the schema is decoded
+internally by `CommitlintConfig.silk()` (via `decodeConfigOptions`) to validate
+and apply defaults. See `package/src/config/schema.ts` for the full schema and
+interface.
 
 ```typescript
 // package/src/config/schema.ts
-import { z } from "zod";
+import { Schema } from "effect";
 
 export type ReleaseFormat = "semver" | "packages" | "scoped";
-export const ReleaseFormatSchema = z.enum(["semver", "packages", "scoped"]);
+export const ReleaseFormatSchema = Schema.Literal("semver", "packages", "scoped");
 
-// Internal: Zod schema for validation and defaults
-export const ConfigOptionsSchema = z.object({
-  dco: z.boolean().optional(),
-  scopes: z.array(z.string()).optional(),
-  additionalScopes: z.array(z.string()).optional(),
-  releaseFormat: ReleaseFormatSchema.optional(),
-  emojis: z.boolean().default(false),
-  bodyMaxLineLength: z.number().positive().default(300),
-  noMarkdown: z.boolean().default(true),
-  cwd: z.string().optional(),
+// Internal: Effect Schema for validation and defaults
+export const ConfigOptionsSchema = Schema.Struct({
+  dco: Schema.optional(Schema.Boolean),
+  scopes: Schema.optional(Schema.Array(Schema.String)),
+  additionalScopes: Schema.optional(Schema.Array(Schema.String)),
+  releaseFormat: Schema.optional(ReleaseFormatSchema),
+  emojis: Schema.optionalWith(Schema.Boolean, { default: () => false }),
+  bodyMaxLineLength: Schema.optionalWith(Schema.Number.pipe(Schema.positive()), { default: () => 300 }),
+  noMarkdown: Schema.optionalWith(Schema.Boolean, { default: () => true }),
+  cwd: Schema.optional(Schema.String),
 });
 
-// Public: manually-written interface with rich JSDoc
-export interface ConfigOptions {
-  /** Enable DCO signoff requirement (auto-detected from DCO file if omitted) */
-  dco?: boolean;
-  /** Allowed scopes (replaces auto-detected when provided) */
-  scopes?: string[];
-  /** Additional scopes to merge with auto-detected */
-  additionalScopes?: string[];
-  /** Release commit format (auto-detected from versioning strategy if omitted) */
-  releaseFormat?: ReleaseFormat;
-  /** Enable emojis in prompt configuration @defaultValue false */
-  emojis?: boolean;
-  /** Maximum body line length @defaultValue 300 */
-  bodyMaxLineLength?: number;
-  /** Reject markdown formatting in commit messages @defaultValue true */
-  noMarkdown?: boolean;
-  /** Working directory for auto-detection @defaultValue process.cwd() */
-  cwd?: string;
-}
+// Synchronous decoder used by CommitlintConfig.silk(); throws ParseError on bad input
+export const decodeConfigOptions = Schema.decodeUnknownSync(ConfigOptionsSchema);
 
-// Resolved type after Zod parsing applies defaults (internal)
-export type ResolvedConfigOptions = z.output<typeof ConfigOptionsSchema>;
+// Resolved type after decoding applies defaults (internal)
+export type ResolvedConfigOptions = Schema.Schema.Type<typeof ConfigOptionsSchema>;
 ```
 
-The `ConfigOptions` interface is manually written rather than inferred from the
-Zod schema (`z.input<typeof ConfigOptionsSchema>`) to provide richer JSDoc
-documentation including `@remarks`, `@defaultValue`, and `@example` tags that
-Zod schemas cannot express. The Zod schema and interface are kept in sync
-manually.
+The `ConfigOptions` interface (not shown) is manually written rather than
+inferred from the schema so it can carry richer JSDoc — `@remarks`,
+`@defaultValue` and `@example` tags the schema cannot express. The schema and
+interface are kept in sync manually. `decodeConfigOptions` is
+`Schema.decodeUnknownSync(ConfigOptionsSchema)`, throwing a `ParseError` on
+invalid input to preserve the previous zod `.parse()` throw-on-failure contract.
 
 ### Custom Plugin System
 
@@ -863,101 +855,123 @@ export { checkCommand, hookCommand, initCommand, rootCommand };
 | `WorkspaceRootLive` | `WorkspaceRoot` (root directory detection) | `workspaces-effect` |
 | `NodeContext.layer` | `FileSystem`, `Path`, `Terminal` | `@effect/platform-node` |
 
-### Init Command - Managed Section Pattern
+### Shared Managed-Section Model
 
-The init command (`package/src/cli/commands/init.ts`) uses the `ManagedSection` service
-from `@savvy-web/silk-effects` to manage BEGIN/END markers in the husky
-hook. This replaces the previous manual marker parsing with a service-based
-approach. The service handles reading, writing, and updating managed sections
-in files, allowing users to add custom hooks above or below the managed block
-without them being overwritten on updates.
+As of silk-effects `^0.5.0`, the husky hooks are composed from **shared**
+managed sections that both `@savvy-web/commitlint` and its sibling
+`@savvy-web/lint-staged` write idempotently, rather than one combined
+commitlint-owned block. silk-effects owns the section generators; this package
+only chooses which sections go in which hook and what config path the tool
+section pins. There are three section identities:
+
+| Section | Hook(s) | Generator (silk-effects) | Guard | Ownership |
+| :------ | :------ | :----------------------- | :---- | :-------- |
+| `savvy-base` | `.husky/commit-msg` | `SavvyBaseSection` / `savvyBasePreamble()` | unguarded (pure definitions) | shared base |
+| `savvy-commit` | `.husky/commit-msg` | `savvyToolSection("savvy-commit", cmd)` | `in_ci \|\| …` (self-guarded) | this package |
+| `savvy-hooks` | `.husky/post-checkout`, `.husky/post-merge` | `SavvyHooksSection` / `savvyHooksHygiene()` | self-guarded against CI | co-owned with `@savvy-web/lint-staged` |
+
+`savvyBasePreamble()` emits the shared preamble — `ROOT=$(git rev-parse --show-toplevel)`,
+an `in_ci()` helper, `detect_pm()`, `PM=$(detect_pm)` and a `pm_exec()` helper
+standardized on local-exec semantics (`pnpm exec` / `yarn exec` / `bun x` / `npx --no`).
+It runs unguarded so the definitions are always in scope; each side-effecting
+section then guards itself with `in_ci || …`. This is the inversion of the
+earlier single-block design where the whole commitlint block lived behind one
+CI guard.
+
+`savvyToolSection("savvy-commit", cmd)` builds a one-line tool section:
+`in_ci || pm_exec commitlint --config "$ROOT/<path>" --edit "$1"`. The
+`savvy-hooks` hygiene section (`git config core.fileMode false` plus chmod of
+tracked `.sh` files, self-guarded against CI) was previously owned by
+`@savvy-web/lint-staged`; it is now a shared base concern both packages may
+write without conflict.
+
+### Init Command
+
+The init command (`package/src/cli/commands/init.ts`) writes the shared sections
+above into the husky hooks via the `ManagedSection` service. See the file for the
+exact orchestration; the load-bearing pieces:
 
 **Options:**
 
-- `--force` / `-f`: Overwrite the entire hook file, not just the managed section
+- `--force` / `-f`: Overwrite the `.husky/commit-msg` file (header + a fresh
+  re-sync of its sections). The hygiene sections in `post-checkout` / `post-merge`
+  are never force-reset — they are always `sync`'d idempotently.
 - `--config` / `-c`: Relative path for the commitlint config file (default:
-  `lib/configs/commitlint.config.ts`)
+  `lib/configs/commitlint.config.ts`). Must be relative to the repo root.
 
-**Key Functions:**
+**Key exports (consumed by the check command and tests):**
 
-| Function | Purpose |
-| :------- | :------ |
-| `generateManagedContent(configPath)` | Returns the inner content between markers. Includes package manager detection, CI skip guard, and commitlint invocation. |
-| `writeFullHook(path, configPath)` | Writes a fresh hook file with shebang header, then delegates to `ManagedSection.write()` for the managed block. |
+| Export | Purpose |
+| :----- | :------ |
+| `SECTION_DEF` | `SectionDefinition.make({ toolName: "savvy-commit" })` — the identity used to read/check/remove the tool section. |
+| `savvyCommitBlock(configPath)` | Returns the `savvy-commit` `SectionBlock` for a config path. Check rebuilds this to compare against the on-disk section. |
+| `generateManagedContent(configPath)` | `savvyCommitBlock(configPath).content` — retained for the check command and tests. |
 
 **ManagedSection service usage:**
 
-- `SectionDefinition.make({ toolName })` - Create a section definition
-- `sectionDef.block(content)` - Create a block with content for the section
-- `ms.sync(path, block)` - Sync managed section (creates, updates, or reports unchanged)
-- `ms.write(path, block)` - Write/overwrite managed section in a file
+- `ms.syncMany(path, blocks[])` — sync an **ordered** list of sections in one
+  pass, preserving user content above, below and between them. Used for
+  `.husky/commit-msg`: `[SavvyBaseSection.block(savvyBasePreamble()), savvyCommitBlock(config)]`.
+- `ms.sync(path, block)` — sync a single section. Used for the `savvy-hooks`
+  hygiene section in `post-checkout` / `post-merge`.
+- `ms.check(path, block)` / `ms.read(path, def)` — used by the check command (below).
+- `ms.remove(path, def)` — also available from the `^0.5.0` API for tearing a
+  section back out.
 
-The `extractManagedSection` and `updateManagedSection` functions from the
-previous implementation have been removed; their logic is now encapsulated
-in the `ManagedSection` service.
+`init` ensures each hook file exists (writing a shebang header if absent), runs
+the relevant sync, then `chmod`s the file executable. The commit-msg sync logs
+the per-section tagged results (`Created` / `Updated` / `Unchanged`). It also
+creates the commitlint config file, respecting `--config` and creating parent
+directories as needed.
 
-**CI Skip Guard:**
+Users may add custom commands above, below, or between the managed sections;
+the markers are preserved across re-runs.
 
-The managed section uses an `if ! { ... }; then ... fi` pattern instead of
-`exit 0` so that user code outside the managed block still runs even in CI:
+### Check Command - Per-Section Health
 
-```bash
-if ! { [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; }; then
-  # ... commitlint invocation ...
-fi
-```
-
-**Three-Branch Hook Handling:**
-
-1. **Exists + no force**: Sync managed section via `ms.sync()` which returns
-   a tagged result (`Updated`, `Created`, or `Unchanged`). Preserves user
-   code above/below the markers.
-2. **Exists + force**: Overwrite the entire file with
-   `generateFullHookContent()`. Logs "Replaced (--force)".
-3. **New file**: Create `.husky/` directory and write fresh hook with
-   `generateFullHookContent()`. Logs "Created".
-
-The command also handles the commitlint config file creation, respecting the
-`--config` path option and creating parent directories as needed.
-
-### Check Command - Managed Section Status
-
-The check command (`package/src/cli/commands/check.ts`) validates the current commitlint
-setup and reports detected settings, including managed section status. It uses
-`CheckResult`, `ManagedSection`, and `VersioningStrategy` from
-`@savvy-web/silk-effects`.
-
-**Service dependencies:**
-
-```typescript
-import { CheckResult, ManagedSection, VersioningStrategy } from "@savvy-web/silk-effects";
-import { WorkspaceDiscovery } from "workspaces-effect";
-```
+The check command (`package/src/cli/commands/check.ts`) validates the current
+commitlint setup, reports detected settings, and checks each shared managed
+section independently. It uses `CheckResult`, `ManagedSection`,
+`VersioningStrategy` plus the shared section generators
+(`SavvyBaseSection` / `savvyBasePreamble`, `SavvyHooksSection` /
+`savvyHooksHygiene`) from `@savvy-web/silk-effects`, and `WorkspaceDiscovery`
+from `workspaces-effect`.
 
 **Key Functions:**
 
 | Function | Purpose |
 | :------- | :------ |
-| `findConfigFile(fs)` | Searches for commitlint config across 16 possible file names in priority order. |
-| `extractConfigPathFromManaged(managedContent)` | Extracts the config path from the `commitlint --config "$ROOT/{path}"` pattern in the managed section. |
-| `checkManagedSectionStatus(existingManaged)` | Compares the current managed section against what would be generated to determine if it is up-to-date. |
-| `detectReleaseFormat` | Effect that uses `VersioningStrategy` and `WorkspaceDiscovery` services to detect the release format. |
+| `findConfigFile(fs)` | Searches for the commitlint config across the `CONFIG_FILES` list in priority order. |
+| `extractConfigPathFromManaged(managedContent)` | Extracts the config path from the `commitlint --config "$ROOT/{path}"` pattern, so the rebuilt `savvy-commit` block compares against whatever path is actually pinned. |
+| `detectReleaseFormat` | Effect that uses `VersioningStrategy` and `WorkspaceDiscovery` to detect the release format. |
 
-**Managed Section Status Reporting:**
+**Section health, factored into the verdict:**
 
-The check command reports one of three states for the managed section:
+`check` evaluates each section via `ms.check(path, block)`, treating only
+`CheckResult.Found` with `isUpToDate` as healthy. A single `sectionsHealthy`
+flag accumulates across all sections:
 
-- **Up-to-date**: Managed section matches what `generateManagedContent()` would
-  produce (with whitespace normalization for comparison).
-- **Outdated**: Managed section exists but content has drifted. Suggests running
-  `savvy-commit init` to update.
-- **Not found**: No managed section markers detected. Suggests running
-  `savvy-commit init` to add one.
+- **`savvy-base`** (in `.husky/commit-msg`): checked against
+  `SavvyBaseSection.block(savvyBasePreamble())`.
+- **`savvy-commit`** (in `.husky/commit-msg`): the tool section is `read` first
+  to recover its pinned config path, then `check`ed against
+  `savvyCommitBlock(configPath)`. Missing path or missing section both count as
+  unhealthy.
+- **`savvy-hooks`** (in `.husky/post-checkout` and `.husky/post-merge`): each
+  hygiene hook is checked for existence and against
+  `SavvyHooksSection.block(savvyHooksHygiene())`.
+
+Each section reports up-to-date / outdated / not-found. The final verdict is now
+`!foundConfig || !hasHuskyHook || !sectionsHealthy` — i.e. a stale or missing
+section in **any** of the three hooks makes `check` report "needs configuration",
+whereas the earlier verdict only checked config-file and commit-msg-hook
+existence.
 
 **Additional Checks:**
 
-- Config file presence (searches 16 possible filenames)
-- Husky hook presence
+- Config file presence (searches the `CONFIG_FILES` list)
+- Husky commit-msg hook presence
+- Hygiene hook (`post-checkout` / `post-merge`) presence and section freshness
 - DCO file presence
 - Detected settings (DCO, release format, scopes)
 
@@ -1325,10 +1339,9 @@ Users who prefer `@commitlint/cz-commitlint` can install it separately.
 ```json
 {
   "dependencies": {
-    "@savvy-web/silk-effects": "^0.2.2",
-    "workspaces-effect": "^0.3.0",
-    "shell-quote": "^1.8.3",
-    "zod": "^4.3.6"
+    "@savvy-web/silk-effects": "^0.5.0",
+    "workspaces-effect": "^1.1.0",
+    "shell-quote": "^1.8.4"
   }
 }
 ```
@@ -1338,6 +1351,19 @@ by `workspaces-effect` (for workspace/scope discovery) and
 `@savvy-web/silk-effects` (for managed sections and versioning strategy).
 `shell-quote` was added in 0.7.0 to tokenize Bash command strings inside the
 `hook` subcommand tree's commit-message parser.
+
+`zod` has been removed: config validation migrated to Effect `Schema` (see
+"Effect Schema for Configuration Validation"), so the package no longer carries
+a second validation library alongside Effect.
+
+silk-effects `^0.5.0` adds the shared managed-section API consumed by `init`
+and `check`: `ManagedSection.syncMany` / `ManagedSection.remove`, the section
+generators `SavvyBaseSection` / `savvyBasePreamble`, `SavvyHooksSection` /
+`savvyHooksHygiene`, and `savvyToolSection` (see "Shared Managed-Section Model").
+
+workspaces-effect `^1.1.0` adds a `refresh()` method to the `WorkspaceDiscovery`
+service; test stubs of the service therefore implement
+`refresh: () => Effect.void` alongside the existing methods.
 
 ### CLI Dependencies (bundled via Effect catalog)
 
@@ -1400,23 +1426,26 @@ export { default } from "@savvy-web/commitlint/static";
 
 ### Husky Integration
 
-Run `savvy-commit init` to generate `.husky/commit-msg` with a managed section.
-The generated hook auto-detects the package manager and uses the correct
-`dlx`/`npx` equivalent. Users can add custom hooks above or below the managed
-section markers without them being overwritten on subsequent `init` runs.
+Run `savvy-commit init` to generate the husky hooks with shared managed sections.
+`.husky/commit-msg` gets the `savvy-base` preamble (package-manager detection plus
+`in_ci` / `pm_exec` helpers) followed by the one-line `savvy-commit` tool section
+that invokes commitlint. `.husky/post-checkout` and `.husky/post-merge` get the
+co-owned `savvy-hooks` hygiene section. Users can add custom hooks above, below,
+or between the markers without them being overwritten on subsequent `init` runs.
 
 ```bash
 #!/usr/bin/env sh
-# Custom hooks can go here (above managed section)
+# Custom hooks can go here (above the managed sections)
+
+# --- BEGIN SAVVY-BASE MANAGED SECTION ---
+# ROOT, in_ci(), detect_pm(), PM, pm_exec() — shared preamble, runs unguarded
+# --- END SAVVY-BASE MANAGED SECTION ---
 
 # --- BEGIN SAVVY-COMMIT MANAGED SECTION ---
-# DO NOT EDIT between these markers - managed by savvy-commit
-if ! { [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; }; then
-  # ... package manager detection and commitlint invocation ...
-fi
+in_ci || pm_exec commitlint --config "$ROOT/lib/configs/commitlint.config.ts" --edit "$1"
 # --- END SAVVY-COMMIT MANAGED SECTION ---
 
-# Custom hooks can go here (below managed section)
+# Custom hooks can go here (below the managed sections)
 ```
 
 ### Formatter Configuration
@@ -1717,7 +1746,10 @@ describe("commitlint integration", () => {
 
 **Document Status:** Current - Core implementation complete, CLI implemented,
 migrated to silk-effects, plugin hook architecture extended (Phase 8), `tdd`
-commit type and `silk/tdd-scope` rule added (feat/tdd branch).
+commit type and `silk/tdd-scope` rule added (feat/tdd branch), husky hooks
+split into shared `savvy-base` + `savvy-commit` + co-owned `savvy-hooks` hygiene
+sections via silk-effects `^0.5.0` `syncMany`, config validation migrated from
+zod to Effect Schema, workspaces-effect bumped to `^1.1.0`.
 
 **Completed:**
 
@@ -1756,6 +1788,17 @@ commit type and `silk/tdd-scope` rule added (feat/tdd branch).
     redirects to absolute / home-dir / traversal paths~~
 24. ~~Update `session-start` quality block: no artificial line breaks,
     2-5 line body max, `<skip_in_body>` noise-exclusion list~~
+25. ~~Split `.husky/commit-msg` into shared `savvy-base` preamble + one-line
+    `savvy-commit` tool section via silk-effects `^0.5.0` `syncMany`; co-own
+    `savvy-hooks` hygiene in `.husky/post-checkout` / `.husky/post-merge` with
+    `@savvy-web/lint-staged`~~
+26. ~~Factor per-section health (`savvy-base` / `savvy-commit` / `savvy-hooks`)
+    into `savvy-commit check`'s "configured correctly" verdict~~
+27. ~~Migrate `package/src/config/schema.ts` off zod to Effect `Schema`; expose
+    synchronous `decodeConfigOptions` from `CommitlintConfig.silk()`; drop
+    `zod` dependency~~
+28. ~~Bump `workspaces-effect` to `^1.1.0` (new `WorkspaceDiscovery.refresh()`
+    method, reflected in test stubs)~~
 
 **Next Steps:**
 

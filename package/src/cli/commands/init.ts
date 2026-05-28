@@ -6,9 +6,18 @@
 import { dirname } from "node:path";
 import { Command, Options } from "@effect/cli";
 import { FileSystem } from "@effect/platform";
-import { ManagedSection, SectionDefinition } from "@savvy-web/silk-effects";
+import type { SectionBlock } from "@savvy-web/silk-effects";
+import {
+	ManagedSection,
+	SavvyBaseSection,
+	SavvyHooksSection,
+	SectionDefinition,
+	savvyBasePreamble,
+	savvyHooksHygiene,
+	savvyToolSection,
+} from "@savvy-web/silk-effects";
 import { Effect } from "effect";
-import { CHECK_MARK, HUSKY_HOOK_PATH, WARNING } from "./constants.js";
+import { CHECK_MARK, HUSKY_HOOK_PATH, POST_CHECKOUT_HOOK_PATH, POST_MERGE_HOOK_PATH, WARNING } from "./constants.js";
 
 /** Executable file permission mode. */
 const EXECUTABLE_MODE = 0o755;
@@ -16,85 +25,68 @@ const EXECUTABLE_MODE = 0o755;
 /** Default path for the commitlint config file. */
 const DEFAULT_CONFIG_PATH = "lib/configs/commitlint.config.ts";
 
-/** Section definition for the savvy-commit managed section in shell hooks. */
+/** Section definition for the savvy-commit tool section (identity for read/check/remove). */
 export const SECTION_DEF = SectionDefinition.make({ toolName: "savvy-commit" });
 
+/** Header written when creating a fresh commit-msg hook. */
+const COMMIT_MSG_HEADER =
+	"#!/usr/bin/env sh\n# Commit-msg hook with savvy managed sections\n# Custom hooks can go above, below, or between the managed sections\n\n";
+
+/** Header written when creating a fresh hygiene hook (post-checkout / post-merge). */
+const HYGIENE_HEADER =
+	"#!/usr/bin/env sh\n# Managed by savvy-hooks\n# Custom hooks can go above or below the managed section\n\n";
+
 /**
- * Generate the managed section content for the commit-msg hook.
+ * Build the commitlint command run inside the savvy-commit tool section.
+ *
+ * @param configPath - Path to the commitlint config file (relative to repo root)
+ */
+function commitlintCommand(configPath: string): string {
+	return `commitlint --config "$ROOT/${configPath}" --edit "$1"`;
+}
+
+/**
+ * Build the savvy-commit tool section block for the given config path.
+ *
+ * @remarks
+ * Depends on the savvy-base preamble (`in_ci`, `pm_exec`) preceding it in the hook.
+ *
+ * @remarks
+ * Exported for reuse by the check command, which rebuilds this block to compare against the on-disk section.
+ */
+export function savvyCommitBlock(configPath: string): SectionBlock {
+	return savvyToolSection("savvy-commit", commitlintCommand(configPath));
+}
+
+/**
+ * Rendered content of the savvy-commit tool section.
+ *
+ * @remarks
+ * Named export retained for the check command and tests; equals
+ * `savvyCommitBlock(configPath).content`.
  *
  * @param configPath - Path to the commitlint config file
- * @returns The managed section content (without markers)
  */
 export function generateManagedContent(configPath: string): string {
-	return `# DO NOT EDIT between these markers - managed by savvy-commit
-# Skip managed section in CI environment
-if ! { [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; }; then
-
-# Get repo root directory
-ROOT=$(git rev-parse --show-toplevel)
-
-# Detect package manager from package.json or lockfiles
-detect_pm() {
-  # Check packageManager field in package.json (e.g., "pnpm@9.0.0")
-  if [ -f "$ROOT/package.json" ]; then
-    pm=$(jq -r '.packageManager // empty' "$ROOT/package.json" 2>/dev/null | cut -d'@' -f1)
-    if [ -n "$pm" ]; then
-      echo "$pm"
-      return
-    fi
-  fi
-
-  # Fallback to lockfile detection
-  if [ -f "$ROOT/pnpm-lock.yaml" ]; then
-    echo "pnpm"
-  elif [ -f "$ROOT/yarn.lock" ]; then
-    echo "yarn"
-  elif [ -f "$ROOT/bun.lock" ]; then
-    echo "bun"
-  else
-    echo "npm"
-  fi
+	return savvyCommitBlock(configPath).content;
 }
 
-# Run commitlint via the detected package manager
-PM=$(detect_pm)
-case "$PM" in
-  pnpm) pnpm exec commitlint --config "$ROOT/${configPath}" --edit "$1" ;;
-  yarn) yarn dlx commitlint --config "$ROOT/${configPath}" --edit "$1" ;;
-  bun)  bun x commitlint --config "$ROOT/${configPath}" --edit "$1" ;;
-  *)    npx --no -- commitlint --config "$ROOT/${configPath}" --edit "$1" ;;
-esac
-
-fi`;
-}
-
-/**
- * Write a fresh hook file with header and managed section.
- *
- * @param path - Hook file path
- * @param configPath - Path to the commitlint config file
- * @returns Effect that creates the hook file
- */
-function writeFullHook(path: string, configPath: string) {
+/** Ensure a hook file exists, writing `header` if it does not. */
+function ensureHookFile(path: string, header: string) {
 	return Effect.gen(function* () {
 		const fs = yield* FileSystem.FileSystem;
-		const ms = yield* ManagedSection;
-		const header =
-			"#!/usr/bin/env sh\n# Commit-msg hook with savvy-commit managed section\n# Custom hooks can go above or below the managed section\n\n";
-		yield* fs.writeFileString(path, header);
-		yield* ms.write(path, SECTION_DEF.block(generateManagedContent(configPath)));
+		const exists = yield* fs.exists(path);
+		if (!exists) {
+			yield* fs.writeFileString(path, header);
+		}
 	});
 }
 
-/** Content for the commitlint config file. */
-const CONFIG_CONTENT = `import { CommitlintConfig } from "@savvy-web/commitlint";
-
-export default CommitlintConfig.silk();
-`;
-
 const forceOption = Options.boolean("force").pipe(
 	Options.withAlias("f"),
-	Options.withDescription("Overwrite entire hook file (not just managed section)"),
+	Options.withDescription(
+		"Overwrite the commit-msg hook and config file entirely (managed sections in post-checkout/post-merge are never force-reset)",
+	),
 	Options.withDefault(false),
 );
 
@@ -104,12 +96,13 @@ const configOption = Options.text("config").pipe(
 	Options.withDefault(DEFAULT_CONFIG_PATH),
 );
 
-/**
- * Make a file executable.
- *
- * @param path - File path to make executable
- * @returns Effect that makes the file executable
- */
+/** Content for the commitlint config file. */
+const CONFIG_CONTENT = `import { CommitlintConfig } from "@savvy-web/commitlint";
+
+export default CommitlintConfig.silk();
+`;
+
+/** Make a file executable. */
 function makeExecutable(path: string) {
 	return Effect.tryPromise(() => import("node:fs/promises").then((fsp) => fsp.chmod(path, EXECUTABLE_MODE)));
 }
@@ -118,12 +111,13 @@ function makeExecutable(path: string) {
  * Init command implementation.
  *
  * @remarks
- * Creates the necessary configuration files for commitlint:
- * - `.husky/commit-msg` hook with managed section
- * - Commitlint config at the specified path
+ * Writes:
+ * - `.husky/commit-msg` — savvy-base preamble + savvy-commit tool section.
+ * - `.husky/post-checkout` and `.husky/post-merge` — savvy-hooks hygiene
+ *   (co-owned with `@savvy-web/lint-staged`; idempotent).
+ * - The commitlint config file.
  *
- * The managed section feature allows users to add custom hooks above/below
- * the savvy-commit section without them being overwritten on updates.
+ * Users may add custom commands above, below, or between the managed sections.
  */
 export const initCommand = Command.make("init", { force: forceOption, config: configOption }, ({ force, config }) =>
 	Effect.gen(function* () {
@@ -136,38 +130,33 @@ export const initCommand = Command.make("init", { force: forceOption, config: co
 
 		yield* Effect.log("Initializing commitlint configuration...\n");
 
-		// Handle husky hook
-		const huskyExists = yield* fs.exists(HUSKY_HOOK_PATH);
+		yield* fs.makeDirectory(".husky", { recursive: true });
 
-		if (huskyExists && !force) {
-			// Sync managed section (creates, updates, or reports unchanged)
-			const block = SECTION_DEF.block(generateManagedContent(config));
-			const result = yield* ms.sync(HUSKY_HOOK_PATH, block);
-			yield* makeExecutable(HUSKY_HOOK_PATH);
-
-			if (result._tag === "Updated") {
-				yield* Effect.log(`${CHECK_MARK} Updated managed section in ${HUSKY_HOOK_PATH}`);
-			} else if (result._tag === "Created") {
-				yield* Effect.log(`${CHECK_MARK} Added managed section to ${HUSKY_HOOK_PATH}`);
-			} else {
-				yield* Effect.log(`${CHECK_MARK} Managed section already up-to-date in ${HUSKY_HOOK_PATH}`);
-			}
-		} else if (huskyExists && force) {
-			// Force: overwrite entire file
-			yield* writeFullHook(HUSKY_HOOK_PATH, config);
-			yield* makeExecutable(HUSKY_HOOK_PATH);
-			yield* Effect.log(`${CHECK_MARK} Replaced ${HUSKY_HOOK_PATH} (--force)`);
+		// commit-msg: savvy-base preamble then savvy-commit tool section, in order.
+		if (force) {
+			yield* fs.writeFileString(HUSKY_HOOK_PATH, COMMIT_MSG_HEADER);
 		} else {
-			// Create new hook
-			yield* fs.makeDirectory(".husky", { recursive: true });
-			yield* writeFullHook(HUSKY_HOOK_PATH, config);
-			yield* makeExecutable(HUSKY_HOOK_PATH);
-			yield* Effect.log(`${CHECK_MARK} Created ${HUSKY_HOOK_PATH}`);
+			yield* ensureHookFile(HUSKY_HOOK_PATH, COMMIT_MSG_HEADER);
+		}
+		const commitResults = yield* ms.syncMany(HUSKY_HOOK_PATH, [
+			SavvyBaseSection.block(savvyBasePreamble()),
+			savvyCommitBlock(config),
+		]);
+		yield* makeExecutable(HUSKY_HOOK_PATH);
+		yield* Effect.log(
+			`${CHECK_MARK} ${force ? "Replaced" : "Synced"} ${HUSKY_HOOK_PATH} (${commitResults.map((r) => r._tag).join(", ")})`,
+		);
+
+		// post-checkout / post-merge: co-owned savvy-hooks hygiene.
+		for (const hookPath of [POST_CHECKOUT_HOOK_PATH, POST_MERGE_HOOK_PATH]) {
+			yield* ensureHookFile(hookPath, HYGIENE_HEADER);
+			yield* ms.sync(hookPath, SavvyHooksSection.block(savvyHooksHygiene()));
+			yield* makeExecutable(hookPath);
+			yield* Effect.log(`${CHECK_MARK} Synced ${hookPath}`);
 		}
 
-		// Handle config file
+		// Config file.
 		const configExists = yield* fs.exists(config);
-
 		if (configExists && !force) {
 			yield* Effect.log(`${WARNING} ${config} already exists (use --force to overwrite)`);
 		} else {

@@ -11,7 +11,7 @@ Commitlint configuration that reads your repository at load time — checking fo
 
 - **Auto-detection** — scans for a `DCO` file, workspace packages and changeset config; no manual flags required
 - **Zero config** — `CommitlintConfig.silk()` picks the right rules; no flags needed
-- **Type-safe** — ships full TypeScript types; Zod validates every detected value at load time
+- **Type-safe** — ships full TypeScript types; Effect Schema validates every option at load time
 - **Extended types** — adds `ai`, `release` and `tdd` commit types on top of the conventional-commits baseline
 - **Interactive prompts** — includes a commitizen adapter with emoji support
 - **`savvy-commit` CLI** — initializes config and reports detected settings with a single command
@@ -23,7 +23,7 @@ This is a monorepo containing two packages:
 
 | Directory | Description |
 | --- | --- |
-| [`package/`](./package/) | The `@savvy-web/commitlint` npm package: config factory, interactive prompt, Zod detection and the `savvy-commit` CLI. |
+| [`package/`](./package/) | The `@savvy-web/commitlint` npm package: config factory, interactive prompt, repo auto-detection and the `savvy-commit` CLI. |
 | [`plugin/`](./plugin/) | A Claude Code sidecar that registers `SessionStart`, `PreToolUse`, `PostToolUse` and `UserPromptSubmit` hooks — injects branch and signing context, auto-allows safe Bash and curated MCP operations, and replays commitlint plus signing checks after each commit. |
 
 ## Quick start
