@@ -32,7 +32,7 @@ tracked `.sh` files stay executable across platforms:
 
 ```sh
 git config core.fileMode false
-find . -name "*.sh" -not -path "./.git/*" | xargs chmod +x 2>/dev/null || true
+git ls-files -z '*.sh' | xargs -0 chmod +x 2>/dev/null || true
 ```
 
 The write is self-guarded and idempotent — running `init` twice or
@@ -66,11 +66,12 @@ try {
 }
 
 // After — Effect Schema ParseError
-import { ParseError } from "@effect/schema/ParseResult";
+import { ParseResult } from "effect";
+
 try {
   CommitlintConfig.silk(badOptions);
 } catch (e) {
-  if (e instanceof ParseError) { /* ... */ }
+  if (e instanceof ParseResult.ParseError) { /* ... */ }
 }
 ```
 
