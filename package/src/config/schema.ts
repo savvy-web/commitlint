@@ -6,17 +6,6 @@
 import { Schema } from "effect";
 
 /**
- * Release format schema for the release commit type.
- *
- * @remarks
- * Determines how release commits are formatted based on versioning strategy:
- * - `semver`: `release: v1.2.3` (for single/fixed-group versioning)
- * - `packages`: `release: version packages` (for independent versioning)
- * - `scoped`: `release(pkg): v1.2.3` (for per-package releases)
- *
- * @internal
- */
-/**
  * Release format type for the release commit type.
  *
  * @remarks
@@ -29,6 +18,11 @@ import { Schema } from "effect";
  */
 export type ReleaseFormat = "semver" | "packages" | "scoped";
 
+/**
+ * Effect Schema for {@link ReleaseFormat}.
+ *
+ * @internal
+ */
 export const ReleaseFormatSchema = Schema.Literal("semver", "packages", "scoped");
 
 /**
