@@ -60,11 +60,11 @@
 		"workspaces-effect": "^1.1.0"
 	},
 	"devDependencies": {
-		"@commitlint/cli": "^21.0.1",
-		"@commitlint/config-conventional": "^21.0.1",
-		"@commitlint/lint": "^21.0.1",
+		"@commitlint/cli": "^21.0.2",
+		"@commitlint/config-conventional": "^21.0.2",
+		"@commitlint/lint": "^21.0.2",
 		"@commitlint/types": "^21.0.1",
-		"@savvy-web/rslib-builder": "^0.20.10",
+		"@savvy-web/rslib-builder": "^0.20.11",
 		"@types/node": "catalog:silk",
 		"@types/shell-quote": "^1.7.5",
 		"@typescript/native-preview": "catalog:silk",
@@ -73,8 +73,8 @@
 		"typescript": "catalog:silk"
 	},
 	"peerDependencies": {
-		"@commitlint/cli": "^21.0.1",
-		"@commitlint/config-conventional": "^21.0.1",
+		"@commitlint/cli": "^21.0.2",
+		"@commitlint/config-conventional": "^21.0.2",
 		"commitizen": "^4.3.0",
 		"husky": "^9.1.0"
 	},
