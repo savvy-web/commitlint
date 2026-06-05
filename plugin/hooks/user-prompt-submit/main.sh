@@ -21,8 +21,8 @@ if echo "$PROMPT" | grep -iqE '(\bcommit\b|\bcommitting\b|\bship (it|this)\b|\bw
   RUN=$(bash "${CLAUDE_PLUGIN_ROOT}/hooks/lib/run-cli.sh")
   err=$(mktemp -t commitlint-user-prompt.XXXXXX)
   trap 'rm -f "$err"' EXIT
-  if ! echo "$ENVELOPE" | $RUN savvy-commit hook user-prompt-submit 2>"$err"; then
-    hook_error "user-prompt-submit" "savvy-commit hook user-prompt-submit failed: $(tr '\n' ' ' < "$err")"
+  if ! echo "$ENVELOPE" | $RUN savvy commit hook user-prompt-submit 2>"$err"; then
+    hook_error "user-prompt-submit" "savvy commit hook user-prompt-submit failed: $(tr '\n' ' ' < "$err")"
   fi
 fi
 exit 0

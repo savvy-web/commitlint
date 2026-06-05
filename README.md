@@ -34,7 +34,7 @@ npm install -D @savvy-web/commitlint @commitlint/cli @commitlint/config-conventi
 
 ```typescript
 // commitlint.config.ts
-import { CommitlintConfig } from "@savvy-web/commitlint";
+import { CommitlintConfig } from "@savvy-web/silk/commitlint";
 
 export default CommitlintConfig.silk();
 ```

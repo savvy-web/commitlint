@@ -23,7 +23,7 @@ fi
 RUN=$(bash "${CLAUDE_PLUGIN_ROOT}/hooks/lib/run-cli.sh")
 err=$(mktemp -t commitlint-session-start.XXXXXX)
 trap 'rm -f "$err"' EXIT
-if ! $RUN savvy-commit hook session-start 2>"$err"; then
-  hook_error "session-start" "savvy-commit hook session-start failed: $(tr '\n' ' ' < "$err")"
+if ! $RUN savvy commit hook session-start 2>"$err"; then
+  hook_error "session-start" "savvy commit hook session-start failed: $(tr '\n' ' ' < "$err")"
   exit 0
 fi

@@ -9,10 +9,10 @@ This monorepo ships `@savvy-web/commitlint` plus a companion Claude Code
 plugin that enforces commit conventions for savvy-web projects.
 
 - `package/` — the `@savvy-web/commitlint` npm package (config factory,
-  prompt, formatter, `savvy-commit` CLI, and the internal `savvy-commit hook`
+  prompt, formatter, `savvy-commit` CLI, and the internal `savvy commit hook`
   subcommand tree).
 - `plugin/` — Claude Code plugin (`commitlint`) registering bash hooks that
-  shim into `savvy-commit hook`.
+  shim into `savvy commit hook`.
 
 ## Design Documentation
 
@@ -118,7 +118,7 @@ bats plugin/hooks/__test__/match-safe-bash.bats
   husky hook presence, and all three managed-section identities, factoring
   section health into the verdict). `commands/constants.ts` holds the
   three husky hook paths. `commands/hook.ts` parents the **internal**
-  `savvy-commit hook` subcommand tree under `commands/hooks/`
+  `savvy commit hook` subcommand tree under `commands/hooks/`
   (`session-start`, `pre-commit-message`, `post-commit-verify`,
   `user-prompt-submit`).
 - `hook/` — helpers shared by hook subcommands: Effect Schemas for the four
@@ -151,7 +151,7 @@ Helpers under `plugin/hooks/lib/`:
 - `safe-mcp-*.txt` — allow-lists for MCP operation suffixes.
 
 The hot path (allow-list match) is cheap pure bash; the cold path delegates
-to `savvy-commit hook` over JSON on stdio. Hooks are invoked as
+to `savvy commit hook` over JSON on stdio. Hooks are invoked as
 `bash <script>` from `hooks.json`; **do not chmod +x them**.
 
 ### Stdout Contract

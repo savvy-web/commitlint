@@ -54,7 +54,7 @@
 		"@effect/printer-ansi": "catalog:silk",
 		"@effect/rpc": "catalog:silk",
 		"@effect/sql": "catalog:silk",
-		"@savvy-web/silk-effects": "^0.5.0",
+		"@savvy-web/silk-effects": "^0.6.1",
 		"effect": "catalog:silk",
 		"shell-quote": "^1.8.4",
 		"workspaces-effect": "^1.1.0"
@@ -64,7 +64,7 @@
 		"@commitlint/config-conventional": "^21.0.2",
 		"@commitlint/lint": "^21.0.2",
 		"@commitlint/types": "^21.0.1",
-		"@savvy-web/rslib-builder": "^0.20.11",
+		"@savvy-web/rslib-builder": "^0.21.3",
 		"@types/node": "catalog:silk",
 		"@types/shell-quote": "^1.7.5",
 		"@typescript/native-preview": "catalog:silk",

@@ -32,8 +32,8 @@ if bash "${CLAUDE_PLUGIN_ROOT}/hooks/lib/is-commit-related.sh" "$COMMAND"; then
   RUN=$(bash "${CLAUDE_PLUGIN_ROOT}/hooks/lib/run-cli.sh")
   err=$(mktemp -t commitlint-pre-bash.XXXXXX)
   trap 'rm -f "$err"' EXIT
-  if ! echo "$ENVELOPE" | $RUN savvy-commit hook pre-commit-message 2>"$err"; then
-    hook_error "pre-tool-use/bash" "savvy-commit hook pre-commit-message failed: $(tr '\n' ' ' < "$err")"
+  if ! echo "$ENVELOPE" | $RUN savvy commit hook pre-commit-message 2>"$err"; then
+    hook_error "pre-tool-use/bash" "savvy commit hook pre-commit-message failed: $(tr '\n' ' ' < "$err")"
   fi
 fi
 exit 0

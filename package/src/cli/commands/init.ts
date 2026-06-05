@@ -97,7 +97,7 @@ const configOption = Options.text("config").pipe(
 );
 
 /** Content for the commitlint config file. */
-const CONFIG_CONTENT = `import { CommitlintConfig } from "@savvy-web/commitlint";
+const CONFIG_CONTENT = `import { CommitlintConfig } from "@savvy-web/silk/commitlint";
 
 export default CommitlintConfig.silk();
 `;

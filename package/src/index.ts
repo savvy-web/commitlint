@@ -9,7 +9,7 @@
  * @example
  * ```typescript
  * // commitlint.config.ts
- * import { CommitlintConfig } from "@savvy-web/commitlint";
+ * import { CommitlintConfig } from "@savvy-web/silk/commitlint";
  *
  * // Auto-detect everything
  * export default CommitlintConfig.silk();
@@ -55,7 +55,7 @@ export type { CommitlintUserConfig, ConfigOptions };
  *
  * @example
  * ```typescript
- * import { CommitlintConfig } from "@savvy-web/commitlint";
+ * import { CommitlintConfig } from "@savvy-web/silk/commitlint";
  *
  * // Auto-detect everything
  * export default CommitlintConfig.silk();

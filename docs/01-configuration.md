@@ -7,7 +7,7 @@ Reference for all options accepted by `@savvy-web/commitlint`.
 The `CommitlintConfig.silk()` method accepts an options object to customize behavior:
 
 ```typescript
-import { CommitlintConfig } from "@savvy-web/commitlint";
+import { CommitlintConfig } from "@savvy-web/silk/commitlint";
 
 export default CommitlintConfig.silk({
   dco: true,                    // Override DCO detection

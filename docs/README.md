@@ -18,7 +18,7 @@
 Reads the repository at load time and generates rules to match:
 
 ```typescript
-import { CommitlintConfig } from "@savvy-web/commitlint";
+import { CommitlintConfig } from "@savvy-web/silk/commitlint";
 
 export default CommitlintConfig.silk();
 // returns a commitlint configuration object

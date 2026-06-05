@@ -140,7 +140,7 @@ To set up without the CLI:
 1. Create `commitlint.config.ts` (or `lib/configs/commitlint.config.ts`):
 
    ```typescript
-   import { CommitlintConfig } from "@savvy-web/commitlint";
+   import { CommitlintConfig } from "@savvy-web/silk/commitlint";
 
    export default CommitlintConfig.silk();
    ```
