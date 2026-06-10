@@ -1,5 +1,13 @@
 # @savvy-web/commitlint
 
+> [!CAUTION]
+> **This package is deprecated and no longer maintained.**
+> Its commitlint config now ships in [`@savvy-web/silk`](https://www.npmjs.com/package/@savvy-web/silk),
+> set up and validated by the [`savvy`](https://www.npmjs.com/package/@savvy-web/cli) CLI
+> (`savvy commit` / `savvy check` replace `savvy-commit`).
+> Sources live in the [Silk Suite monorepo](https://github.com/savvy-web/systems).
+> No further releases, fixes, or security patches will be published here.
+
 [![npm version](https://img.shields.io/npm/v/@savvy-web/commitlint)](https://www.npmjs.com/package/@savvy-web/commitlint)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-24%2B-339933?logo=node.js)](https://nodejs.org/)
@@ -26,7 +34,7 @@ npm install -D @savvy-web/commitlint @commitlint/cli @commitlint/config-conventi
 
 ```typescript
 // commitlint.config.ts
-import { CommitlintConfig } from "@savvy-web/silk/commitlint";
+import { CommitlintConfig } from "@savvy-web/commitlint";
 
 export default CommitlintConfig.silk();
 ```

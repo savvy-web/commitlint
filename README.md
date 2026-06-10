@@ -1,5 +1,13 @@
 # @savvy-web/commitlint
 
+> [!CAUTION]
+> **This package is deprecated and no longer maintained.**
+> Its commitlint config now ships in [`@savvy-web/silk`](https://www.npmjs.com/package/@savvy-web/silk),
+> set up and validated by the [`savvy`](https://www.npmjs.com/package/@savvy-web/cli) CLI
+> (`savvy commit` / `savvy check` replace `savvy-commit`).
+> Sources live in the [Silk Suite monorepo](https://github.com/savvy-web/systems).
+> No further releases, fixes or security patches will be published here.
+
 [![npm version](https://img.shields.io/npm/v/@savvy-web/commitlint?label=npm&color=cb3837)](https://www.npmjs.com/package/@savvy-web/commitlint)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4caf50.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-24%2B-5fa04e?logo=node.js)](https://nodejs.org/)

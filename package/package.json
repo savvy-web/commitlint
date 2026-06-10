@@ -40,9 +40,9 @@
 		"savvy-commit": "./src/bin/cli.ts"
 	},
 	"scripts": {
-		"build:dev": "rslib build --env-mode dev",
-		"build:prod": "rslib build --env-mode npm",
-		"prepare": "rslib build --config-loader native --env-mode dev",
+		"build:dev": "node savvy.build.ts --target dev",
+		"build:meta": "node savvy.build.ts --target meta",
+		"build:prod": "node savvy.build.ts --target prod",
 		"types:check": "tsgo --noEmit"
 	},
 	"dependencies": {
@@ -54,17 +54,17 @@
 		"@effect/printer-ansi": "catalog:silk",
 		"@effect/rpc": "catalog:silk",
 		"@effect/sql": "catalog:silk",
-		"@savvy-web/silk-effects": "^0.6.1",
+		"@savvy-web/silk-effects": "^1.0.0",
 		"effect": "catalog:silk",
 		"shell-quote": "^1.8.4",
-		"workspaces-effect": "^1.1.0"
+		"workspaces-effect": "^1.2.0"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^21.0.2",
 		"@commitlint/config-conventional": "^21.0.2",
 		"@commitlint/lint": "^21.0.2",
 		"@commitlint/types": "^21.0.1",
-		"@savvy-web/rslib-builder": "^0.21.3",
+		"@savvy-web/bundler": "^0.2.0",
 		"@types/node": "catalog:silk",
 		"@types/shell-quote": "^1.7.5",
 		"@typescript/native-preview": "catalog:silk",
