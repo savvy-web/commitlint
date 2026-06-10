@@ -1,5 +1,22 @@
 # @savvy-web/commitlint
 
+## 1.0.0
+
+### Breaking Changes
+
+* [`9f5f59a`](https://github.com/savvy-web/commitlint/commit/9f5f59a40e54b5d34407d4066ed91efdb195f142) ### Package Deprecation
+
+The commitlint config factory has moved into the Silk Suite monorepo and now ships as a config-integration shim in `@savvy-web/silk`,
+driven by the unified `savvy` CLI.
+
+### Migration:
+
+* Replace `@savvy-web/commitlint` with `@savvy-web/silk` in your devDependencies.
+* Point `commitlint.config.ts` at the shim from `@savvy-web/silk/commitlint` instead of this package's factory.
+* Replace the `savvy-commit` bin with `savvy commit` (and `savvy check` for setup validation); the per-tool init/check subcommands are gone.
+
+This is the final release. No further fixes or security patches will be published.
+
 ## 0.10.1
 
 ### Dependencies
