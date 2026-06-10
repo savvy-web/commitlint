@@ -32,11 +32,11 @@
 		"test": "vitest run",
 		"test:coverage": "vitest run --coverage",
 		"test:watch": "vitest --watch",
-		"typecheck": "turbo run types:check //#types:check --log-prefix=none --log-order=grouped",
+		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
 		"types:check": "tsgo --noEmit"
 	},
 	"devDependencies": {
-		"@savvy-web/silk": "^0.3.1",
+		"@savvy-web/silk": "^0.4.0",
 		"@savvy-web/vitest": "^1.4.0",
 		"bats": "^1.13.0"
 	},
